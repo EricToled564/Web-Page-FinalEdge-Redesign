@@ -221,6 +221,22 @@ class EngineWheel {
     this.rig.add(ring);
     this.ring = ring;
 
+    /* pulso de activación (referencia real: igloo.inc — el anillo
+       fragmentado emite un destello y ondas concéntricas al activarse,
+       ver frames del video del cliente). 3 anillos finos que se
+       expanden y desvanecen al hacer clic; color = el de la fase/edge
+       elegido, nunca blanco puro (disciplina de un solo acento). */
+    this.pulses = [0, 1, 2].map(() => {
+      const m = new THREE.Mesh(
+        new THREE.RingGeometry(1, 1, 64),
+        new THREE.MeshBasicMaterial({ color: 0x1e80f0, transparent: true, opacity: 0, side: THREE.DoubleSide })
+      );
+      m.position.z = 40;
+      m.visible = false;
+      this.rig.add(m);
+      return m;
+    });
+
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
     this.resize();
@@ -282,14 +298,51 @@ class EngineWheel {
 
   go(data) {
     if (!data || this.busy) return;
-    let target, url;
-    if (data.kind === 'sector') { target = { mode: 'service', edge: data.edge }; url = data.edge.slug; }
-    else if (data.kind === 'band') { target = { mode: 'phase', phase: data.phase }; url = data.phase.slug; }
-    else return;
+    let target, url, color;
+    if (data.kind === 'sector') {
+      target = { mode: 'service', edge: data.edge };
+      url = data.edge.slug;
+      color = PHASES.find((p) => p.id === data.edge.phase).color;
+    } else if (data.kind === 'band') {
+      target = { mode: 'phase', phase: data.phase };
+      url = data.phase.slug;
+      color = data.phase.color;
+    } else return;
     if (sameState(target, this.state) || REDUCED) { navigate(url); return; }
     this.busy = true;
+    if (!REDUCED) this.pulseBurst(color);
     this.apply(target, false, () => { this.busy = false; });
     setTimeout(() => navigate(url), 560);
+  }
+
+  /**
+   * Pulso de activación al elegir una fase/servicio — el anillo emite un
+   * destello y ondas concéntricas que se expanden y desvanecen (referencia
+   * real: video de igloo.inc que compartió el cliente). Color = el de la
+   * fase/edge elegido, nunca blanco puro.
+   */
+  pulseBurst(hex) {
+    const c = new THREE.Color(hex);
+    this.pulses.forEach((m, i) => {
+      m.material.color.copy(c);
+      m.userData.t0 = performance.now() + i * 90; // ondas escalonadas
+      m.userData.active = true;
+      m.visible = true;
+    });
+  }
+
+  stepPulses(now) {
+    for (const m of this.pulses) {
+      if (!m.userData.active) continue;
+      const k = (now - m.userData.t0) / 650;
+      if (k < 0) continue;
+      if (k >= 1) { m.userData.active = false; m.visible = false; continue; }
+      const e = masterEase(k);
+      const r = 24 + e * 320;
+      m.geometry.dispose();
+      m.geometry = new THREE.RingGeometry(r, r + 2.2, 64);
+      m.material.opacity = (1 - e) * 0.8;
+    }
   }
 
   targetsFor(state) {
@@ -494,6 +547,7 @@ class EngineWheel {
     requestAnimationFrame(this.loop);
     if (!this.visible || document.hidden) return;
     for (const tw of this.tweens) tw.step(now);
+    this.stepPulses(now);
     if (!REDUCED) {
       this.ring.rotation.z += 0.0012;
       const px = this.parallax?.x ?? 0;

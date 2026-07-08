@@ -1,7 +1,7 @@
 ---
 import LockupMark from './LockupMark.astro';
 ---
-<header class="nav" id="site-nav">
+<header class="nav" id="site-nav" transition:persist>
   <a class="nav-brand" href="/" aria-label="Final Edge — inicio">
     <LockupMark word="final edge" tag="[AI]" variant="section" />
   </a>
@@ -14,9 +14,12 @@ import LockupMark from './LockupMark.astro';
 </header>
 
 <style>
+  /* carcasa persistente estilo cosmos.so: sticky, SIEMPRE visible — no se
+     oculta al bajar. transition:persist (arriba) evita que se vuelva a
+     montar entre páginas, así nunca parpadea. */
   .nav {
-    position: fixed;
-    inset: 0 0 auto 0;
+    position: sticky;
+    top: 0;
     z-index: 50;
     display: flex;
     align-items: center;
@@ -27,9 +30,7 @@ import LockupMark from './LockupMark.astro';
     background: color-mix(in srgb, var(--panel) 82%, transparent);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--hairline-nav);
-    transition: transform var(--t-ui) var(--ease);
   }
-  .nav.is-hidden { transform: translateY(-100%); }
   /* mínimo digital del brand book: logo ≥160px de ancho, en cualquier tratamiento */
   .nav-brand { width: 168px; flex: none; }
   .nav-side { display: flex; align-items: center; gap: 20px; }
@@ -40,24 +41,3 @@ import LockupMark from './LockupMark.astro';
     .nav { padding: 0 16px; }
   }
 </style>
-
-<script>
-  // Nav estilo cosmos: se oculta al bajar, reaparece al subir.
-  function initNav() {
-    const nav = document.getElementById('site-nav');
-    if (!nav || nav.dataset.bound) return;
-    nav.dataset.bound = '1';
-    let last = 0;
-    addEventListener(
-      'scroll',
-      () => {
-        const y = scrollY;
-        nav.classList.toggle('is-hidden', y > 120 && y > last);
-        last = y;
-      },
-      { passive: true }
-    );
-  }
-  initNav();
-  document.addEventListener('astro:page-load', initNav);
-</script>

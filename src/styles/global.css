@@ -107,11 +107,19 @@ h1, h2, h3 { font-weight: 500; }
 .btn--ghost { border-color: var(--hairline); color: var(--fg-2); }
 .btn--ghost:hover { border-color: var(--accent); background: transparent; color: var(--accent); }
 
-/* revelado de sección */
-.reveal { opacity: 0; transform: translateY(24px); transition: opacity var(--t-enter) var(--ease), transform var(--t-enter) var(--ease); }
-.reveal.is-in { opacity: 1; transform: none; }
+/* revelado de sección — referencia cosmos.so: el contenido no aparece de
+   golpe, entra con blur que se aclara + un leve desplazamiento/escala
+   (su propio código usa keyframes "enter" con blur y "scale-in" al
+   montar, en vez de una transición nativa entre documentos). */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px) scale(.985);
+  filter: blur(6px);
+  transition: opacity var(--t-enter) var(--ease), transform var(--t-enter) var(--ease), filter var(--t-enter) var(--ease);
+}
+.reveal.is-in { opacity: 1; transform: none; filter: blur(0); }
 @media (prefers-reduced-motion: reduce) {
-  .reveal { opacity: 1; transform: none; transition: none; }
+  .reveal { opacity: 1; transform: none; filter: none; transition: none; }
   html { scroll-behavior: auto; }
   .cursor { animation: none; }
 }
