@@ -25,6 +25,7 @@
   --accent:        #1E80F0; /* Edge Blue */
   --accent-active: #1668C2;
   --on-accent:     #FFFFFF; /* texto sobre relleno accent (hover CTA) */
+  --silver:        #E4E8ED; /* plata — >=3:1 sobre accent, solo texto GRANDE (>=24px) */
 
   /* colores de fase — solo marcadores / rueda ENGINE / iconos. Nunca rellenos grandes. Nunca estado. */
   --phase-eval: #F4920C; /* Evaluación  · ámbar   */

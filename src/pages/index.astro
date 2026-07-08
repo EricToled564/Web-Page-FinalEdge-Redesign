@@ -311,17 +311,35 @@ import LockupMark from '../components/LockupMark.astro';
     color: var(--on-accent);
   }
   /* el >_ NO tiene font-size propio: hereda el de .presion-h2, así queda
-     exactamente a la altura de la "L" de "La" — nunca más chico. */
+     exactamente a la altura de la "L" de "La" — nunca más chico. Color
+     plata para diferenciarlo del resto del heading. */
+  .presion-prompt { color: var(--silver); }
+  /* bloques con delimitación clara: misma retícula hairline que el
+     resto del sitio (gap:1px + fondo de línea), adaptada a superficie
+     accent — cada bloque es un rectángulo vertical con el número
+     centrado arriba del texto, nunca a la izquierda. */
   .presion-facts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 40px;
+    gap: 1px;
     margin-top: 56px;
+    background: color-mix(in srgb, var(--on-accent) 30%, transparent);
+    border: 1px solid color-mix(in srgb, var(--on-accent) 30%, transparent);
+  }
+  .presion-fact {
+    background: var(--accent);
+    padding: 40px 28px;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
   }
   .presion-fact-num { font-size: clamp(28px, 3.2vw, 44px); font-weight: 600; letter-spacing: -.03em; color: var(--on-accent); white-space: nowrap; }
   .presion-fact-unit { font-size: 0.55em; }
   .presion-fact-arrow { display: inline-block; margin: 0 .2em; font-weight: 400; font-size: .7em; }
-  .presion-fact-txt { margin-top: 12px; font-size: var(--text-body); line-height: 1.5; color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+  .presion-fact-txt { margin-top: 16px; font-size: var(--text-body); line-height: 1.5; color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
   .body-2 { color: var(--fg-2); font-size: var(--text-body); }
 
   .diff-mark { width: min(520px, 100%); }
@@ -406,6 +424,7 @@ import LockupMark from '../components/LockupMark.astro';
     .hero { padding: 32px 24px 48px; }
     .plate { padding: 88px 24px; }
     .presion-band { padding: 64px 24px; }
-    .presion-facts { grid-template-columns: 1fr; gap: 32px; margin-top: 40px; }
+    .presion-facts { grid-template-columns: 1fr; margin-top: 40px; }
+    .presion-fact { min-height: 0; padding: 32px 24px; }
   }
 </style>
