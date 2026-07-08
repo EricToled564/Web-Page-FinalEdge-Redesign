@@ -1,0 +1,118 @@
+---
+/**
+ * Isla persistente de la rueda ENGINE™ (WebGL). Se conserva entre páginas
+ * (transition:persist) para que la coreografía fluya sin recargas.
+ * Fallback sin WebGL: los mismos lockups como enlaces estáticos en retícula.
+ */
+import { PHASES, EDGES } from '../data/engine.js';
+const { compact = false } = Astro.props;
+---
+<div
+  id="engine-wheel"
+  class="wheel-stage"
+  data-compact={compact ? '1' : '0'}
+  transition:persist="engine-wheel"
+>
+  <canvas class="wheel-canvas" aria-hidden="true"></canvas>
+
+  <div class="wheel-overlay" data-overlay>
+    {EDGES.map((e) => {
+      const color = PHASES.find((p) => p.id === e.phase).color;
+      return (
+        <a class={`wl wl-edge wl-phase-${e.phase}`} data-anchor={`edge-${e.id}`} href={e.slug} aria-label={`${e.id} — ${e.service}`} style={`--ec:${color}`}>
+          <span class="wl-edge-row">
+            <span class="wl-edge-prompt">&gt;_</span>
+            <span class="wl-edge-col">
+              <span class="wl-edge-word">{e.id}</span>
+              <span class="wl-edge-ai">[AI]</span>
+            </span>
+          </span>
+        </a>
+      );
+    })}
+    {PHASES.map((p) => (
+      <a class={`wl wl-band wl-phase-${p.id}`} data-anchor={`phase-${p.id}`} href={p.slug} style={`color:${p.color}`}>
+        {p.label}
+      </a>
+    ))}
+    <div class="wl wl-hub" data-anchor="hub" aria-hidden="true">
+      <span class="wl-hub-prompt">&gt;_</span>
+      <span class="wl-hub-col">
+        <span class="wl-hub-name">final edge</span>
+        <span class="wl-hub-engine">[ENGINE]</span>
+      </span>
+    </div>
+  </div>
+
+  <noscript>
+    <ul class="wheel-list">
+      {EDGES.map((e) => (
+        <li><a href={e.slug}>{e.id} — {e.service}</a></li>
+      ))}
+    </ul>
+  </noscript>
+</div>
+
+<style>
+  /* la rueda completa vive fija a 880×880 dentro de un card con scroll
+     horizontal (comportamiento del brand book: nada baja de 14px) */
+  .wheel-stage {
+    position: relative;
+    width: 880px;
+    height: 880px;
+    margin: 0 auto;
+    flex: none;
+  }
+  .wheel-stage[data-compact='1'] { width: 100%; max-width: 620px; height: 560px; }
+  .wheel-canvas { width: 100%; height: 100%; display: block; }
+  .wheel-overlay { position: absolute; inset: 0; pointer-events: none; }
+
+  .wl {
+    position: absolute;
+    top: 0; left: 0;
+    pointer-events: auto;
+    transition: opacity var(--t-ui) var(--ease);
+  }
+
+  /* lockup de edge — especificación exacta del brand book §07 */
+  .wl-edge-row { display: flex; align-items: baseline; gap: 6px; line-height: 1; white-space: nowrap; }
+  .wl-edge-col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .wl-edge-prompt { font-weight: 700; font-size: 14px; color: var(--ec); line-height: 1; }
+  .wl-edge-word { font-weight: 600; font-size: 18px; letter-spacing: -.02em; color: var(--fg); line-height: 1; }
+  .wl-edge-ai { font-weight: 600; font-size: 14px; letter-spacing: .07em; color: var(--ec); line-height: 1; }
+
+  /* etiqueta de fase — 16px, tracking 2.6px, 600 */
+  .wl-band { font-size: 16px; letter-spacing: 2.6px; font-weight: 600; }
+
+  /* hub — >_ 16/700 azul · final edge 23/600 · [ENGINE] 14/600 azul */
+  .wl-hub { display: flex; align-items: baseline; gap: 9px; }
+  .wl-hub-prompt { font-weight: 700; font-size: 16px; color: var(--accent); }
+  .wl-hub-col { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .wl-hub-name { font-size: 23px; font-weight: 600; color: var(--fg); letter-spacing: -.02em; word-spacing: -.36ch; line-height: 1; }
+  .wl-hub-engine { font-size: 14px; font-weight: 600; letter-spacing: .16em; color: var(--accent); line-height: 1; }
+
+  /* estados: en el hub de fase solo vive la fase enfocada; en servicio, nada */
+  [data-mode='service'] .wl,
+  [data-mode='phase'] .wl { opacity: 0; pointer-events: none; }
+  [data-mode='phase'][data-focus='evaluacion'] .wl-phase-evaluacion,
+  [data-mode='phase'][data-focus='capacidades'] .wl-phase-capacidades,
+  [data-mode='phase'][data-focus='ejecucion'] .wl-phase-ejecucion { opacity: 1; pointer-events: auto; }
+
+  /* fallback sin WebGL: retícula de lockups */
+  .wheel-stage.is-fallback { aspect-ratio: auto; }
+  .wheel-stage.is-fallback .wheel-canvas { display: none; }
+  .wheel-stage.is-fallback .wheel-overlay { position: static; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+  .wheel-stage.is-fallback .wl { position: static; transform: none; background: var(--bg); padding: 24px; }
+  .wheel-stage.is-fallback .wl-hub { grid-column: 1 / -1; }
+  .wheel-list { list-style: none; display: grid; gap: 10px; padding: 24px; }
+
+  /* móvil: la rueda completa mantiene 880px y el card hace scroll horizontal
+     (regla del brand book: ninguna etiqueta baja de 14px); la compacta sí se adapta */
+  @media (max-width: 760px) {
+    .wheel-stage[data-compact='1'] { max-width: 100%; height: 440px; }
+  }
+</style>
+
+<script>
+  import '../scripts/engine-wheel.js';
+</script>

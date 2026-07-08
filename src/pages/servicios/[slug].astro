@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import EngineWheel from '../../components/EngineWheel.astro';
+import { EDGES, phaseOfEdge } from '../../data/engine.js';
+
+export function getStaticPaths() {
+  return EDGES.map((e) => ({
+    params: { slug: e.slug.split('/').filter(Boolean).pop() },
+    props: { edge: e },
+  }));
+}
+const { edge } = Astro.props;
+const phase = phaseOfEdge(edge);
+---
+<Base
+  title={`${edge.service} — Final Edge`}
+  description={edge.summary}
+>
+  <!-- el segmento desprendido gira y se acopla junto al título -->
+  <section class="svc-hero" style={`--pc:${phase.color}`}>
+    <div class="svc-grid">
+      <div class="svc-wheel">
+        <EngineWheel compact />
+      </div>
+      <div>
+        <p class="svc-crumb reveal">
+          <a href={phase.slug}>FASE {phase.num} · {phase.label}</a>
+        </p>
+        <h1 class="svc-title reveal">
+          <span class="lockup lockup--big">
+            <span class="prompt">&gt;_</span>
+            <span class="lockup-name">{edge.id}</span>
+            <span class="tag-ai">[AI]</span>
+          </span>
+        </h1>
+        <p class="svc-service reveal">{edge.service}</p>
+        <p class="svc-hook reveal">{edge.hook}</p>
+        <p class="lead reveal">{edge.summary}</p>
+        <div class="svc-actions reveal">
+          <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style={`--pc:${phase.color}`}>
+    <div class="hairline-grid grid-3 reveal">
+      {edge.stats.map(([num, txt]) => (
+        <div>
+          <p class="svc-stat-num" style={`color:${phase.color}`}>{num}</p>
+          <p class="svc-stat-txt">{txt}</p>
+        </div>
+      ))}
+    </div>
+    <blockquote class="svc-quote reveal">«{edge.quote}»</blockquote>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <header class="section-head reveal">
+      <p class="eyebrow"><span class="prompt">&gt;_</span>¿para qué sirve?</p>
+      <hr />
+    </header>
+    <div class="hairline-grid grid-2 reveal">
+      {edge.uses.map(([t, d], i) => (
+        <div>
+          <p class="svc-use-num prompt">{String(i + 1).padStart(2, '0')}</p>
+          <p class="svc-use-title">{t}</p>
+          <p class="svc-use-desc">{d}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <section class="section" style="padding-top:0">
+    <header class="section-head reveal">
+      <p class="eyebrow"><span class="prompt">&gt;_</span>entregables reales</p>
+      <hr />
+    </header>
+    <div class="hairline-grid grid-2 reveal">
+      {edge.proof.map(([t, d]) => (
+        <div>
+          <p class="svc-use-title">{t}</p>
+          <p class="svc-use-desc">{d}</p>
+        </div>
+      ))}
+    </div>
+    <p class="svc-closing reveal">{edge.closing}</p>
+    <div class="svc-actions reveal" style="margin-top:40px">
+      <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
+      <a class="btn btn--ghost" href={phase.slug}>Volver a {phase.name}</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .svc-hero { padding: 150px 72px 88px; }
+  .svc-grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 64px;
+    align-items: center;
+  }
+  .svc-crumb a { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
+  .svc-crumb a:hover { color: var(--fg); }
+  .svc-title { margin-top: 20px; }
+  .svc-service { margin-top: 18px; font-size: var(--text-subtitle); color: var(--fg); font-weight: 500; }
+  .svc-hook { margin: 12px 0 16px; font-size: var(--text-manifesto); letter-spacing: -.025em; color: var(--fg-2); }
+  .svc-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 36px; }
+  .svc-stat-num { font-size: clamp(30px, 3.4vw, 46px); font-weight: 600; letter-spacing: -.04em; }
+  .svc-stat-txt { margin-top: 10px; font-size: 14px; color: var(--fg-muted); }
+  .svc-quote {
+    margin-top: 56px;
+    border-left: 2px solid var(--pc, var(--accent));
+    padding-left: 28px;
+    font-size: var(--text-manifesto);
+    letter-spacing: -.025em;
+    color: var(--fg-2);
+  }
+  .svc-use-num { font-size: 14px; letter-spacing: .2em; }
+  .svc-use-title { margin-top: 10px; color: var(--fg); font-weight: 500; font-size: var(--text-body); }
+  .svc-use-desc { margin-top: 8px; color: var(--fg-muted); font-size: 14px; }
+  .svc-closing { margin-top: 48px; font-size: var(--text-subtitle); color: var(--fg-2); max-width: 62ch; }
+  @media (max-width: 980px) {
+    .svc-hero { padding: 120px 24px 64px; }
+    .svc-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 40px; }
+  }
+</style>

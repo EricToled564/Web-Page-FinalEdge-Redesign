@@ -1,0 +1,74 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
+import Assistant from '../components/Assistant.astro';
+
+const {
+  title = 'Final Edge — La IA ejecuta. La experiencia decide.',
+  description = 'Firma mexicana potenciada por inteligencia artificial y dirigida por visión de negocio. Haz más. Sin contratar más.',
+} = Astro.props;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfessionalService',
+  name: 'Final Edge',
+  alternateName: 'Final Edge AI',
+  slogan: 'La IA ejecuta. La experiencia decide.',
+  description,
+  areaServed: { '@type': 'Country', name: 'México' },
+  knowsLanguage: ['es-MX', 'en'],
+  url: 'https://finaledge.mx',
+  founder: { '@type': 'Person', name: 'Eric Toledano' },
+  makesOffer: [
+    'Business Intelligence', 'Estrategia', 'Team Readiness',
+    'Optimización de Procesos', 'Sistemas', 'Producción Creativa',
+  ].map((name) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name } })),
+};
+---
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_MX" />
+    <link rel="icon" href="/assets/logos/logo-finaledge.png" type="image/png" />
+    <link rel="preload" href="/fonts/v6-or3nQ6H-1_WfwkMZI_qYFrcdmg.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    <ClientRouter />
+  </head>
+  <body>
+    <Nav />
+    <main data-main>
+      <slot />
+    </main>
+    <Footer />
+    <Assistant />
+    <script>
+      // Revelado de secciones — 600ms, curva maestra (R3.4)
+      function initReveal() {
+        const els = document.querySelectorAll('.reveal:not(.is-in)');
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const en of entries) {
+              if (en.isIntersecting) {
+                en.target.classList.add('is-in');
+                io.unobserve(en.target);
+              }
+            }
+          },
+          { rootMargin: '0px 0px -12% 0px' }
+        );
+        els.forEach((el) => io.observe(el));
+      }
+      initReveal();
+      document.addEventListener('astro:page-load', initReveal);
+    </script>
+  </body>
+</html>

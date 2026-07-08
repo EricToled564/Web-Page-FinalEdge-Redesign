@@ -1,0 +1,320 @@
+---
+import Base from '../layouts/Base.astro';
+import EngineWheel from '../components/EngineWheel.astro';
+import { PHASES, EDGES } from '../data/engine.js';
+
+const toc = [
+  ['01', 'La presión', '#presion'],
+  ['02', 'La diferencia', '#diferencia'],
+  ['03', 'El ENGINE™', '#engine'],
+  ['04', 'Cómo trabajamos', '#como-trabajamos'],
+  ['05', 'Nosotros', '#nosotros'],
+  ['06', 'Casos', '#casos'],
+  ['07', 'Valoración', '#valoracion'],
+];
+---
+<Base>
+  <!-- 00 · HERO -->
+  <section class="hero" id="inicio">
+    <div class="hero-inner">
+      <p class="eyebrow reveal">
+        <span class="prompt">&gt;_</span>inicializando ventaja<span class="cursor">▌</span>
+      </p>
+      <img
+        class="hero-logo reveal"
+        src="/assets/logos/logo-finaledge.png"
+        alt="final edge [AI]"
+        width="300"
+      />
+      <h1 class="hero-h1 reveal">
+        La IA ejecuta.<br />La experiencia <span class="prompt">decide.</span>
+      </h1>
+      <p class="hero-sub reveal">Haz más. Sin contratar más.</p>
+      <p class="lead reveal">
+        Final Edge es una firma potenciada por inteligencia artificial y dirigida por visión humana.
+        La IA hace el trabajo pesado; la dirección la pone más de 30 años de experiencia de negocio
+        del lado del cliente.
+      </p>
+      <div class="hero-cta reveal">
+        <a class="btn" href="#valoracion">Agenda tu reunión de valoración</a>
+        <a class="btn btn--ghost" href="#engine">Conoce el Engine</a>
+      </div>
+
+      <!-- índice principal -->
+      <nav class="hero-toc reveal" aria-label="Índice">
+        {toc.map(([num, label, href]) => (
+          <a href={href}>
+            <span class="prompt">{num}</span>
+            <span>{label}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+  </section>
+
+  <!-- 01 · LA PRESIÓN -->
+  <section class="section" id="presion">
+    <header class="section-head reveal">
+      <p class="section-num">01</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>la presión · 01 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">Tus costos suben por ley. Tu productividad, no.</h2>
+    <p class="lead reveal" style="margin-top:24px">
+      La jornada de 40 horas ya es ley. El salario mínimo sube cada año. Y quizá ya probaste la
+      inteligencia artificial sin que moviera una sola cifra. El problema no fue la herramienta:
+      fue que nadie la dirigió hacia tu negocio.
+    </p>
+    <div class="hairline-grid grid-3 reveal" style="margin-top:56px">
+      <div class="stat">
+        <p class="stat-num">30%</p>
+        <p class="stat-txt">de encarecimiento de la nómina con la reforma de 40 horas</p>
+      </div>
+      <div class="stat">
+        <p class="stat-num">38% <span class="stat-vs">vs</span> 3%</p>
+        <p class="stat-txt">de las empresas usa IA; solo una fracción obtiene resultados reales</p>
+      </div>
+      <div class="stat">
+        <p class="stat-num">+20%</p>
+        <p class="stat-txt">crece cada año el mercado de IA en México</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · LA DIFERENCIA -->
+  <section class="section" id="diferencia">
+    <header class="section-head reveal">
+      <p class="section-num">02</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>la diferencia · 02 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">Más IA que las agencias. Más criterio que los técnicos.</h2>
+    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+      <div>
+        <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a agencias y consultoras</p>
+        <p class="body-2">
+          Ejecutamos con IA a una fracción del tiempo y del costo: lo que ellas hacen a mano en
+          semanas, aquí ocurre en horas.
+        </p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a proveedores técnicos</p>
+        <p class="body-2">
+          Dirigimos con 30 años de experiencia del lado del cliente, decidiendo qué mueve tu margen.
+          No vendemos experimentos: entregamos resultados.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 · EL ENGINE -->
+  <section class="section section--engine" id="engine">
+    <header class="section-head reveal">
+      <p class="section-num">03</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>el ENGINE™ · 03 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
+    <p class="lead reveal" style="margin-top:24px">
+      Tres fases que te llevan de «no sé por dónde empezar» a tener la IA funcionando como el motor
+      de tu negocio. Toca una fase para entrar a su hub, o un edge para ir directo al servicio.
+    </p>
+
+    <div class="reveal wheel-card" style="margin-top:64px">
+      <EngineWheel />
+    </div>
+
+    <div class="hairline-grid grid-3 reveal" style="margin-top:64px">
+      {PHASES.map((p) => (
+        <a class="phase-card" href={p.slug} style={`--pc:${p.color}`}>
+          <p class="phase-tag">FASE {p.num}</p>
+          <p class="phase-name">{p.name}</p>
+          <p class="phase-tagline">{p.tagline}</p>
+          <p class="phase-edges">
+            {EDGES.filter((e) => e.phase === p.id).map((e) => (
+              <span class="lockup"><span class="prompt">&gt;_</span><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+            ))}
+          </p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- 04 · CÓMO TRABAJAMOS -->
+  <section class="section" id="como-trabajamos">
+    <header class="section-head reveal">
+      <p class="section-num">04</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>cómo trabajamos · 04 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">El mejor talento del mundo, reunido para tu proyecto.</h2>
+    <p class="lead reveal" style="margin-top:24px">
+      Sin el peso ni el costo fijo de una agencia tradicional. Para cada reto armamos un equipo a la
+      medida con talento internacional, evaluado y seleccionado por habilidad, formado con la
+      metodología de nuestra firma afiliada en Singapur, Final Upgrade AI.
+    </p>
+    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Sin la estructura pesada de una agencia: mejor precio y mayor velocidad, sin sacrificar el nivel.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Dirigidos por negocio: la dirección la pone la experiencia del lado del cliente, no un equipo puramente técnico.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Talento seleccionado por habilidad, no por cercanía, con calidad consistente en cada reto.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> A la medida de México cuando se necesita: español nativo y manejo de datos conforme a la ley mexicana.</p></div>
+    </div>
+  </section>
+
+  <!-- 05 · NOSOTROS -->
+  <section class="section" id="nosotros">
+    <header class="section-head reveal">
+      <p class="section-num">05</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>nosotros · 05 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">30 años del lado del cliente. La experiencia que dirige la IA.</h2>
+    <p class="lead reveal" style="margin-top:24px">
+      La diferencia no es el modelo de inteligencia artificial: es quién lo dirige. Eric Toledano
+      suma más de 30 años de experiencia de negocio del lado del cliente: liderazgo comercial de
+      alto nivel, como vicepresidente de marketing y director de marketing, en marcas globales de
+      consumo y bebidas —Mondelez, PepsiCo y Bacardi-Martini— en siete países de cuatro continentes.
+      Es la experiencia de quien contrataba y dirigía agencias y tecnología, no de quien las vende.
+    </p>
+  </section>
+
+  <!-- 06 · CASOS -->
+  <section class="section" id="casos">
+    <header class="section-head reveal">
+      <p class="section-num">06</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>casos · 06 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">Trabajo real, entregado a clientes reales.</h2>
+    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+      <div>
+        <p class="eyebrow" style="margin-bottom:14px"><span class="prompt">&gt;_</span>investigación y datos</p>
+        <p class="body-2">La auditoría de posicionamiento en buscadores de <strong>Sports World México</strong> y el comparativo de precios de los <strong>hoteles VLU</strong>.</p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:14px"><span class="prompt">&gt;_</span>estrategia</p>
+        <p class="body-2">El marco estratégico para una <strong>tienda de mascotas en Hong Kong</strong> y el estudio para inversionistas de una <strong>empresa de infraestructura espacial en los Emiratos</strong>.</p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:14px"><span class="prompt">&gt;_</span>sistemas</p>
+        <p class="body-2">El tablero financiero de <strong>Kanguru Beverages</strong>, la inteligencia de inventarios de <strong>Tiendas Chedraui</strong> y el sistema comercial <strong>Growth Hub</strong>.</p>
+      </div>
+      <div>
+        <p class="eyebrow" style="margin-bottom:14px"><span class="prompt">&gt;_</span>producción creativa</p>
+        <p class="body-2">Las campañas audiovisuales de <strong>Sports World México</strong>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · VALORACIÓN -->
+  <section class="section" id="valoracion">
+    <header class="section-head reveal">
+      <p class="section-num">07</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>valoración · 07 / 07</p>
+      <hr />
+    </header>
+    <h2 class="h2 reveal">La competencia te entrega promedio. Final Edge te entrega la ventaja.</h2>
+    <p class="lead reveal" style="margin-top:24px">
+      Empieza por una reunión de valoración: en una conversación corta entenderás dónde la
+      inteligencia artificial puede mover tu margen y por dónde empezar. Sin compromiso.
+    </p>
+    <ol class="val-steps reveal">
+      <li><span class="prompt">01</span> Responde unas preguntas rápidas: el contexto de tu empresa y tu reto, para que la reunión sea valiosa desde el primer minuto.</li>
+      <li><span class="prompt">02</span> Elige tu horario: la reservación queda confirmada dentro de nuestro propio sistema.</li>
+      <li><span class="prompt">03</span> ¿Dudas en el camino? Nuestro asistente de inteligencia artificial te acompaña y te ayuda a agendar.</li>
+    </ol>
+    <a
+      class="btn reveal"
+      href="mailto:eric@finalupgrade.ai?subject=Reuni%C3%B3n%20de%20valoraci%C3%B3n%20%E2%80%94%20Final%20Edge"
+      style="margin-top:40px"
+    >Agendar mi reunión</a>
+  </section>
+
+  <!-- placa Edge Blue (la ÚNICA placa full-bleed de acento) -->
+  <section class="plate" aria-label="Tu ventaja final">
+    <p class="plate-text">Tu ventaja final<span class="plate-dot">.</span></p>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    align-items: center;
+    padding: 140px 72px 72px;
+  }
+  .hero-inner { max-width: 1180px; margin: 0 auto; width: 100%; }
+  .hero-logo { width: min(300px, 60vw); height: auto; margin: 40px 0 28px; }
+  .hero-h1 {
+    font-size: clamp(48px, 7.6vw, 118px);
+    font-weight: 600;
+    letter-spacing: -.06em;
+    line-height: .92;
+    color: var(--fg);
+  }
+  .hero-sub {
+    margin-top: 28px;
+    font-size: var(--text-manifesto);
+    letter-spacing: -.025em;
+    color: var(--fg-2);
+  }
+  .hero .lead { margin-top: 24px; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 44px; }
+  .hero-toc {
+    margin-top: 88px;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+  }
+  .hero-toc a {
+    display: flex;
+    gap: 14px;
+    padding: 18px 20px;
+    background: var(--bg);
+    font-size: 14px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    transition: color var(--t-hover) var(--ease), background var(--t-hover) var(--ease);
+  }
+  .hero-toc a:hover { color: var(--fg); background: var(--panel); }
+
+  .stat-num { font-size: clamp(36px, 4.2vw, 56px); font-weight: 600; letter-spacing: -.035em; color: var(--fg); }
+  .stat-vs { font-size: 16px; color: var(--fg-faint); }
+  .stat-txt { margin-top: 12px; font-size: 14px; color: var(--fg-muted); }
+  .body-2 { color: var(--fg-2); font-size: var(--text-body); }
+
+  .phase-card { display: grid; gap: 12px; align-content: start; color: inherit; }
+  .phase-card:hover .phase-name { color: var(--pc); }
+  .phase-tag { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
+  .phase-name { font-size: clamp(23px, 2.9vw, 38px); font-weight: 500; letter-spacing: -.025em; color: var(--fg); transition: color var(--t-hover) var(--ease); }
+  .phase-tagline { font-size: 14px; color: var(--fg-muted); }
+  .phase-edges { display: grid; gap: 6px; margin-top: 8px; }
+
+  .val-steps { list-style: none; margin-top: 48px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+  .val-steps li { background: var(--bg); padding: 22px 26px; color: var(--fg-2); display: flex; gap: 18px; font-size: var(--text-body); }
+
+  .plate {
+    background: var(--accent);
+    padding: 120px 72px;
+    overflow: hidden;
+  }
+  .plate-text {
+    max-width: 1180px;
+    margin: 0 auto;
+    font-size: var(--text-plate);
+    font-weight: 600;
+    letter-spacing: -.05em;
+    line-height: .95;
+    color: var(--on-accent);
+  }
+  .plate-dot { color: var(--void-deep); }
+
+  @media (max-width: 760px) {
+    .hero { padding: 120px 24px 56px; }
+    .hero-toc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .plate { padding: 88px 24px; }
+  }
+</style>

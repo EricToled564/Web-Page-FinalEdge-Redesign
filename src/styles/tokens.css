@@ -1,0 +1,60 @@
+/* ============================================================
+   FINAL EDGE AI — DESIGN TOKENS (fuente única de verdad)
+   Origen: design_handoff_brand_book (README.md + CLAUDE.md)
+   Gobernanza: brand/RULES.md · verificado por tools/brand-guard.mjs
+   NO introducir colores, tipografías ni tamaños fuera de este archivo.
+   ============================================================ */
+:root {
+  /* superficies */
+  --bg:            #0E0E12; /* Void — nunca negro puro (evita halación) */
+  --panel:         #0B0B0E;
+  --card:          #0A0A0C;
+  --void-deep:     #08080A; /* fondo para logo mono silver */
+  --hairline:      #1A1A1E; /* bordes 1px + separadores de retícula */
+  --hairline-nav:  #16161A;
+  --hub-ring:      #1A2A40; /* anillo del hub de la rueda ENGINE (brand book §07) */
+  --placeholder:   #34343C; /* barras mock */
+
+  /* texto (todos >=4.5:1 sobre --bg) */
+  --fg:        #F4F4F2;
+  --fg-2:      #C6C6CC;
+  --fg-muted:  #A0A0A8;
+  --fg-faint:  #7E7E88;
+
+  /* acento — el UNICO acento de UI */
+  --accent:        #1E80F0; /* Edge Blue */
+  --accent-active: #1668C2;
+  --on-accent:     #FFFFFF; /* texto sobre relleno accent (hover CTA) */
+
+  /* colores de fase — solo marcadores / rueda ENGINE / iconos. Nunca rellenos grandes. Nunca estado. */
+  --phase-eval: #F4920C; /* Evaluación  · ámbar   */
+  --phase-cap:  #15D9D9; /* Capacidades · cian    */
+  --phase-exe:  #E15CDB; /* Ejecución   · magenta */
+
+  /* semánticos / estado — independientes de las fases */
+  --color-error:   #FF5A5A;
+  --color-success: #3DD68C;
+  --color-warning: #F5C24B;
+  --color-info:    #1E80F0;
+
+  /* tipografía */
+  --font-ui:   "Geist Mono", ui-monospace, monospace;
+  --font-read: "Geist", system-ui, sans-serif; /* SOLO párrafos largos densos */
+
+  /* escala tipográfica (piso duro global: 14px) */
+  --text-display:   clamp(64px, 11vw, 176px);  /* H1 portada · 600 · -.06em · lh .82 */
+  --text-opener:    clamp(52px, 7vw, 104px);   /* número de sección · 600 · -.06em · accent */
+  --text-h2:        clamp(36px, 4.2vw, 56px);  /* 500 · -.035em */
+  --text-manifesto: clamp(23px, 2.9vw, 38px);  /* 400 · -.025em */
+  --text-plate:     clamp(48px, 7.5vw, 108px); /* placa tagline · 600 · -.05em */
+  --text-subtitle:  clamp(19px, 2vw, 24px);
+  --text-lead:      19px;
+  --text-body:      16px;
+  --text-label:     14px; /* UPPERCASE · tracking .14–.24em · PISO DURO */
+
+  /* movimiento — una sola curva */
+  --ease:    cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-hover: 160ms;
+  --t-ui:    280ms;
+  --t-enter: 600ms;
+}

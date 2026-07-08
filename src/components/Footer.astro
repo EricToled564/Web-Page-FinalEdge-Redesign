@@ -1,0 +1,82 @@
+---
+import { PHASES, EDGES } from '../data/engine.js';
+---
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <img
+        src="/assets/logos/logo-finaledge.png"
+        alt="final edge [AI]"
+        width="220"
+        loading="lazy"
+      />
+      <p class="footer-line">La IA ejecuta. La experiencia decide.</p>
+    </div>
+    <nav class="footer-nav" aria-label="Navegación completa">
+      <div>
+        <p class="eyebrow"><span class="prompt">&gt;_</span>ENGINE™</p>
+        <ul>
+          {PHASES.map((p) => (
+            <li><a href={p.slug}>{p.name}</a></li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p class="eyebrow"><span class="prompt">&gt;_</span>Servicios</p>
+        <ul>
+          {EDGES.map((e) => (
+            <li><a href={e.slug}>{e.service}</a></li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <p class="eyebrow"><span class="prompt">&gt;_</span>Final Edge</p>
+        <ul>
+          <li><a href="/#como-trabajamos">Cómo trabajamos</a></li>
+          <li><a href="/#casos">Casos</a></li>
+          <li><a href="/#nosotros">Nosotros</a></li>
+          <li><a href="/#valoracion">Valoración</a></li>
+          <li><a href="https://www.linkedin.com" data-todo="url-linkedin-fundador" rel="noopener" target="_blank">LinkedIn del fundador</a></li>
+        </ul>
+      </div>
+    </nav>
+  </div>
+  <div class="footer-meta">
+    <span>© 2026 Final Edge · México</span>
+    <span class="nav-lang" title="English — disponible próximamente"><span style="color:var(--fg)">ES</span> / EN</span>
+  </div>
+</footer>
+
+<style>
+  .footer { border-top: 1px solid var(--hairline); background: var(--panel); }
+  .footer-inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 88px 72px 56px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px;
+  }
+  .footer-brand img { width: 220px; height: auto; }
+  .footer-line { margin-top: 20px; color: var(--fg-2); font-size: var(--text-body); }
+  .footer-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+  .footer-nav ul { list-style: none; margin-top: 16px; display: grid; gap: 10px; }
+  .footer-nav a { color: var(--fg-muted); font-size: 14px; }
+  .footer-nav a:hover { color: var(--fg); }
+  .footer-meta {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px 72px 32px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    justify-content: space-between;
+    color: var(--fg-faint);
+    font-size: 14px;
+  }
+  .nav-lang { letter-spacing: .14em; color: var(--fg-faint); }
+  @media (max-width: 900px) {
+    .footer-inner { grid-template-columns: repeat(1, minmax(0, 1fr)); padding: 64px 24px 40px; }
+    .footer-nav { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+    .footer-meta { padding: 20px 24px 32px; }
+  }
+</style>

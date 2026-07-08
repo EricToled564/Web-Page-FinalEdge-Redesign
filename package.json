@@ -1,0 +1,16 @@
+{
+  "name": "final-edge-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build && node tools/brand-guard.mjs",
+    "preview": "astro preview",
+    "brand:check": "node tools/brand-guard.mjs"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "three": "^0.185.1"
+  }
+}

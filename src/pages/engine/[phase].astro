@@ -1,0 +1,86 @@
+---
+import Base from '../../layouts/Base.astro';
+import EngineWheel from '../../components/EngineWheel.astro';
+import { PHASES, EDGES } from '../../data/engine.js';
+
+export function getStaticPaths() {
+  return PHASES.map((p) => ({ params: { phase: p.id }, props: { phase: p } }));
+}
+const { phase } = Astro.props;
+const edges = EDGES.filter((e) => e.phase === phase.id);
+---
+<Base
+  title={`${phase.name} — Final Edge Engine`}
+  description={phase.lead}
+>
+  <section class="hub-hero" style={`--pc:${phase.color}`}>
+    <div class="hub-grid">
+      <!-- la fase que giró e iluminó se queda como menú vivo del hub -->
+      <div class="hub-wheel">
+        <EngineWheel compact />
+        <p class="hub-hint eyebrow"><span class="prompt">&gt;_</span>toca un edge para entrar al servicio</p>
+      </div>
+      <div class="hub-copy">
+        <p class="hub-tag reveal">FASE {phase.num} / 03</p>
+        <h1 class="hub-name reveal">{phase.name}</h1>
+        <p class="hub-tagline reveal">{phase.tagline}</p>
+        <p class="lead reveal">{phase.lead}</p>
+        <nav class="hub-menu reveal" aria-label={`Servicios de ${phase.name}`}>
+          {edges.map((e) => (
+            <a class="hub-item" href={e.slug}>
+              <img src={e.icon} alt="" width="44" height="44" loading="lazy" />
+              <span class="hub-item-txt">
+                <span class="lockup"><span class="prompt">&gt;_</span><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+                <span class="hub-item-service">{e.service}</span>
+                <span class="hub-item-hook">{e.hook}</span>
+              </span>
+            </a>
+          ))}
+        </nav>
+        <div class="hub-actions reveal">
+          <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
+          <a class="btn btn--ghost" href={phase.next.slug}>Siguiente fase: {phase.next.name}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hub-hero { padding: 150px 72px 120px; }
+  .hub-grid {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 64px;
+    align-items: center;
+  }
+  .hub-hint { margin-top: 16px; text-align: center; }
+  .hub-tag { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
+  .hub-name {
+    margin-top: 16px;
+    font-size: var(--text-opener);
+    font-weight: 600;
+    letter-spacing: -.06em;
+    line-height: .95;
+    color: var(--fg);
+  }
+  .hub-tagline { margin: 20px 0 16px; font-size: var(--text-subtitle); color: var(--fg-2); }
+  .hub-menu { margin-top: 40px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+  .hub-item {
+    display: flex; gap: 20px; align-items: center;
+    background: var(--bg); padding: 24px;
+    transition: background var(--t-hover) var(--ease);
+  }
+  .hub-item:hover { background: var(--panel); }
+  .hub-item img { width: 44px; height: 44px; }
+  .hub-item-txt { display: grid; gap: 4px; }
+  .hub-item-service { color: var(--fg); font-size: var(--text-body); font-weight: 500; }
+  .hub-item-hook { color: var(--fg-muted); font-size: 14px; }
+  .hub-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
+  @media (max-width: 980px) {
+    .hub-hero { padding: 120px 24px 88px; }
+    .hub-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+  }
+</style>
