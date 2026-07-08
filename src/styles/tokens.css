@@ -25,7 +25,7 @@
   --accent:        #1E80F0; /* Edge Blue */
   --accent-active: #1668C2;
   --on-accent:     #FFFFFF; /* texto sobre relleno accent (hover CTA) */
-  --silver:        #E4E8ED; /* plata — >=3:1 sobre accent, solo texto GRANDE (>=24px) */
+  --silver:        #8F8F8F; /* plata real — muestreado de logo-mono-white/light.png (símbolo >_), R5.4 */
 
   /* colores de fase — solo marcadores / rueda ENGINE / iconos. Nunca rellenos grandes. Nunca estado. */
   --phase-eval: #F4920C; /* Evaluación  · ámbar   */
