@@ -1,8 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
 import EngineWheel from '../components/EngineWheel.astro';
-import LockupMark from '../components/LockupMark.astro';
-import { EDGES, phaseOfEdge } from '../data/engine.js';
 ---
 <Base>
   <!-- 00 · HERO -->
@@ -21,7 +19,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
         La IA ejecuta.<br />La experiencia <span class="prompt">decide.</span>
       </h1>
       <p class="hero-sub reveal">Haz más. Sin contratar más.</p>
-      <p class="lead reveal">IA que ejecuta. 30 años de experiencia de negocio que la dirige.</p>
+      <p class="lead reveal">Dirigida por más de 30 años de experiencia de negocio del lado del cliente.</p>
       <div class="hero-cta reveal">
         <a class="btn" href="#valoracion">Agenda tu reunión de valoración</a>
         <a class="btn btn--ghost" href="#engine">Conoce el Final Edge Engine</a>
@@ -77,39 +75,25 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     </div>
   </section>
 
-  <!-- 03 · EL ENGINE — pantalla A: encabezado + rueda (sola, sin el grid
-       de servicios apilado debajo: eso es lo que hacía de esta sección la
-       más larga del sitio, casi 2.5 pantallas) -->
-  <section class="section section--engine" id="engine">
-    <header class="section-head reveal">
-      <p class="section-num">03</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>el Final Edge Engine · 03 / 07</p>
-      <hr />
-    </header>
-    <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
-    <p class="body-2 reveal" style="margin-top:12px">Tres fases. Seis servicios. Toca para entrar.</p>
-
-    <div class="wheel-card" id="wheel-entry" style="margin-top:24px">
-      <EngineWheel />
+  <!-- 03 · EL ENGINE — pantalla completa, a dos columnas, usando todo el
+       ancho de la ventana (referencia: las páginas anexas, no el
+       contenedor centrado de 1080px que usan las demás secciones). La
+       rueda es la única fuente de los nombres de servicio: no se repiten
+       en una lista aparte. -->
+  <section class="engine-split" id="engine">
+    <div class="engine-col-text">
+      <header class="section-head reveal">
+        <p class="section-num">03</p>
+        <p class="eyebrow"><span class="prompt">&gt;_</span>el Final Edge Engine · 03 / 07</p>
+        <hr />
+      </header>
+      <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
+      <p class="body-2 reveal" style="margin-top:12px">Tres fases, seis servicios, un solo sistema.</p>
     </div>
-  </section>
-
-  <!-- 03 · EL ENGINE — pantalla B: los 6 servicios, en su propia pantalla
-       (continuación de 03, no una sección numerada nueva) -->
-  <section class="section section--services">
-    <p class="eyebrow reveal"><span class="prompt">&gt;_</span>los seis edges del Final Edge Engine</p>
-    <div class="hairline-grid grid-3 reveal edge-grid">
-      {EDGES.map((e) => {
-        const phase = phaseOfEdge(e);
-        return (
-          <a class="edge-card" href={e.slug} style={`--pc:${phase.color}`} transition:name={`edge-${e.id}`}>
-            <img class="edge-card-icon" src={e.icon} alt="" width="36" height="36" loading="lazy" />
-            <LockupMark word={e.id} tag="[AI]" color={phase.color} variant="section" />
-            <p class="edge-card-service">{e.service}</p>
-            <p class="edge-card-hook">{e.hook}</p>
-          </a>
-        );
-      })}
+    <div class="engine-col-wheel">
+      <div class="wheel-card" id="wheel-entry">
+        <EngineWheel fitHeight />
+      </div>
     </div>
   </section>
 
@@ -123,10 +107,10 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     <h2 class="h2 reveal">El mejor talento del mundo, reunido para tu proyecto.</h2>
     <p class="lead reveal" style="margin-top:16px">Un equipo a la medida. Sin el costo fijo de una agencia.</p>
     <div class="hairline-grid grid-2 reveal" style="margin-top:32px">
-      <div><p class="body-2"><span class="prompt">&gt;_</span> Mejor precio, mayor velocidad.</p></div>
-      <div><p class="body-2"><span class="prompt">&gt;_</span> Dirigidos por negocio, no solo por tecnología.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Menor costo y mayor velocidad que una agencia tradicional.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Dirigidos por negocio: decide la experiencia, no solo la tecnología.</p></div>
       <div><p class="body-2"><span class="prompt">&gt;_</span> Talento elegido por habilidad, no por cercanía.</p></div>
-      <div><p class="body-2"><span class="prompt">&gt;_</span> Español nativo. Ley mexicana de datos.</p></div>
+      <div><p class="body-2"><span class="prompt">&gt;_</span> Español nativo, conforme a la ley mexicana de datos.</p></div>
     </div>
   </section>
 
@@ -197,7 +181,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     <ol class="val-steps reveal">
       <li><span class="prompt">01</span> Responde unas preguntas rápidas sobre tu negocio.</li>
       <li><span class="prompt">02</span> Elige tu horario.</li>
-      <li><span class="prompt">03</span> Nuestro asistente de IA te acompaña en el camino.</li>
+      <li><span class="prompt">03</span> Resuelve tus dudas con nuestro asistente de IA.</li>
     </ol>
     <a
       class="btn reveal"
@@ -298,30 +282,53 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
   .diff-mark { width: min(520px, 100%); }
   .diff-mark img { width: 100%; height: auto; display: block; }
 
-  /* la sección Engine arranca con menos aire arriba y abajo para que el
-     encabezado y la rueda se sientan en la misma pantalla */
-  .section--engine { padding-top: 40px; padding-bottom: 40px; }
-  .section--services { padding-top: 40px; }
-  @media (max-width: 760px) {
-    .section--engine { padding-top: 32px; padding-bottom: 32px; }
-    .section--services { padding-top: 32px; }
+  /* El Engine — pantalla completa a dos columnas, ancho real de la
+     ventana (no el contenedor de 1080px de .section), igual que las
+     referencias: texto corto a la izquierda, gráfico dominante a la
+     derecha, sangrado hacia el borde. La rueda se dimensiona a sí misma
+     en engine-wheel.js para NUNCA exceder el alto disponible de esta
+     fila — así siempre cabe entera en una sola pantalla. */
+  .engine-split {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+    align-items: center;
+    gap: 24px;
+    padding: 16px 0 16px 72px;
+    min-height: calc(100vh - 92px);
   }
-
-  /* tarjetas de servicio — pantalla propia, acceso directo, sin duplicar
-     lo que la rueda ya navega por fase */
-  .edge-grid { margin-top: 28px; }
-  .edge-card { display: grid; gap: 10px; align-content: start; padding: 20px; color: inherit; border-top: 2px solid var(--pc); background: var(--bg); transition: background var(--t-hover) var(--ease); }
-  /* en móvil, 2 columnas en vez de 1: cada tarjeta es corta (ícono +
-     lockup + 2 líneas), apilar las 6 en una sola columna era lo que
-     hacía esta pantalla casi el doble de alta de lo necesario */
-  @media (max-width: 760px) {
-    .edge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .engine-col-text { padding-right: 24px; }
+  .engine-col-wheel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
+    min-height: 0;
+    min-width: 0;
+    padding: 8px 16px 8px 0;
   }
-  .edge-card:hover { background: var(--panel); }
-  .edge-card-icon { width: 36px; height: 36px; }
-  .edge-card .lm { width: 150px; }
-  .edge-card-service { margin-top: 6px; font-size: var(--text-body); font-weight: 500; color: var(--fg); }
-  .edge-card-hook { font-size: 14px; color: var(--fg-muted); }
+  /* dentro del split, la rueda flota libre — sin el marco de "tarjeta"
+     (borde + fondo + padding) que usa en otras páginas: en las
+     referencias el gráfico sangra al borde, no vive dentro de una caja */
+  .engine-col-wheel .wheel-card {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    align-items: center;
+    justify-content: flex-end;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+  @media (max-width: 900px) {
+    .engine-split {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      padding: 56px 24px;
+      gap: 32px;
+    }
+    .engine-col-text { padding-right: 0; }
+    .engine-col-wheel { justify-content: center; padding: 0; height: auto; }
+  }
 
   .val-steps { list-style: none; margin-top: 28px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
   .val-steps li { background: var(--bg); padding: 16px 20px; color: var(--fg-2); display: flex; gap: 18px; font-size: var(--text-body); }

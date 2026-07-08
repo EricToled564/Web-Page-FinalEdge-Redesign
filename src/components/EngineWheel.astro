@@ -6,12 +6,13 @@
  */
 import { PHASES, EDGES } from '../data/engine.js';
 import LockupMark from './LockupMark.astro';
-const { compact = false } = Astro.props;
+const { compact = false, fitHeight = false } = Astro.props;
 ---
 <div
   id="engine-wheel"
   class="wheel-stage"
   data-compact={compact ? '1' : '0'}
+  data-fit-height={fitHeight ? '1' : '0'}
   transition:persist="engine-wheel"
 >
   <canvas class="wheel-canvas" aria-hidden="true"></canvas>
@@ -45,23 +46,21 @@ const { compact = false } = Astro.props;
 </div>
 
 <style>
-  /* La rueda SIEMPRE se ve completa, en una sola imagen, sin scroll
-     horizontal bajo ninguna circunstancia: el ancho es responsivo
-     (nunca excede el contenedor) y el canvas + las etiquetas se re-render
-     a la resolución real en cada resize (ver engine-wheel.js resize()).
-     880px es el tamaño de referencia — se alcanza en pantallas anchas,
-     nunca se fuerza en las angostas. */
+  /* La rueda SIEMPRE se ve completa, en una sola imagen, sin scroll ni
+     horizontal ni vertical bajo ninguna circunstancia: el ancho Y el
+     alto los calcula engine-wheel.js en cada resize() a partir del
+     espacio real disponible en AMBAS dimensiones (nunca solo el ancho),
+     y los aplica directo como width/height en px — por eso no hay
+     width/aspect-ratio fijos aquí, sería redundante con ese cálculo y
+     podría entrar en conflicto con él. */
   .wheel-stage {
     position: relative;
-    width: min(880px, 100%);
-    aspect-ratio: 1;
     margin: 0 auto;
     /* contención defensiva: pase lo que pase con el cálculo de proyección
        3D (framing de zoom en modo servicio, redondeos, etc.), una etiqueta
-       JAMÁS puede producir scroll horizontal a nivel de página. */
+       JAMÁS puede producir scroll a nivel de página. */
     overflow: hidden;
   }
-  .wheel-stage[data-compact='1'] { width: min(620px, 100%); aspect-ratio: 620 / 560; }
   .wheel-canvas { width: 100%; height: 100%; display: block; }
   .wheel-overlay { position: absolute; inset: 0; pointer-events: none; }
 

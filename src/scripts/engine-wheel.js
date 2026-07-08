@@ -186,7 +186,12 @@ class EngineWheel {
       this.wheel.add(g);
       this.parts.bands[phase.id] = g;
       const center = phase.startAngle + 60;
-      const labelR = { evaluacion: 290, capacidades: 348, ejecucion: 338 }[phase.id];
+      /* mismo radio para las 3 — capacidades/ejecución (a los lados,
+         donde el offset horizontal es máximo) se salían del cuadro
+         visible con radios más grandes que evaluación (arriba, donde el
+         offset es casi todo vertical); un solo radio conservador
+         garantiza que ninguna se corte en ningún ángulo. */
+      const labelR = 270;
       this.addAnchor('phase-' + phase.id, posAt(center, labelR).setZ(BAND_DEPTH / 2 + 2), g);
     }
 
@@ -266,9 +271,16 @@ class EngineWheel {
 
   bind() {
     addEventListener('resize', () => this.resize(), { passive: true });
-    /* el ancho disponible también cambia por layout (p. ej. la columna de
-       texto junto a la rueda), no solo por el viewport — ResizeObserver
-       cubre ambos casos y garantiza que nunca haga falta scroll lateral */
+    /* el ancho Y el alto disponibles también cambian por layout (p. ej.
+       la columna de texto junto a la rueda), no solo por el viewport —
+       ResizeObserver cubre ambos casos y garantiza que nunca haga falta
+       scroll. Se observa this.root (no su padre): como es una isla
+       persistida (transition:persist), el padre cambia en cada
+       navegación entre páginas y un observer fijado sobre el padre
+       original quedaría obsoleto; observar el propio nodo persistido
+       sigue siendo válido sin importar dónde quede reinsertado. resize()
+       vuelve a fijar el mismo tamaño cuando no hay cambio real, así que
+       no genera un bucle: solo una llamada extra, no infinita. */
     if ('ResizeObserver' in window) {
       new ResizeObserver(() => this.resize()).observe(this.root);
     }
@@ -480,19 +492,36 @@ class EngineWheel {
   }
 
   resize() {
-    /* La rueda SIEMPRE cabe entera, nunca requiere scroll horizontal:
-       el canvas se ajusta al ancho REAL disponible (min(referencia,
-       contenedor)), nunca fuerza el tamaño de referencia. `fitScale`
-       (real/referencia) reescala las etiquetas overlay proporcionalmente
-       en projectLabels(), así el conjunto se ve consistente a cualquier
-       tamaño — nunca cada etiqueta por separado. */
+    /* La rueda SIEMPRE cabe entera, nunca requiere scroll ni horizontal
+       ni vertical: el ancho se ajusta al ancho REAL del contenedor
+       (min(referencia, contenedor)); cuando fitHeight está activo (el
+       split de dos columnas del home) TAMBIÉN se limita al alto real
+       disponible, para garantizar que la rueda nunca empuje la sección
+       más allá de una pantalla. `fitScale` (real/referencia) reescala
+       las etiquetas overlay proporcionalmente en projectLabels(), así
+       el conjunto se ve consistente a cualquier tamaño — nunca cada
+       etiqueta por separado. Ancho y alto se aplican como px reales en
+       el propio elemento (ya no depende de aspect-ratio en CSS). */
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
-    const refW = compact ? 620 : 880;
-    const refH = compact ? 560 : 880;
-    const available = this.root.clientWidth || refW;
-    const w = Math.max(1, Math.min(available, refW));
+    const refW = compact ? 620 : 820;
+    const refH = compact ? 560 : 820;
+    const parent = this.root.parentElement;
+    const availW = parent?.clientWidth || refW;
+    let w = Math.max(1, Math.min(availW, refW));
+    /* el límite por alto SOLO aplica en el layout de dos columnas (>900px,
+       mismo corte que el media query de .engine-split): en la columna
+       apilada de móvil, .engine-col-wheel pasa a height:auto — un % de
+       alto contra un ancestro auto no resuelve a nada usable (colapsa al
+       tamaño por defecto del <canvas>, ~300×150), así que ahí la rueda
+       vuelve a dimensionarse solo por ancho, como siempre lo hizo. */
+    if (this.root.dataset.fitHeight === '1' && matchMedia('(min-width: 901px)').matches) {
+      const availH = parent?.clientHeight || refH;
+      if (availH > 0) w = Math.max(1, Math.min(w, availH * (refW / refH)));
+    }
     const h = Math.round(w * (refH / refW));
+    this.root.style.width = w + 'px';
+    this.root.style.height = h + 'px';
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();

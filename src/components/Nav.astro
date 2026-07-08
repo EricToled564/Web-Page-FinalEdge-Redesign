@@ -41,4 +41,15 @@
   @media (max-width: 900px) {
     .nav { padding: 0 16px; }
   }
+  /* en teléfonos angostos, el logo (180px fijo) + el toggle ES/EN + el
+     botón de valoración no caben en una sola fila y producían scroll
+     horizontal en TODO el sitio (el nav es sticky global) — el inglés
+     todavía no está disponible, así que el toggle se oculta aquí en vez
+     de forzar el layout. */
+  @media (max-width: 480px) {
+    .nav { padding: 0 16px; gap: 10px; }
+    .nav-brand { width: 128px; }
+    .nav-lang { display: none; }
+    .nav-cta { padding: 8px 12px; letter-spacing: .04em; }
+  }
 </style>

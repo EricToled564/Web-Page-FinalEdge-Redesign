@@ -37,6 +37,13 @@ a:hover { color: var(--fg); }
   white-space: nowrap;
 }
 
+/* al saltar a un ancla (#engine, #valoracion, etc.) el navegador alinea
+   la sección al borde superior del viewport SIN saber que el nav es
+   sticky — el resultado es contenido tapado bajo el nav justo después
+   de saltar. scroll-margin-top reserva ese espacio en cualquier salto
+   de ancla, nativo del navegador. */
+section[id] { scroll-margin-top: 92px; }
+
 .section {
   max-width: 1080px;
   margin: 0 auto;
