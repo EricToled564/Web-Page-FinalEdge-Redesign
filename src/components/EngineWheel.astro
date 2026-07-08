@@ -27,7 +27,7 @@ const { compact = false, fitHeight = false } = Astro.props;
       );
     })}
     {PHASES.map((p) => (
-      <a class={`wl wl-band wl-phase-${p.id}`} data-anchor={`phase-${p.id}`} href={p.slug} style={`color:${p.color}`}>
+      <a class={`wl wl-band wl-phase-${p.id}`} data-anchor={`phase-${p.id}`} href={p.slug}>
         {p.label}
       </a>
     ))}
@@ -61,8 +61,22 @@ const { compact = false, fitHeight = false } = Astro.props;
        JAMÁS puede producir scroll a nivel de página. */
     overflow: hidden;
   }
-  .wheel-canvas { width: 100%; height: 100%; display: block; }
-  .wheel-overlay { position: absolute; inset: 0; pointer-events: none; }
+  /* el canvas NO llena el 100% de .wheel-stage: .wheel-stage tiene un
+     margen de seguridad (ver BUFFER en engine-wheel.js resize()) para
+     que las etiquetas de fase tengan aire entre el anillo y el borde de
+     recorte — nunca se encima el nombre sobre el color de la rueda, y
+     nunca se corta contra el borde. El canvas y el overlay comparten
+     exactamente el mismo tamaño y posición (centrados), así que las
+     coordenadas de projectLabels() (relativas al canvas) siguen siendo
+     válidas para el overlay. */
+  .wheel-canvas, .wheel-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  .wheel-canvas { display: block; }
+  .wheel-overlay { pointer-events: none; }
 
   .wl {
     position: absolute;
@@ -78,8 +92,14 @@ const { compact = false, fitHeight = false } = Astro.props;
   .wl-edge { width: 118px; }
   [data-compact='1'] .wl-edge { width: 96px; }
 
-  /* etiqueta de fase — 16px, tracking 2.6px, 600 */
-  .wl-band { font-size: 16px; letter-spacing: 2.6px; font-weight: 600; }
+  /* etiqueta de fase — 16px, tracking 2.6px, 600. Texto SIEMPRE blanco
+     sobre un fondo sólido oscuro (nunca el color de la fase): antes el
+     texto usaba el mismo color que el propio anillo de la rueda, y
+     donde ambos se cruzan en la proyección 3D el nombre se volvía
+     ilegible (mismo color sobre mismo color). El fondo sólido garantiza
+     contraste sin importar qué haya detrás — anillo, línea punteada o
+     vacío — sin usar sombras (R3.2, prohibidas). */
+  .wl-band { font-size: 16px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
 
   .wl-hub { width: 148px; }
 

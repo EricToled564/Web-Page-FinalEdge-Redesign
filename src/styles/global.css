@@ -30,6 +30,14 @@ a:hover { color: var(--fg); }
 }
 .eyebrow .prompt { letter-spacing: 0; margin-right: .6em; }
 
+/* eyebrow que incrusta el lockup ENGINE en vez de escribir "Final Edge
+   Engine" como texto plano — el lockup real junto al sufijo opcional de
+   numeración (R5.8, tools/brand-guard.mjs). */
+.eyebrow--lockup { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.eyebrow--lockup .lm { transform: none; }
+.eyebrow--lockup .lm-wheel .lm-word { font-size: 15px; }
+.eyebrow--lockup span { font-size: var(--text-label); letter-spacing: .18em; color: var(--fg-muted); }
+
 .tag-ai {
   font-size: var(--text-label);
   letter-spacing: .14em;

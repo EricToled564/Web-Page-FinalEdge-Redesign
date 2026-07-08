@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import EngineWheel from '../components/EngineWheel.astro';
+import LockupMark from '../components/LockupMark.astro';
 ---
 <Base>
   <!-- 00 · HERO -->
@@ -22,7 +23,7 @@ import EngineWheel from '../components/EngineWheel.astro';
       <p class="lead reveal">Dirigida por más de 30 años de experiencia de negocio del lado del cliente.</p>
       <div class="hero-cta reveal">
         <a class="btn" href="#valoracion">Agenda tu reunión de valoración</a>
-        <a class="btn btn--ghost" href="#engine">Conoce el Final Edge Engine</a>
+        <a class="btn btn--ghost" href="#engine">Descubre el sistema completo</a>
       </div>
     </div>
   </section>
@@ -84,10 +85,12 @@ import EngineWheel from '../components/EngineWheel.astro';
     <div class="engine-col-text">
       <header class="section-head reveal">
         <p class="section-num">03</p>
-        <p class="eyebrow"><span class="prompt">&gt;_</span>el Final Edge Engine · 03 / 07</p>
+        <p class="eyebrow eyebrow--lockup">
+          <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+        </p>
         <hr />
       </header>
-      <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
+      <h2 class="h2 reveal">Un sistema, no una lista de&nbsp;servicios.</h2>
       <p class="body-2 reveal" style="margin-top:12px">Tres fases, seis servicios, un solo sistema.</p>
     </div>
     <div class="engine-col-wheel">
@@ -293,8 +296,16 @@ import EngineWheel from '../components/EngineWheel.astro';
     grid-template-columns: minmax(280px, 420px) 1fr;
     align-items: center;
     gap: 24px;
-    padding: 16px 0 16px 72px;
+    padding: 16px 72px 16px 72px;
     min-height: calc(100vh - 92px);
+    /* mucho más ancho que el contenedor de 1080px de las demás
+       secciones (así se diferencia y la rueda tiene espacio real para
+       dominar), pero SIGUE acotado y centrado — sin este tope, en
+       pantallas anchas el texto quedaba pegado al margen izquierdo del
+       nav mientras la rueda (limitada por el alto disponible, no por el
+       ancho) flotaba lejos a la derecha con un vacío enorme en medio. */
+    max-width: 1800px;
+    margin: 0 auto;
   }
   .engine-col-text { padding-right: 24px; }
   .engine-col-wheel {

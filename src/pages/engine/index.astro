@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
+import LockupMark from '../../components/LockupMark.astro';
 ---
 <Base
   title="El Final Edge Engine — consultoría de inteligencia artificial en México"
@@ -9,13 +10,15 @@ import EngineWheel from '../../components/EngineWheel.astro';
   <section class="section" style="padding-top:150px">
     <header class="section-head reveal">
       <p class="section-num">ENGINE™</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>el Final Edge Engine</p>
+      <p class="eyebrow eyebrow--lockup">
+        <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+      </p>
       <hr />
     </header>
     <h1 class="h2 reveal">Un sistema de tres fases. No una lista de servicios.</h1>
     <p class="lead reveal" style="margin-top:24px">
-      Cada fase construye sobre la anterior y te lleva de no saber por dónde empezar a tener el
-      Final Edge Engine operando tu negocio, sin contratar más.
+      Cada fase construye sobre la anterior y te lleva de no saber por dónde empezar a tenerlo
+      operando tu negocio, sin contratar más.
     </p>
     <div class="reveal wheel-card" style="margin-top:40px">
       <EngineWheel />

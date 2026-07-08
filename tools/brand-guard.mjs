@@ -120,6 +120,18 @@ function checkFile(path) {
       }
     }
 
+    /* R5.8 — "Final Edge Engine" NUNCA aparece como texto plano visible:
+       siempre es el lockup (LockupMark word="final edge" tag="[ENGINE]").
+       Excepción inevitable: <title>/description de metadatos (no pueden
+       contener una imagen — un <title> de HTML es texto por definición). */
+    if (
+      /final edge engine/i.test(line) &&
+      !/\b(title|description)\s*=\s*[{"'`]/.test(line) &&
+      !rel.startsWith('brand/')
+    ) {
+      errors.push(`${loc} · R5.8 "Final Edge Engine" como copy de texto plano — debe ser el lockup <LockupMark word="final edge" tag="[ENGINE]" />, nunca escribirse como palabra`);
+    }
+
     /* R4 verbal — solo en archivos de contenido/markup, no en código puro */
     if (!isCode && !rel.startsWith('brand/')) {
       for (const re of FORBIDDEN_WORDS) {

@@ -186,12 +186,13 @@ class EngineWheel {
       this.wheel.add(g);
       this.parts.bands[phase.id] = g;
       const center = phase.startAngle + 60;
-      /* mismo radio para las 3 — capacidades/ejecución (a los lados,
-         donde el offset horizontal es máximo) se salían del cuadro
-         visible con radios más grandes que evaluación (arriba, donde el
-         offset es casi todo vertical); un solo radio conservador
-         garantiza que ninguna se corte en ningún ángulo. */
-      const labelR = 270;
+      /* mismo radio para las 3: el anillo de fase termina en radio 278
+         (donutShape(248,278,...) más arriba), así que 296 deja ~18
+         unidades de separación visible entre el color de la rueda y el
+         nombre — nunca se encima. El margen BUFFER en resize() es lo
+         que permite que ese mismo radio no se corte contra el borde en
+         ningún ángulo (antes competían por el mismo espacio). */
+      const labelR = 296;
       this.addAnchor('phase-' + phase.id, posAt(center, labelR).setZ(BAND_DEPTH / 2 + 2), g);
     }
 
@@ -500,14 +501,23 @@ class EngineWheel {
        más allá de una pantalla. `fitScale` (real/referencia) reescala
        las etiquetas overlay proporcionalmente en projectLabels(), así
        el conjunto se ve consistente a cualquier tamaño — nunca cada
-       etiqueta por separado. Ancho y alto se aplican como px reales en
-       el propio elemento (ya no depende de aspect-ratio en CSS). */
+       etiqueta por separado.
+
+       BUFFER: .wheel-stage (el elemento con overflow:hidden) es MÁS
+       GRANDE que el canvas por este margen a cada lado — así las
+       etiquetas de fase tienen un carril propio entre el anillo de la
+       rueda y el borde de recorte: nunca se encima el nombre sobre el
+       color de la rueda (necesita separarse del anillo) y nunca se
+       corta contra el borde (necesita quedar dentro del recorte). Sin
+       este margen ambos requisitos compiten por los mismos pocos
+       píxeles. */
+    const BUFFER = 26;
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
     const refW = compact ? 620 : 820;
     const refH = compact ? 560 : 820;
     const parent = this.root.parentElement;
-    const availW = parent?.clientWidth || refW;
+    const availW = (parent?.clientWidth || refW) - BUFFER * 2;
     let w = Math.max(1, Math.min(availW, refW));
     /* el límite por alto SOLO aplica en el layout de dos columnas (>900px,
        mismo corte que el media query de .engine-split): en la columna
@@ -516,12 +526,16 @@ class EngineWheel {
        tamaño por defecto del <canvas>, ~300×150), así que ahí la rueda
        vuelve a dimensionarse solo por ancho, como siempre lo hizo. */
     if (this.root.dataset.fitHeight === '1' && matchMedia('(min-width: 901px)').matches) {
-      const availH = parent?.clientHeight || refH;
+      const availH = (parent?.clientHeight || refH) - BUFFER * 2;
       if (availH > 0) w = Math.max(1, Math.min(w, availH * (refW / refH)));
     }
     const h = Math.round(w * (refH / refW));
-    this.root.style.width = w + 'px';
-    this.root.style.height = h + 'px';
+    this.root.style.width = w + BUFFER * 2 + 'px';
+    this.root.style.height = h + BUFFER * 2 + 'px';
+    this.canvas.style.width = w + 'px';
+    this.canvas.style.height = h + 'px';
+    this.overlay.style.width = w + 'px';
+    this.overlay.style.height = h + 'px';
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
