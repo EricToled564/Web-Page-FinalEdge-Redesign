@@ -1,9 +1,8 @@
 ---
-import LockupMark from './LockupMark.astro';
 ---
 <header class="nav" id="site-nav" transition:persist>
   <a class="nav-brand" href="/" aria-label="Final Edge — inicio">
-    <LockupMark word="final edge" tag="[AI]" variant="section" />
+    <img src="/assets/logos/logo-finaledge.png" alt="final edge [AI]" width="180" height="49" />
   </a>
   <div class="nav-side">
     <span class="nav-lang" title="English — disponible próximamente">
@@ -31,8 +30,10 @@ import LockupMark from './LockupMark.astro';
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--hairline-nav);
   }
-  /* mínimo digital del brand book: logo ≥160px de ancho, en cualquier tratamiento */
-  .nav-brand { width: 168px; flex: none; }
+  /* logo maestro real (brand book), no una reconstrucción de texto —
+     mínimo digital del brand book: ≥160px de ancho, nunca menor */
+  .nav-brand { width: 180px; flex: none; display: block; }
+  .nav-brand img { width: 100%; height: auto; display: block; }
   .nav-side { display: flex; align-items: center; gap: 20px; }
   .nav-lang { font-size: var(--text-label); letter-spacing: .14em; color: var(--fg-faint); }
   .nav-lang-on { color: var(--fg); }
