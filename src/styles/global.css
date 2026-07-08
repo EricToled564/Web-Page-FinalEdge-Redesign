@@ -40,23 +40,26 @@ a:hover { color: var(--fg); }
 .section {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 120px 72px;
+  padding: 88px 72px;
 }
 @media (max-width: 760px) {
-  .section { padding: 88px 24px; }
+  .section { padding: 64px 24px; }
 }
 
-.section-head { margin-bottom: 56px; }
+/* el número de sección se lee más compacto (menos "aire" fijo antes de
+   cualquier contenido real) — sigue siendo el mismo token --text-opener,
+   solo se le da menos margen alrededor */
+.section-head { margin-bottom: 32px; }
 .section-num {
-  font-size: var(--text-opener);
+  font-size: clamp(32px, 4vw, 56px);
   font-weight: 600;
   letter-spacing: -.06em;
   line-height: 1;
   color: var(--accent);
 }
-.section-head .eyebrow { margin-top: 12px; }
+.section-head .eyebrow { margin-top: 8px; }
 .section-head hr {
-  border: 0; border-top: 1px solid var(--hairline); margin-top: 20px;
+  border: 0; border-top: 1px solid var(--hairline); margin-top: 14px;
 }
 
 h1, h2, h3 { font-weight: 500; }
@@ -80,7 +83,7 @@ h1, h2, h3 { font-weight: 500; }
   background: var(--hairline);
   border: 1px solid var(--hairline);
 }
-.hairline-grid > * { background: var(--bg); padding: 28px; }
+.hairline-grid > * { background: var(--bg); padding: 20px; }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 @media (max-width: 760px) {

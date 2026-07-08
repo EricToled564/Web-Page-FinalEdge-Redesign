@@ -73,7 +73,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     <div class="diff-mark reveal">
       <img src="/assets/logos/logo-finaledge.png" alt="final edge [AI]" width="520" height="140" />
     </div>
-    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+    <div class="hairline-grid grid-2 reveal" style="margin-top:32px">
       <div>
         <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a agencias y consultoras</p>
         <p class="body-2">
@@ -91,7 +91,9 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     </div>
   </section>
 
-  <!-- 03 · EL ENGINE -->
+  <!-- 03 · EL ENGINE — pantalla A: encabezado + rueda (sola, sin el grid
+       de servicios apilado debajo: eso es lo que hacía de esta sección la
+       más larga del sitio, casi 2.5 pantallas) -->
   <section class="section section--engine" id="engine">
     <header class="section-head reveal">
       <p class="section-num">03</p>
@@ -99,15 +101,20 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
       <hr />
     </header>
     <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
-    <p class="lead reveal" style="margin-top:16px">
+    <p class="body-2 reveal" style="margin-top:12px; max-width:62ch">
       Tres fases que te llevan de «no sé por dónde empezar» a tener el Final Edge Engine operando
       tu negocio. Toca una fase para entrar a su hub, o un edge para ir directo al servicio.
     </p>
 
-    <div class="wheel-card" id="wheel-entry" style="margin-top:32px">
+    <div class="wheel-card" id="wheel-entry" style="margin-top:24px">
       <EngineWheel />
     </div>
+  </section>
 
+  <!-- 03 · EL ENGINE — pantalla B: los 6 servicios, en su propia pantalla
+       (continuación de 03, no una sección numerada nueva) -->
+  <section class="section section--services">
+    <p class="eyebrow reveal"><span class="prompt">&gt;_</span>los seis edges del Final Edge Engine</p>
     <div class="hairline-grid grid-3 reveal edge-grid">
       {EDGES.map((e) => {
         const phase = phaseOfEdge(e);
@@ -136,7 +143,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
       medida con talento internacional, evaluado y seleccionado por habilidad, formado con la
       metodología de nuestra firma afiliada en Singapur, Final Upgrade AI.
     </p>
-    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+    <div class="hairline-grid grid-2 reveal" style="margin-top:32px">
       <div><p class="body-2"><span class="prompt">&gt;_</span> Sin la estructura pesada de una agencia: mejor precio y mayor velocidad, sin sacrificar el nivel.</p></div>
       <div><p class="body-2"><span class="prompt">&gt;_</span> Dirigidos por negocio: la dirección la pone la experiencia del lado del cliente, no un equipo puramente técnico.</p></div>
       <div><p class="body-2"><span class="prompt">&gt;_</span> Talento seleccionado por habilidad, no por cercanía, con calidad consistente en cada reto.</p></div>
@@ -169,7 +176,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
       <hr />
     </header>
     <h2 class="h2 reveal">Trabajo real, entregado a clientes reales.</h2>
-    <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
+    <div class="hairline-grid grid-2 reveal" style="margin-top:32px">
       <div>
         <p class="eyebrow" style="margin-bottom:14px"><span class="prompt">&gt;_</span>investigación y datos</p>
         <p class="body-2">La auditoría de posicionamiento en buscadores de <strong>Sports World México</strong> y el comparativo de precios de los <strong>hoteles VLU</strong>.</p>
@@ -197,7 +204,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
       <hr />
     </header>
     <h2 class="h2 reveal">La competencia te entrega promedio. Final Edge te entrega la ventaja.</h2>
-    <p class="lead reveal" style="margin-top:24px">
+    <p class="body-2 reveal" style="margin-top:16px; max-width:62ch">
       Empieza por una reunión de valoración: en una conversación corta entenderás dónde la
       inteligencia artificial puede mover tu margen y por dónde empezar. Sin compromiso.
     </p>
@@ -209,7 +216,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
     <a
       class="btn reveal"
       href="mailto:eric@finalupgrade.ai?subject=Reuni%C3%B3n%20de%20valoraci%C3%B3n%20%E2%80%94%20Final%20Edge"
-      style="margin-top:40px"
+      style="margin-top:18px"
     >Agendar mi reunión</a>
   </section>
 
@@ -256,12 +263,12 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
 </Base>
 
 <style>
-  /* el hero recupera su peso completo: logotipo, titular grande, párrafo
-     y los dos CTA — sin forzar 100vh (la causa del corte anterior);
-     simplemente toma el espacio que su contenido necesita. */
-  .hero { padding: 152px 72px 88px; }
+  /* el hero mantiene su peso completo (logotipo, titular, párrafo, dos
+     CTA) pero SIN el hueco muerto de ~150px que dejaba entre el nav y el
+     primer texto — el contenido arranca inmediatamente bajo el nav. */
+  .hero { padding: 48px 72px 64px; }
   .hero-inner { max-width: 900px; margin: 0 auto; }
-  .hero-logo { width: min(260px, 55vw); height: auto; margin: 36px 0 28px; }
+  .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
   .hero-h1 {
     font-size: clamp(40px, 6vw, 88px);
     font-weight: 600;
@@ -281,21 +288,21 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
   /* la fila de cifras se lee como UN argumento: mismo tratamiento tipográfico,
      una línea que las presenta como facetas del mismo problema */
   .stat-lede {
-    margin-top: 48px;
+    margin-top: 32px;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: .18em;
     color: var(--fg-faint);
   }
   .stat-row {
-    margin-top: 20px;
+    margin-top: 16px;
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1px;
     background: var(--hairline);
     border: 1px solid var(--hairline);
   }
-  .stat { background: var(--bg); padding: 28px; }
+  .stat { background: var(--bg); padding: 20px; }
   .stat-num { font-size: clamp(32px, 3.6vw, 48px); font-weight: 600; letter-spacing: -.035em; color: var(--fg); white-space: nowrap; }
   .stat-unit { font-size: 0.55em; color: var(--fg-muted); }
   .stat-arrow { color: var(--accent); font-weight: 400; }
@@ -305,25 +312,33 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
   .diff-mark { width: min(520px, 100%); }
   .diff-mark img { width: 100%; height: auto; display: block; }
 
-  /* la sección Engine arranca con menos aire arriba para que el encabezado
-     y la rueda se sientan en la misma pantalla, sin reducir la rueda */
-  .section--engine { padding-top: 72px; }
+  /* la sección Engine arranca con menos aire arriba y abajo para que el
+     encabezado y la rueda se sientan en la misma pantalla */
+  .section--engine { padding-top: 40px; padding-bottom: 40px; }
+  .section--services { padding-top: 40px; }
   @media (max-width: 760px) {
-    .section--engine { padding-top: 56px; }
+    .section--engine { padding-top: 32px; padding-bottom: 32px; }
+    .section--services { padding-top: 32px; }
   }
 
-  /* tarjetas de servicio bajo la rueda — acceso directo, sin duplicar lo
-     que la rueda ya navega por fase */
-  .edge-grid { margin-top: 64px; }
-  .edge-card { display: grid; gap: 12px; align-content: start; padding: 28px; color: inherit; border-top: 2px solid var(--pc); background: var(--bg); transition: background var(--t-hover) var(--ease); }
+  /* tarjetas de servicio — pantalla propia, acceso directo, sin duplicar
+     lo que la rueda ya navega por fase */
+  .edge-grid { margin-top: 28px; }
+  .edge-card { display: grid; gap: 10px; align-content: start; padding: 20px; color: inherit; border-top: 2px solid var(--pc); background: var(--bg); transition: background var(--t-hover) var(--ease); }
+  /* en móvil, 2 columnas en vez de 1: cada tarjeta es corta (ícono +
+     lockup + 2 líneas), apilar las 6 en una sola columna era lo que
+     hacía esta pantalla casi el doble de alta de lo necesario */
+  @media (max-width: 760px) {
+    .edge-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  }
   .edge-card:hover { background: var(--panel); }
   .edge-card-icon { width: 36px; height: 36px; }
   .edge-card .lm { width: 150px; }
   .edge-card-service { margin-top: 6px; font-size: var(--text-body); font-weight: 500; color: var(--fg); }
   .edge-card-hook { font-size: 14px; color: var(--fg-muted); }
 
-  .val-steps { list-style: none; margin-top: 48px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
-  .val-steps li { background: var(--bg); padding: 22px 26px; color: var(--fg-2); display: flex; gap: 18px; font-size: var(--text-body); }
+  .val-steps { list-style: none; margin-top: 28px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
+  .val-steps li { background: var(--bg); padding: 16px 20px; color: var(--fg-2); display: flex; gap: 18px; font-size: var(--text-body); }
 
   .plate {
     background: var(--accent);
@@ -342,7 +357,7 @@ import { EDGES, phaseOfEdge } from '../data/engine.js';
   .plate-dot { color: var(--void-deep); }
 
   @media (max-width: 760px) {
-    .hero { padding: 128px 24px 56px; }
+    .hero { padding: 32px 24px 48px; }
     .plate { padding: 88px 24px; }
   }
 </style>

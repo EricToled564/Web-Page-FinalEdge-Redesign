@@ -53,6 +53,18 @@ const jsonLd = {
     <script>
       // Revelado de secciones — 600ms, curva maestra (R3.4)
       function initReveal() {
+        /* todo lo que ya es visible en la primera pantalla al cargar se
+           revela de inmediato — el rootMargin negativo de abajo es solo
+           para el efecto de scroll en contenido que AÚN no se ve; sin
+           este paso, contenido dentro del primer viewport (p. ej. los CTA
+           del hero, cuando el hero ya cabe entero en pantalla) se quedaba
+           en opacity:0 indefinidamente si el usuario nunca hacía scroll. */
+        const vh = innerHeight || document.documentElement.clientHeight;
+        document.querySelectorAll('.reveal:not(.is-in)').forEach((el) => {
+          const r = el.getBoundingClientRect();
+          if (r.top < vh && r.bottom > 0) el.classList.add('is-in');
+        });
+
         const els = document.querySelectorAll('.reveal:not(.is-in)');
         const io = new IntersectionObserver(
           (entries) => {
