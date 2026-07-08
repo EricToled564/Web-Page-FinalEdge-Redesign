@@ -56,6 +56,10 @@ const { compact = false } = Astro.props;
     width: min(880px, 100%);
     aspect-ratio: 1;
     margin: 0 auto;
+    /* contención defensiva: pase lo que pase con el cálculo de proyección
+       3D (framing de zoom en modo servicio, redondeos, etc.), una etiqueta
+       JAMÁS puede producir scroll horizontal a nivel de página. */
+    overflow: hidden;
   }
   .wheel-stage[data-compact='1'] { width: min(620px, 100%); aspect-ratio: 620 / 560; }
   .wheel-canvas { width: 100%; height: 100%; display: block; }
@@ -94,12 +98,6 @@ const { compact = false } = Astro.props;
   .wheel-stage.is-fallback .wl { position: static; transform: none; background: var(--bg); padding: 24px; }
   .wheel-stage.is-fallback .wl-hub { grid-column: 1 / -1; }
   .wheel-list { list-style: none; display: grid; gap: 10px; padding: 24px; }
-
-  /* móvil: la rueda completa mantiene 880px y el card hace scroll horizontal
-     (regla del brand book: ninguna etiqueta baja de 14px); la compacta sí se adapta */
-  @media (max-width: 760px) {
-    .wheel-stage[data-compact='1'] { max-width: 100%; height: 440px; }
-  }
 </style>
 
 <script>
