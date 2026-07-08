@@ -104,6 +104,22 @@ function checkFile(path) {
       errors.push(`${loc} · R5.1 filter CSS sobre un logo`);
     }
 
+    /* R5.5 — el logo maestro "final edge [AI]" NUNCA se reconstruye con
+       LockupMark (texto/CSS): siempre es el PNG real (logo-finaledge.png
+       o su variante mono). Bloquea el build si vuelve a pasar. */
+    if (/<LockupMark\b/.test(line) && /word\s*=\s*"final edge"/i.test(line) && /tag\s*=\s*"\[AI\]"/i.test(line)) {
+      errors.push(`${loc} · R5.5 el logo maestro "final edge [AI]" se reconstruyó con LockupMark — debe ser <img> con logo-finaledge.png (o logo-mono-*.png), nunca texto/CSS`);
+    }
+
+    /* R5.6 — el <img> del logo maestro nunca por debajo del mínimo digital
+       del brand book (160px de ancho). */
+    for (const m of line.matchAll(/<img\b[^>]*\bsrc\s*=\s*["'][^"']*\/(logo-finaledge|logo-mono-[a-z]+)\.png["'][^>]*>/gi)) {
+      const wMatch = m[0].match(/\bwidth\s*=\s*["']?(\d+)["']?/i);
+      if (wMatch && parseFloat(wMatch[1]) < 160) {
+        errors.push(`${loc} · R5.6 logo maestro con width=${wMatch[1]} < 160px (mínimo digital del brand book)`);
+      }
+    }
+
     /* R4 verbal — solo en archivos de contenido/markup, no en código puro */
     if (!isCode && !rel.startsWith('brand/')) {
       for (const re of FORBIDDEN_WORDS) {
