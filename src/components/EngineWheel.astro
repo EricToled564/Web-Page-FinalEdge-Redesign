@@ -5,6 +5,7 @@
  * Fallback sin WebGL: los mismos lockups como enlaces estáticos en retícula.
  */
 import { PHASES, EDGES } from '../data/engine.js';
+import LockupMark from './LockupMark.astro';
 const { compact = false } = Astro.props;
 ---
 <div
@@ -19,14 +20,8 @@ const { compact = false } = Astro.props;
     {EDGES.map((e) => {
       const color = PHASES.find((p) => p.id === e.phase).color;
       return (
-        <a class={`wl wl-edge wl-phase-${e.phase}`} data-anchor={`edge-${e.id}`} href={e.slug} aria-label={`${e.id} — ${e.service}`} style={`--ec:${color}`}>
-          <span class="wl-edge-row">
-            <span class="wl-edge-prompt">&gt;_</span>
-            <span class="wl-edge-col">
-              <span class="wl-edge-word">{e.id}</span>
-              <span class="wl-edge-ai">[AI]</span>
-            </span>
-          </span>
+        <a class={`wl wl-edge wl-phase-${e.phase}`} data-anchor={`edge-${e.id}`} href={e.slug} aria-label={`${e.id} — ${e.service}`}>
+          <LockupMark word={e.id} tag="[AI]" color={color} size="wheel" />
         </a>
       );
     })}
@@ -36,11 +31,7 @@ const { compact = false } = Astro.props;
       </a>
     ))}
     <div class="wl wl-hub" data-anchor="hub" aria-hidden="true">
-      <span class="wl-hub-prompt">&gt;_</span>
-      <span class="wl-hub-col">
-        <span class="wl-hub-name">final edge</span>
-        <span class="wl-hub-engine">[ENGINE]</span>
-      </span>
+      <LockupMark word="final edge" tag="[ENGINE]" size="wheel" />
     </div>
   </div>
 
@@ -74,22 +65,16 @@ const { compact = false } = Astro.props;
     transition: opacity var(--t-ui) var(--ease);
   }
 
-  /* lockup de edge — especificación exacta del brand book §07 */
-  .wl-edge-row { display: flex; align-items: baseline; gap: 6px; line-height: 1; white-space: nowrap; }
-  .wl-edge-col { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-  .wl-edge-prompt { font-weight: 700; font-size: 14px; color: var(--ec); line-height: 1; }
-  .wl-edge-word { font-weight: 600; font-size: 18px; letter-spacing: -.02em; color: var(--fg); line-height: 1; }
-  .wl-edge-ai { font-weight: 600; font-size: 14px; letter-spacing: .07em; color: var(--ec); line-height: 1; }
+  /* lockup de edge: ancho FIJO por contexto — el SVG (viewBox proporcional)
+     siempre escala dentro de ese ancho, así "intelligence" nunca desborda
+     su sector: se auto-ajusta proporcionalmente, nunca se sale. */
+  .wl-edge { width: 118px; }
+  [data-compact='1'] .wl-edge { width: 96px; }
 
   /* etiqueta de fase — 16px, tracking 2.6px, 600 */
   .wl-band { font-size: 16px; letter-spacing: 2.6px; font-weight: 600; }
 
-  /* hub — >_ 16/700 azul · final edge 23/600 · [ENGINE] 14/600 azul */
-  .wl-hub { display: flex; align-items: baseline; gap: 9px; }
-  .wl-hub-prompt { font-weight: 700; font-size: 16px; color: var(--accent); }
-  .wl-hub-col { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
-  .wl-hub-name { font-size: 23px; font-weight: 600; color: var(--fg); letter-spacing: -.02em; word-spacing: -.36ch; line-height: 1; }
-  .wl-hub-engine { font-size: 14px; font-weight: 600; letter-spacing: .16em; color: var(--accent); line-height: 1; }
+  .wl-hub { width: 148px; }
 
   /* estados: en el hub de fase solo vive la fase enfocada; en servicio, nada */
   [data-mode='service'] .wl,
@@ -105,11 +90,6 @@ const { compact = false } = Astro.props;
   .wheel-stage.is-fallback .wl { position: static; transform: none; background: var(--bg); padding: 24px; }
   .wheel-stage.is-fallback .wl-hub { grid-column: 1 / -1; }
   .wheel-list { list-style: none; display: grid; gap: 10px; padding: 24px; }
-
-  /* en modo compacto (hub/servicio) la palabra baja a 16px — tamaño canónico del
-     README §07 — para que «intelligence» no desborde su sector */
-  [data-compact='1'] .wl-edge-word { font-size: 16px; }
-  [data-compact='1'] .wl-edge-row { gap: 5px; }
 
   /* móvil: la rueda completa mantiene 880px y el card hace scroll horizontal
      (regla del brand book: ninguna etiqueta baja de 14px); la compacta sí se adapta */

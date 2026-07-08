@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
+import LockupMark from '../../components/LockupMark.astro';
 import { EDGES, phaseOfEdge } from '../../data/engine.js';
 
 export function getStaticPaths() {
@@ -27,13 +28,7 @@ const phase = phaseOfEdge(edge);
           <a href={phase.slug}>FASE {phase.num} · {phase.label}</a>
         </p>
         <h1 class="svc-title reveal">
-          <span class="lockup lockup--big" style={`--lc:${phase.color}`}>
-            <span class="prompt">&gt;_</span>
-            <span class="lockup-col">
-              <span class="lockup-name">{edge.id}</span>
-              <span class="tag-ai">[AI]</span>
-            </span>
-          </span>
+          <LockupMark word={edge.id} tag="[AI]" color={phase.color} size="lg" />
         </h1>
         <p class="svc-service reveal">{edge.service}</p>
         <p class="svc-hook reveal">{edge.hook}</p>
@@ -106,7 +101,7 @@ const phase = phaseOfEdge(edge);
   }
   .svc-crumb a { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
   .svc-crumb a:hover { color: var(--fg); }
-  .svc-title { margin-top: 20px; }
+  .svc-title { margin-top: 20px; width: min(560px, 100%); }
   .svc-service { margin-top: 18px; font-size: var(--text-subtitle); color: var(--fg); font-weight: 500; }
   .svc-hook { margin: 12px 0 16px; font-size: var(--text-manifesto); letter-spacing: -.025em; color: var(--fg-2); }
   .svc-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 36px; }

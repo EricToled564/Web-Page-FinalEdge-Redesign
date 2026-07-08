@@ -1,0 +1,99 @@
+---
+/**
+ * LockupMark — ÚNICA fuente de verdad para todo lockup de marca
+ * (>_ + palabra + [tag]) en el sitio. Brand book §03/§07.
+ *
+ * Por qué SVG y no PNG: el ancho de "word" y "tag" se calcula y se
+ * FUERZA con textLength — el layout nunca depende de flexbox anidado
+ * (fuente de los bugs de alineación anteriores) y nunca puede
+ * desbordar su contenedor, sin importar qué tan larga sea la palabra
+ * (p. ej. "intelligence" vs "strategy"). Al ser vectorial, el mismo
+ * archivo sirve nítido desde 14px (rueda) hasta el título monumental
+ * de una página de servicio — un solo componente, en todos lados.
+ *
+ * Estructura fija (idéntica en todo tamaño): línea 1 `>_ palabra`,
+ * línea 2 `[tag]` alineado a la primera letra de "palabra".
+ */
+interface Props {
+  word: string;
+  tag?: string;
+  color?: string;
+  wordColor?: string;
+  size?: 'wheel' | 'sm' | 'md' | 'lg';
+  class?: string;
+}
+
+const {
+  word,
+  tag = '[AI]',
+  color = 'var(--accent)',
+  wordColor = 'var(--fg)',
+  size = 'md',
+  class: klass = '',
+} = Astro.props as Props;
+
+const SIZES = {
+  wheel: { prompt: 14, word: 15, tag: 14, rowGap: 5, colGap: 5 },
+  sm: { prompt: 14, word: 16, tag: 14, rowGap: 6, colGap: 5 },
+  md: { prompt: 15, word: 18, tag: 14, rowGap: 7, colGap: 7 },
+  lg: { prompt: 26, word: 72, tag: 18, rowGap: 14, colGap: 14 },
+};
+const cfg = SIZES[size] ?? SIZES.md;
+const CHAR_W = 0.6; // relación de avance de Geist Mono; forzada vía textLength
+
+const promptText = '>_';
+const promptW = promptText.length * cfg.prompt * CHAR_W;
+const wordW = word.length * cfg.word * CHAR_W;
+const tagW = tag.length * cfg.tag * CHAR_W;
+
+const colX = promptW + cfg.rowGap; // arranque compartido de word y tag — [tag] SIEMPRE bajo la primera letra
+const lineH1 = cfg.word * 1.0;
+const lineH2 = cfg.tag * 1.0;
+const baseline1 = Math.round(lineH1 * 0.8);
+const baseline2 = Math.round(lineH1 + cfg.colGap + lineH2 * 0.8);
+
+const totalWidth = Math.ceil(Math.max(colX + wordW, colX + tagW) + 2);
+const totalHeight = Math.ceil(lineH1 + cfg.colGap + lineH2 + lineH2 * 0.22);
+
+const FONT = "'Geist Mono', ui-monospace, monospace";
+---
+<svg
+  class={`lockup-mark ${klass}`}
+  viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+  width={totalWidth}
+  height={totalHeight}
+  role="img"
+  aria-label={`${word} ${tag}`}
+  style="display:block;width:100%;height:auto;"
+>
+  <text
+    x="0"
+    y={baseline1}
+    font-family={FONT}
+    font-weight="700"
+    font-size={cfg.prompt}
+    fill={color}
+    textLength={promptW}
+    lengthAdjust="spacingAndGlyphs"
+  >{promptText}</text>
+  <text
+    x={colX}
+    y={baseline1}
+    font-family={FONT}
+    font-weight="600"
+    font-size={cfg.word}
+    fill={wordColor}
+    textLength={wordW}
+    lengthAdjust="spacingAndGlyphs"
+  >{word}</text>
+  <text
+    x={colX}
+    y={baseline2}
+    font-family={FONT}
+    font-weight="600"
+    font-size={cfg.tag}
+    fill={color}
+    textLength={tagW}
+    lengthAdjust="spacingAndGlyphs"
+  >{tag}</text>
+</svg>

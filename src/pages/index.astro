@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import EngineWheel from '../components/EngineWheel.astro';
+import LockupMark from '../components/LockupMark.astro';
 import { PHASES, EDGES } from '../data/engine.js';
 
 const toc = [
@@ -37,7 +38,7 @@ const toc = [
       </p>
       <div class="hero-cta reveal">
         <a class="btn" href="#valoracion">Agenda tu reunión de valoración</a>
-        <a class="btn btn--ghost" href="#engine">Conoce el Engine</a>
+        <a class="btn btn--ghost" href="#engine">Conoce el Final Edge Engine</a>
       </div>
 
       <!-- índice principal -->
@@ -65,18 +66,19 @@ const toc = [
       inteligencia artificial sin que moviera una sola cifra. El problema no fue la herramienta:
       fue que nadie la dirigió hacia tu negocio.
     </p>
-    <div class="hairline-grid grid-3 reveal" style="margin-top:56px">
+    <p class="stat-lede reveal">Tres cifras del mismo problema:</p>
+    <div class="stat-row reveal">
       <div class="stat">
-        <p class="stat-num">30%</p>
-        <p class="stat-txt">de encarecimiento de la nómina con la reforma de 40 horas</p>
+        <p class="stat-num">+30<span class="stat-unit">%</span></p>
+        <p class="stat-txt">de encarecimiento de nómina con la reforma de 40 horas</p>
       </div>
       <div class="stat">
-        <p class="stat-num">38% <span class="stat-vs">vs</span> 3%</p>
-        <p class="stat-txt">de las empresas usa IA; solo una fracción obtiene resultados reales</p>
+        <p class="stat-num">38<span class="stat-unit">%</span> <span class="stat-arrow">→</span> 3<span class="stat-unit">%</span></p>
+        <p class="stat-txt">usa inteligencia artificial hoy; a esa fracción es a la que le funciona</p>
       </div>
       <div class="stat">
-        <p class="stat-num">+20%</p>
-        <p class="stat-txt">crece cada año el mercado de IA en México</p>
+        <p class="stat-num">+20<span class="stat-unit">%</span></p>
+        <p class="stat-txt">crece cada año el mercado de IA en México — sin que la mayoría lo capture</p>
       </div>
     </div>
   </section>
@@ -88,7 +90,10 @@ const toc = [
       <p class="eyebrow"><span class="prompt">&gt;_</span>la diferencia · 02 / 07</p>
       <hr />
     </header>
-    <h2 class="h2 reveal">Más IA que las agencias. Más criterio que los técnicos.</h2>
+    <p class="diff-lede reveal">Por qué elegir</p>
+    <div class="diff-mark reveal">
+      <LockupMark word="Final Edge" tag="[AI]" size="lg" />
+    </div>
     <div class="hairline-grid grid-2 reveal" style="margin-top:56px">
       <div>
         <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a agencias y consultoras</p>
@@ -115,12 +120,12 @@ const toc = [
       <hr />
     </header>
     <h2 class="h2 reveal">Un sistema, no una lista de servicios.</h2>
-    <p class="lead reveal" style="margin-top:24px">
-      Tres fases que te llevan de «no sé por dónde empezar» a tener la IA funcionando como el motor
-      de tu negocio. Toca una fase para entrar a su hub, o un edge para ir directo al servicio.
+    <p class="lead reveal" style="margin-top:16px">
+      Tres fases que te llevan de «no sé por dónde empezar» a tener el Final Edge Engine operando
+      tu negocio. Toca una fase para entrar a su hub, o un edge para ir directo al servicio.
     </p>
 
-    <div class="wheel-card" id="wheel-entry" style="margin-top:64px">
+    <div class="wheel-card" id="wheel-entry" style="margin-top:32px">
       <EngineWheel />
     </div>
 
@@ -132,9 +137,8 @@ const toc = [
           <p class="phase-tagline">{p.tagline}</p>
           <p class="phase-edges">
             {EDGES.filter((e) => e.phase === p.id).map((e) => (
-              <span class="lockup lockup--sm" style={`--lc:${p.color}`}>
-                <span class="prompt">&gt;_</span>
-                <span class="lockup-col"><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+              <span class="phase-edge-chip">
+                <LockupMark word={e.id} tag="[AI]" color={p.color} size="sm" />
               </span>
             ))}
           </p>
@@ -253,14 +257,14 @@ const toc = [
         const vh = innerHeight || 800;
         if (hero) {
           const p = Math.min(1, scrollY / (vh * 0.9));
-          hero.style.transform = `translateY(${scrollY * 0.22}px) scale(${1 - p * 0.06})`;
-          hero.style.opacity = String(1 - p * 0.92);
+          hero.style.transform = `translateY(${scrollY * 0.18}px) scale(${1 - p * 0.04})`;
+          hero.style.opacity = String(1 - p * 0.55);
         }
         if (card) {
           const r = card.getBoundingClientRect();
-          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.72)));
-          card.style.transform = `translateY(${(1 - p) * 72}px) scale(${0.9 + p * 0.1})`;
-          card.style.opacity = String(0.12 + p * 0.88);
+          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.6)));
+          card.style.transform = `translateY(${(1 - p) * 48}px) scale(${0.94 + p * 0.06})`;
+          card.style.opacity = String(0.35 + p * 0.65);
         }
       }
       addEventListener('scroll', () => {
@@ -320,10 +324,39 @@ const toc = [
   }
   .hero-toc a:hover { color: var(--fg); background: var(--panel); }
 
-  .stat-num { font-size: clamp(36px, 4.2vw, 56px); font-weight: 600; letter-spacing: -.035em; color: var(--fg); }
-  .stat-vs { font-size: 16px; color: var(--fg-faint); }
+  /* la fila de cifras se lee como UN argumento: mismo tratamiento tipográfico,
+     una línea que las presenta como facetas del mismo problema, sin elementos
+     sueltos (nada de un "vs" aislado con su propio tamaño) */
+  .stat-lede {
+    margin-top: 48px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--fg-faint);
+  }
+  .stat-row {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+  }
+  .stat { background: var(--bg); padding: 28px; }
+  .stat-num { font-size: clamp(32px, 3.6vw, 48px); font-weight: 600; letter-spacing: -.035em; color: var(--fg); white-space: nowrap; }
+  .stat-unit { font-size: 0.55em; color: var(--fg-muted); }
+  .stat-arrow { color: var(--accent); font-weight: 400; }
   .stat-txt { margin-top: 12px; font-size: 14px; color: var(--fg-muted); }
   .body-2 { color: var(--fg-2); font-size: var(--text-body); }
+
+  .diff-lede {
+    margin-top: 40px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .18em;
+    color: var(--fg-faint);
+  }
+  .diff-mark { margin-top: 16px; width: min(520px, 100%); }
 
   .phase-card { display: grid; gap: 12px; align-content: start; color: inherit; }
   .phase-card:hover .phase-name { color: var(--pc); }
@@ -331,6 +364,14 @@ const toc = [
   .phase-name { font-size: clamp(23px, 2.9vw, 38px); font-weight: 500; letter-spacing: -.025em; color: var(--fg); transition: color var(--t-hover) var(--ease); }
   .phase-tagline { font-size: 14px; color: var(--fg-muted); }
   .phase-edges { display: grid; gap: 6px; margin-top: 8px; }
+  .phase-edge-chip { display: block; width: 108px; }
+
+  /* la sección Engine arranca con menos aire arriba para que el encabezado
+     y la rueda se sientan en la misma pantalla, sin reducir la rueda */
+  .section--engine { padding-top: 72px; }
+  @media (max-width: 760px) {
+    .section--engine { padding-top: 56px; }
+  }
 
   .val-steps { list-style: none; margin-top: 48px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
   .val-steps li { background: var(--bg); padding: 22px 26px; color: var(--fg-2); display: flex; gap: 18px; font-size: var(--text-body); }

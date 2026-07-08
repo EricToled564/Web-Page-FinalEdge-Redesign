@@ -1,24 +1,25 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
+import LockupMark from '../../components/LockupMark.astro';
 import { PHASES, EDGES } from '../../data/engine.js';
 ---
 <Base
   title="El Final Edge Engine — consultoría de inteligencia artificial en México"
-  description="Un sistema de tres fases —Evaluación, Capacidades y Ejecución— que lleva la IA de «no sé por dónde empezar» al motor de tu negocio."
+  description="Un sistema de tres fases —Evaluación, Capacidades y Ejecución— que lleva la IA de «no sé por dónde empezar» a operar tu negocio, sin contratar más."
 >
   <section class="section" style="padding-top:150px">
     <header class="section-head reveal">
       <p class="section-num">ENGINE™</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>el final edge engine</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>el Final Edge Engine</p>
       <hr />
     </header>
     <h1 class="h2 reveal">Un sistema de tres fases. No una lista de servicios.</h1>
     <p class="lead reveal" style="margin-top:24px">
-      Cada fase construye sobre la anterior y te lleva de no saber por dónde empezar a tener la
-      inteligencia artificial funcionando como el motor de tu negocio, sin contratar más.
+      Cada fase construye sobre la anterior y te lleva de no saber por dónde empezar a tener el
+      Final Edge Engine operando tu negocio, sin contratar más.
     </p>
-    <div class="reveal wheel-card" style="margin-top:64px">
+    <div class="reveal wheel-card" style="margin-top:40px">
       <EngineWheel />
     </div>
     <div class="hairline-grid grid-3 reveal" style="margin-top:64px">
@@ -29,9 +30,8 @@ import { PHASES, EDGES } from '../../data/engine.js';
           <p class="phase-tagline">{p.tagline}</p>
           <p class="phase-edges">
             {EDGES.filter((e) => e.phase === p.id).map((e) => (
-              <span class="lockup lockup--sm" style={`--lc:${p.color}`}>
-                <span class="prompt">&gt;_</span>
-                <span class="lockup-col"><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+              <span class="phase-edge-chip">
+                <LockupMark word={e.id} tag="[AI]" color={p.color} size="sm" />
               </span>
             ))}
           </p>
@@ -49,4 +49,5 @@ import { PHASES, EDGES } from '../../data/engine.js';
   .phase-name { font-size: clamp(23px, 2.9vw, 38px); font-weight: 500; letter-spacing: -.025em; color: var(--fg); transition: color var(--t-hover) var(--ease); }
   .phase-tagline { font-size: 14px; color: var(--fg-muted); }
   .phase-edges { display: grid; gap: 6px; margin-top: 8px; }
+  .phase-edge-chip { display: block; width: 108px; }
 </style>

@@ -129,7 +129,7 @@ export const EDGES = [
     uses: [
       ['Diagnóstico de Team Readiness', 'Evaluación agregada por colaboradores, directores de área y alta dirección, con gap analysis y roadmap accionable.'],
       ['Executive Training & Public Speaking', 'Programas ejecutivos por perfil de liderazgo, área funcional e industria — 3 tracks, más de 8 áreas, 14 industrias — más conferencias y keynotes.'],
-      ['4 niveles de preparación', 'Fundación · Emergente · Competente · IA como motor de ventaja competitiva.'],
+      ['4 niveles de preparación', 'Fundación · Emergente · Competente · IA como palanca de ventaja competitiva.'],
       ['6 dimensiones medidas', 'Conocimiento técnico · Mentalidad y cultura · Contexto externo · Integración de procesos · Colaboración entre áreas · Impacto medible.'],
     ],
     proof: [

@@ -15,8 +15,8 @@ import { PHASES, EDGES } from '../data/engine.js';
 
 const D2R = Math.PI / 180;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const DEPTH = 30;      // extrusión de sectores
-const BAND_DEPTH = 18; // extrusión de la banda
+const DEPTH = 58;      // extrusión de sectores — volumen 3D deliberadamente visible
+const BAND_DEPTH = 34; // extrusión de la banda
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -129,6 +129,7 @@ class EngineWheel {
     this.visible = true;
     this.stateRot = 0;
     this.tilt = 0;
+    this.yaw = 0;
     this.build();
     this.bind();
     this.state = routeState();
@@ -143,8 +144,8 @@ class EngineWheel {
     this.renderer = renderer;
 
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(38, 1, 10, 4000);
-    this.camera.position.set(0, 0, 1120);
+    this.camera = new THREE.PerspectiveCamera(34, 1, 10, 4000);
+    this.camera.position.set(0, 90, 980);
     this.camera.lookAt(0, 0, 0);
 
     this.rig = new THREE.Group();
@@ -280,7 +281,7 @@ class EngineWheel {
   }
 
   targetsFor(state) {
-    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.30, items: new Map() };
+    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.46, yaw: 0.17, items: new Map() };
     const set = (g, v) => t.items.set(g, v);
 
     if (state.mode === 'full') {
@@ -294,7 +295,8 @@ class EngineWheel {
       t.spin = Math.PI * 2;
       t.scale = 1.1;
       t.offY = -150;
-      t.tilt = -0.18;
+      t.tilt = -0.30;
+      t.yaw = 0.12;
       for (const e of EDGES) {
         const mine = e.phase === pid;
         set(this.parts.sectors[e.id], mine
@@ -314,7 +316,8 @@ class EngineWheel {
       t.spin = Math.PI * 2;
       t.scale = 1.16;
       t.offY = -130;
-      t.tilt = -0.2;
+      t.tilt = -0.32;
+      t.yaw = 0.1;
       for (const e of EDGES) {
         const sel = e.id === edge.id;
         set(this.parts.sectors[e.id], sel
@@ -334,6 +337,7 @@ class EngineWheel {
     this.root.dataset.focus = state.mode === 'phase' ? state.phase.id : state.mode === 'service' ? state.edge.id : '';
     const t = this.targetsFor(state);
     this.tilt = t.tilt;
+    this.yaw = t.yaw;
 
     const jobs = [];
     for (const [g, v] of t.items) {
@@ -468,7 +472,7 @@ class EngineWheel {
       const px = this.parallax?.x ?? 0;
       const py = this.parallax?.y ?? 0;
       this.wheel.rotation.x += ((this.tilt + px) - this.wheel.rotation.x) * 0.06;
-      this.wheel.rotation.y += (py - this.wheel.rotation.y) * 0.06;
+      this.wheel.rotation.y += ((this.yaw + py) - this.wheel.rotation.y) * 0.06;
       if (!this.tweens.length) {
         const target = this.stateRot + this.scrollRot();
         this.wheel.rotation.z += (target - this.wheel.rotation.z) * 0.08;

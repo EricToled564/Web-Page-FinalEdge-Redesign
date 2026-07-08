@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
+import LockupMark from '../../components/LockupMark.astro';
 import { PHASES, EDGES } from '../../data/engine.js';
 
 export function getStaticPaths() {
@@ -30,10 +31,7 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
             <a class="hub-item" href={e.slug}>
               <img src={e.icon} alt="" width="44" height="44" loading="lazy" />
               <span class="hub-item-txt">
-                <span class="lockup" style={`--lc:${phase.color}`}>
-                  <span class="prompt">&gt;_</span>
-                  <span class="lockup-col"><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
-                </span>
+                <span class="hub-item-mark"><LockupMark word={e.id} tag="[AI]" color={phase.color} size="md" /></span>
                 <span class="hub-item-service">{e.service}</span>
                 <span class="hub-item-hook">{e.hook}</span>
               </span>
@@ -79,6 +77,7 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
   .hub-item:hover { background: var(--panel); }
   .hub-item img { width: 44px; height: 44px; }
   .hub-item-txt { display: grid; gap: 4px; }
+  .hub-item-mark { display: block; width: 128px; }
   .hub-item-service { color: var(--fg); font-size: var(--text-body); font-weight: 500; }
   .hub-item-hook { color: var(--fg-muted); font-size: 14px; }
   .hub-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
