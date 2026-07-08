@@ -4,8 +4,22 @@ import EngineWheel from '../components/EngineWheel.astro';
 import LockupMark from '../components/LockupMark.astro';
 ---
 <Base>
-  <!-- 00 · HERO -->
+  <!-- 00 · HERO — video de fondo (fotograma clave: filamento del foco en
+       forma de cerebro, se enciende en azul acento — misma paleta que
+       la marca) con velo oscuro para garantizar contraste con el texto,
+       texto centrado en toda la pantalla. -->
   <section class="hero" id="inicio">
+    <video
+      class="hero-video"
+      src="/assets/video/hero-bg.mp4"
+      poster="/assets/video/hero-bg-poster.jpg"
+      autoplay
+      muted
+      loop
+      playsinline
+      aria-hidden="true"
+    ></video>
+    <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-inner">
       <p class="eyebrow reveal">
         <span class="prompt">&gt;_</span>inicializando ventaja<span class="cursor">▌</span>
@@ -17,13 +31,14 @@ import LockupMark from '../components/LockupMark.astro';
         width="300"
       />
       <h1 class="hero-h1 reveal">
-        La IA ejecuta.<br />La experiencia <span class="prompt">decide.</span>
+        30 años de experiencia dirigen.<br />Nuestros flujos de trabajo propietarios de IA ejecutan.
       </h1>
       <p class="hero-sub reveal">Haz más. Sin contratar más.</p>
-      <p class="lead reveal">Dirigida por más de 30 años de experiencia de negocio del lado del cliente.</p>
       <div class="hero-cta reveal">
-        <a class="btn" href="#valoracion">Agenda tu reunión de valoración</a>
-        <a class="btn btn--ghost" href="#engine">Descubre el sistema completo</a>
+        <a class="btn" href="#valoracion">Exploremos tus necesidades</a>
+        <a class="btn btn--ghost btn--lockup" href="#engine">
+          Conoce el<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+        </a>
       </div>
     </div>
   </section>
@@ -239,14 +254,45 @@ import LockupMark from '../components/LockupMark.astro';
   /* el hero mantiene su peso completo (logotipo, titular, párrafo, dos
      CTA) pero SIN el hueco muerto de ~150px que dejaba entre el nav y el
      primer texto — el contenido arranca inmediatamente bajo el nav. */
-  .hero { padding: 48px 72px 64px; }
-  .hero-inner { max-width: 900px; margin: 0 auto; }
+  /* fondo de video: cubre el hero entero, recortado sin distorsión
+     (object-fit:cover) y siempre detrás del velo + el texto. */
+  .hero {
+    position: relative;
+    padding: 48px 72px 64px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: calc(100vh - 92px);
+  }
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+  /* velo oscuro UNIFORME: garantiza contraste de texto (>=4.5:1) sin
+     importar el fotograma del video (pasa de campo claro al atardecer a
+     foco encendido en azul) — el texto está centrado en TODA la
+     pantalla, así que el oscurecimiento tiene que ser parejo, no solo
+     detrás de un bloque de texto en una esquina. Un poco del video se
+     alcanza a ver (atmósfera), pero nunca compite con el texto. */
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+  }
+  .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
   .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
   .hero-h1 {
-    font-size: clamp(40px, 6vw, 88px);
+    font-size: clamp(34px, 4.6vw, 64px);
     font-weight: 600;
-    letter-spacing: -.05em;
-    line-height: .96;
+    letter-spacing: -.03em;
+    line-height: 1.08;
     color: var(--fg);
   }
   .hero-sub {
@@ -255,8 +301,14 @@ import LockupMark from '../components/LockupMark.astro';
     letter-spacing: -.025em;
     color: var(--fg-2);
   }
-  .hero .lead { margin-top: 20px; max-width: 62ch; }
-  .hero-cta { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
+  .hero-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 40px; }
+
+  /* botón con el lockup ENGINE incrustado en vez del nombre escrito
+     como texto plano (R5.8) — se resetea el uppercase/tracking del
+     .btn para que el lockup se vea igual que en cualquier otro lugar
+     del sitio, nunca distorsionado por el estilo del botón. */
+  .btn--lockup { display: inline-flex; align-items: center; gap: 10px; }
+  .btn--lockup .lm { text-transform: none; letter-spacing: normal; transform: scale(.82); transform-origin: left center; }
 
   /* la fila de cifras se lee como UN argumento: mismo tratamiento tipográfico,
      una línea que las presenta como facetas del mismo problema */
