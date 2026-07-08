@@ -34,37 +34,30 @@ import LockupMark from '../components/LockupMark.astro';
         30 años de experiencia dirigen.<br />Nuestros flujos de trabajo propietarios de IA ejecutan.
       </h1>
       <p class="hero-sub reveal">Haz más. Sin contratar más.</p>
-      <div class="hero-cta reveal">
-        <a class="btn" href="#valoracion">Exploremos tus necesidades</a>
-        <a class="btn btn--ghost btn--lockup" href="#engine">
-          Conoce el<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
-        </a>
-      </div>
     </div>
   </section>
 
-  <!-- 01 · LA PRESIÓN -->
-  <section class="section" id="presion">
-    <header class="section-head reveal">
-      <p class="section-num">01</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>la presión · 01 / 07</p>
-      <hr />
-    </header>
-    <h2 class="h2 reveal">Tus costos suben por ley. Tu productividad, no.</h2>
-    <p class="lead reveal" style="margin-top:16px">La IA sin dirección no mueve el margen.</p>
-    <p class="stat-lede reveal">Tres cifras del mismo problema:</p>
-    <div class="stat-row reveal">
-      <div class="stat">
-        <p class="stat-num">+30<span class="stat-unit">%</span></p>
-        <p class="stat-txt">de encarecimiento de nómina con la reforma de 40 horas</p>
-      </div>
-      <div class="stat">
-        <p class="stat-num">38<span class="stat-unit">%</span> <span class="stat-arrow">→</span> 3<span class="stat-unit">%</span></p>
-        <p class="stat-txt">usa inteligencia artificial hoy; a esa fracción es a la que le funciona</p>
-      </div>
-      <div class="stat">
-        <p class="stat-num">+20<span class="stat-unit">%</span></p>
-        <p class="stat-txt">crece cada año el mercado de IA en México — sin que la mayoría lo capture</p>
+  <!-- 01 · LA PRESIÓN — franja Edge Blue full-bleed, mismo tratamiento
+       que la placa final ("Tu ventaja final"): sin número de sección,
+       solo el heading y las tres cifras. El >_ hereda el font-size del
+       heading (mismo elemento), así queda exactamente a la altura de
+       la "L" de "La", nunca más chico. -->
+  <section class="presion-band" id="presion">
+    <div class="presion-inner">
+      <p class="presion-h2 reveal"><span class="presion-prompt">&gt;_</span> La Presión</p>
+      <div class="presion-facts reveal">
+        <div class="presion-fact">
+          <p class="presion-fact-num">48<span class="presion-fact-arrow">→</span>40</p>
+          <p class="presion-fact-txt">horas de jornada laboral semanal hacia 2030</p>
+        </div>
+        <div class="presion-fact">
+          <p class="presion-fact-num">+26.6<span class="presion-fact-unit">%</span></p>
+          <p class="presion-fact-txt">acumulado en el salario mínimo en los últimos dos años</p>
+        </div>
+        <div class="presion-fact">
+          <p class="presion-fact-num">+52<span class="presion-fact-unit">%</span></p>
+          <p class="presion-fact-txt">impacto acumulado en el costo laboral</p>
+        </div>
       </div>
     </div>
   </section>
@@ -273,18 +266,19 @@ import LockupMark from '../components/LockupMark.astro';
     height: 100%;
     object-fit: cover;
     z-index: 0;
+    filter: saturate(1.5) brightness(1.08);
   }
-  /* velo oscuro UNIFORME: garantiza contraste de texto (>=4.5:1) sin
-     importar el fotograma del video (pasa de campo claro al atardecer a
-     foco encendido en azul) — el texto está centrado en TODA la
-     pantalla, así que el oscurecimiento tiene que ser parejo, no solo
-     detrás de un bloque de texto en una esquina. Un poco del video se
-     alcanza a ver (atmósfera), pero nunca compite con el texto. */
+  /* velo oscuro UNIFORME: garantiza contraste de texto sin importar el
+     fotograma del video (pasa de campo claro al atardecer a foco
+     encendido en azul) — el texto está centrado en TODA la pantalla,
+     así que el oscurecimiento tiene que ser parejo, no solo detrás de
+     un bloque de texto en una esquina. Opacidad reducida a la mitad
+     (82% → 41%) para que el foco se vea más brillante. */
   .hero-scrim {
     position: absolute;
     inset: 0;
     z-index: 1;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    background: color-mix(in srgb, var(--bg) 41%, transparent);
   }
   .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
   .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
@@ -299,39 +293,35 @@ import LockupMark from '../components/LockupMark.astro';
     margin-top: 24px;
     font-size: clamp(14px, 1.45vw, 19px);
     letter-spacing: -.025em;
-    color: var(--fg-2);
+    color: var(--accent);
   }
-  .hero-cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 40px; }
-
-  /* botón con el lockup ENGINE incrustado en vez del nombre escrito
-     como texto plano (R5.8) — se resetea el uppercase/tracking del
-     .btn para que el lockup se vea igual que en cualquier otro lugar
-     del sitio, nunca distorsionado por el estilo del botón. */
-  .btn--lockup { display: inline-flex; align-items: center; gap: 10px; }
-  .btn--lockup .lm { text-transform: none; letter-spacing: normal; transform: scale(.82); transform-origin: left center; }
-
-  /* la fila de cifras se lee como UN argumento: mismo tratamiento tipográfico,
-     una línea que las presenta como facetas del mismo problema */
-  .stat-lede {
-    margin-top: 32px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: .18em;
-    color: var(--fg-faint);
+  /* franja "la presión" — mismo tratamiento full-bleed que .plate (placa
+     final): fondo Edge Blue sólido, contenido acotado y centrado, texto
+     en --on-accent (blanco) porque azul sobre azul no se leería. */
+  .presion-band { background: var(--accent); padding: 96px 72px; overflow: hidden; }
+  .presion-inner { max-width: 1180px; margin: 0 auto; }
+  .presion-h2 {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    font-size: clamp(28px, 3.6vw, 48px);
+    letter-spacing: -.02em;
+    color: var(--on-accent);
   }
-  .stat-row {
-    margin-top: 16px;
+  /* el >_ NO tiene font-size propio: hereda el de .presion-h2, así queda
+     exactamente a la altura de la "L" de "La" — nunca más chico. */
+  .presion-facts {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 1px;
-    background: var(--hairline);
-    border: 1px solid var(--hairline);
+    gap: 40px;
+    margin-top: 56px;
   }
-  .stat { background: var(--bg); padding: 20px; }
-  .stat-num { font-size: clamp(32px, 3.6vw, 48px); font-weight: 600; letter-spacing: -.035em; color: var(--fg); white-space: nowrap; }
-  .stat-unit { font-size: 0.55em; color: var(--fg-muted); }
-  .stat-arrow { color: var(--accent); font-weight: 400; }
-  .stat-txt { margin-top: 12px; font-size: 14px; color: var(--fg-muted); }
+  .presion-fact-num { font-size: clamp(28px, 3.2vw, 44px); font-weight: 600; letter-spacing: -.03em; color: var(--on-accent); white-space: nowrap; }
+  .presion-fact-unit { font-size: 0.55em; }
+  .presion-fact-arrow { display: inline-block; margin: 0 .2em; font-weight: 400; font-size: .7em; }
+  .presion-fact-txt { margin-top: 12px; font-size: var(--text-body); line-height: 1.5; color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
   .body-2 { color: var(--fg-2); font-size: var(--text-body); }
 
   .diff-mark { width: min(520px, 100%); }
@@ -415,5 +405,7 @@ import LockupMark from '../components/LockupMark.astro';
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
     .plate { padding: 88px 24px; }
+    .presion-band { padding: 64px 24px; }
+    .presion-facts { grid-template-columns: 1fr; gap: 32px; margin-top: 40px; }
   }
 </style>

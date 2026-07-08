@@ -1,4 +1,5 @@
 ---
+import LockupMark from './LockupMark.astro';
 ---
 <header class="nav" id="site-nav" transition:persist>
   <a class="nav-brand" href="/" aria-label="Final Edge — inicio">
@@ -8,7 +9,13 @@
     <span class="nav-lang" title="English — disponible próximamente">
       <span class="nav-lang-on">ES</span> / <span class="nav-lang-off">EN</span>
     </span>
-    <a class="btn nav-cta" href="/#valoracion">Valoración</a>
+    <a class="btn nav-cta" href="/#valoracion">
+      <span class="nav-cta-full">Exploremos tus necesidades</span>
+      <span class="nav-cta-short">Valoración</span>
+    </a>
+    <a class="btn btn--ghost nav-cta nav-cta--lockup" href="/#engine">
+      Conoce el<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+    </a>
   </div>
 </header>
 
@@ -34,22 +41,45 @@
      mínimo digital del brand book: ≥160px de ancho, nunca menor */
   .nav-brand { width: 180px; flex: none; display: block; }
   .nav-brand img { width: 100%; height: auto; display: block; }
-  .nav-side { display: flex; align-items: center; gap: 20px; }
+  .nav-side { display: flex; align-items: center; gap: 12px; }
   .nav-lang { font-size: var(--text-label); letter-spacing: .14em; color: var(--fg-faint); }
   .nav-lang-on { color: var(--fg); }
-  .nav-cta { padding: 10px 18px; }
+  .nav-cta { padding: 10px 18px; white-space: nowrap; }
+  .nav-cta-short { display: none; }
+  /* resetea el uppercase/tracking del .btn (R5.8) para que el lockup se
+     vea igual que en cualquier otro lugar del sitio, nunca distorsionado
+     por el estilo del botón. */
+  .nav-cta--lockup { display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
+  .nav-cta--lockup .lm { transform: none; }
+  .nav-cta--lockup .lm-wheel .lm-prompt,
+  .nav-cta--lockup .lm-wheel .lm-word { font-size: 14px; }
+  .nav-cta--lockup .lm-wheel .lm-tag { font-size: 14px; }
+  @media (max-width: 1100px) {
+    .nav { padding: 0 24px; }
+    .nav-cta { padding: 8px 14px; }
+  }
+  /* en teléfonos y tablets angostos, el logo (180px fijo) + el toggle
+     ES/EN + los dos botones ya no caben en una sola fila y producían
+     scroll horizontal en TODO el sitio (el nav es sticky global) — se
+     va soltando lo menos crítico primero: el toggle de idioma (inglés
+     aún no disponible) y luego el botón secundario del Engine, así
+     siempre queda al menos la llamada a la valoración, siempre visible. */
   @media (max-width: 900px) {
     .nav { padding: 0 16px; }
+    .nav-lang { display: none; }
+    .nav-cta--lockup { display: none; }
   }
-  /* en teléfonos angostos, el logo (180px fijo) + el toggle ES/EN + el
-     botón de valoración no caben en una sola fila y producían scroll
-     horizontal en TODO el sitio (el nav es sticky global) — el inglés
-     todavía no está disponible, así que el toggle se oculta aquí en vez
-     de forzar el layout. */
+  /* "Exploremos tus necesidades" no cabe en una fila junto al logo y el
+     padding del nav en pantallas angostas — se reemplaza por el label
+     corto en vez de encogerse más (el font-size ya está en el piso duro
+     de 14px, R2.1). */
+  @media (max-width: 560px) {
+    .nav-cta-full { display: none; }
+    .nav-cta-short { display: inline; }
+  }
   @media (max-width: 480px) {
     .nav { padding: 0 16px; gap: 10px; }
     .nav-brand { width: 128px; }
-    .nav-lang { display: none; }
     .nav-cta { padding: 8px 12px; letter-spacing: .04em; }
   }
 </style>
