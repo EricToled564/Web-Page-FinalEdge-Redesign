@@ -23,7 +23,7 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
       </div>
       <div class="hub-copy">
         <p class="hub-tag reveal">FASE {phase.num} / 03</p>
-        <h1 class="hub-name reveal">{phase.name}</h1>
+        <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}</h1>
         <p class="hub-tagline reveal">{phase.tagline}</p>
         <p class="lead reveal">{phase.lead}</p>
         <nav class="hub-menu reveal" aria-label={`Servicios de ${phase.name}`}>
@@ -31,7 +31,7 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
             <a class="hub-item" href={e.slug}>
               <img src={e.icon} alt="" width="44" height="44" loading="lazy" />
               <span class="hub-item-txt">
-                <span class="hub-item-mark"><LockupMark word={e.id} tag="[AI]" color={phase.color} size="md" /></span>
+                <span class="hub-item-mark"><LockupMark word={e.id} tag="[AI]" color={phase.color} variant="section" transition:name={`edge-${e.id}`} /></span>
                 <span class="hub-item-service">{e.service}</span>
                 <span class="hub-item-hook">{e.hook}</span>
               </span>

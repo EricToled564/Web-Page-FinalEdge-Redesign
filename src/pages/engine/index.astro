@@ -1,8 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
-import LockupMark from '../../components/LockupMark.astro';
-import { PHASES, EDGES } from '../../data/engine.js';
 ---
 <Base
   title="El Final Edge Engine — consultoría de inteligencia artificial en México"
@@ -22,32 +20,6 @@ import { PHASES, EDGES } from '../../data/engine.js';
     <div class="reveal wheel-card" style="margin-top:40px">
       <EngineWheel />
     </div>
-    <div class="hairline-grid grid-3 reveal" style="margin-top:64px">
-      {PHASES.map((p) => (
-        <a class="phase-card" href={p.slug} style={`--pc:${p.color}`}>
-          <p class="phase-tag">FASE {p.num}</p>
-          <p class="phase-name">{p.name}</p>
-          <p class="phase-tagline">{p.tagline}</p>
-          <p class="phase-edges">
-            {EDGES.filter((e) => e.phase === p.id).map((e) => (
-              <span class="phase-edge-chip">
-                <LockupMark word={e.id} tag="[AI]" color={p.color} size="sm" />
-              </span>
-            ))}
-          </p>
-        </a>
-      ))}
-    </div>
-    <a class="btn reveal" href="/#valoracion" style="margin-top:64px">Agenda tu reunión de valoración</a>
+    <a class="btn reveal" href="/#valoracion" style="margin-top:48px">Agenda tu reunión de valoración</a>
   </section>
 </Base>
-
-<style>
-  .phase-card { display: grid; gap: 12px; align-content: start; color: inherit; }
-  .phase-card:hover .phase-name { color: var(--pc); }
-  .phase-tag { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
-  .phase-name { font-size: clamp(23px, 2.9vw, 38px); font-weight: 500; letter-spacing: -.025em; color: var(--fg); transition: color var(--t-hover) var(--ease); }
-  .phase-tagline { font-size: 14px; color: var(--fg-muted); }
-  .phase-edges { display: grid; gap: 6px; margin-top: 8px; }
-  .phase-edge-chip { display: block; width: 108px; }
-</style>

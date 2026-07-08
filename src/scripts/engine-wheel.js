@@ -60,9 +60,15 @@ function donutShape(ri, ro, a0deg, a1deg) {
  * Materiales: [caras (vertexColors o sólido), pared lateral oscura].
  */
 function volumeMesh(shape, depth, { grad, solid }) {
+  /* bisel sutil: hace que cada pieza lea como un objeto 3D real (capta
+     una arista de luz), no solo una extrusión recta con paredes planas —
+     geometría pura, no toca ningún color exacto del brand book. */
   const geo = new THREE.ExtrudeGeometry(shape, {
     depth,
-    bevelEnabled: false,
+    bevelEnabled: true,
+    bevelThickness: 3,
+    bevelSize: 2.4,
+    bevelSegments: 3,
     curveSegments: 48,
   });
   geo.translate(0, 0, -depth / 2);
@@ -244,11 +250,17 @@ class EngineWheel {
 
   bind() {
     addEventListener('resize', () => this.resize(), { passive: true });
+    /* el ancho disponible también cambia por layout (p. ej. la columna de
+       texto junto a la rueda), no solo por el viewport — ResizeObserver
+       cubre ambos casos y garantiza que nunca haga falta scroll lateral */
+    if ('ResizeObserver' in window) {
+      new ResizeObserver(() => this.resize()).observe(this.root);
+    }
 
     this.canvas.addEventListener('pointermove', (ev) => {
       const r = this.canvas.getBoundingClientRect();
       this.pointer.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
-      this.parallax = { x: this.pointer.y * 0.09, y: this.pointer.x * 0.14 };
+      this.parallax = { x: this.pointer.y * 0.16, y: this.pointer.x * 0.22 };
     });
 
     this.canvas.addEventListener('click', () => {
@@ -281,7 +293,11 @@ class EngineWheel {
   }
 
   targetsFor(state) {
-    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.46, yaw: 0.17, items: new Map() };
+    /* Reposo = de frente al observador (como la referencia plana del brand
+       book); el volumen 3D se lee por la extrusión y la luz, no por el
+       ángulo. El tilt pronunciado es una REACCIÓN — al pasar el mouse
+       (parallax) o durante el giro de una elección — nunca la posición fija. */
+    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.09, yaw: 0.04, items: new Map() };
     const set = (g, v) => t.items.set(g, v);
 
     if (state.mode === 'full') {
@@ -295,8 +311,8 @@ class EngineWheel {
       t.spin = Math.PI * 2;
       t.scale = 1.1;
       t.offY = -150;
-      t.tilt = -0.30;
-      t.yaw = 0.12;
+      t.tilt = -0.09;
+      t.yaw = 0.04;
       for (const e of EDGES) {
         const mine = e.phase === pid;
         set(this.parts.sectors[e.id], mine
@@ -316,8 +332,8 @@ class EngineWheel {
       t.spin = Math.PI * 2;
       t.scale = 1.16;
       t.offY = -130;
-      t.tilt = -0.32;
-      t.yaw = 0.1;
+      t.tilt = -0.09;
+      t.yaw = 0.04;
       for (const e of EDGES) {
         const sel = e.id === edge.id;
         set(this.parts.sectors[e.id], sel
@@ -411,22 +427,33 @@ class EngineWheel {
   }
 
   resize() {
+    /* La rueda SIEMPRE cabe entera, nunca requiere scroll horizontal:
+       el canvas se ajusta al ancho REAL disponible (min(referencia,
+       contenedor)), nunca fuerza el tamaño de referencia. `fitScale`
+       (real/referencia) reescala las etiquetas overlay proporcionalmente
+       en projectLabels(), así el conjunto se ve consistente a cualquier
+       tamaño — nunca cada etiqueta por separado. */
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
-    const w = compact ? Math.min(this.root.clientWidth || 620, 620) : 880;
-    const h = compact ? Math.min(w, 560) : 880;
+    const refW = compact ? 620 : 880;
+    const refH = compact ? 560 : 880;
+    const available = this.root.clientWidth || refW;
+    const w = Math.max(1, Math.min(available, refW));
+    const h = Math.round(w * (refH / refW));
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this.fitScale = w / refW;
   }
 
   projectLabels() {
     const r = this.canvas.getBoundingClientRect();
     const v = new THREE.Vector3();
+    const fit = this.fitScale || 1;
     for (const [, { obj, el }] of this.anchors) {
       obj.getWorldPosition(v);
       v.project(this.camera);
-      el.style.transform = `translate(-50%, -50%) translate(${((v.x + 1) / 2) * r.width}px, ${((1 - v.y) / 2) * r.height}px)`;
+      el.style.transform = `translate(-50%, -50%) translate(${((v.x + 1) / 2) * r.width}px, ${((1 - v.y) / 2) * r.height}px) scale(${fit})`;
     }
   }
 

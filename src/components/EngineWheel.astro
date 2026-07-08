@@ -21,7 +21,7 @@ const { compact = false } = Astro.props;
       const color = PHASES.find((p) => p.id === e.phase).color;
       return (
         <a class={`wl wl-edge wl-phase-${e.phase}`} data-anchor={`edge-${e.id}`} href={e.slug} aria-label={`${e.id} — ${e.service}`}>
-          <LockupMark word={e.id} tag="[AI]" color={color} size="wheel" />
+          <LockupMark word={e.id} tag="[AI]" color={color} variant="wheel" />
         </a>
       );
     })}
@@ -31,7 +31,7 @@ const { compact = false } = Astro.props;
       </a>
     ))}
     <div class="wl wl-hub" data-anchor="hub" aria-hidden="true">
-      <LockupMark word="final edge" tag="[ENGINE]" size="wheel" />
+      <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
     </div>
   </div>
 
@@ -45,16 +45,19 @@ const { compact = false } = Astro.props;
 </div>
 
 <style>
-  /* la rueda completa vive fija a 880×880 dentro de un card con scroll
-     horizontal (comportamiento del brand book: nada baja de 14px) */
+  /* La rueda SIEMPRE se ve completa, en una sola imagen, sin scroll
+     horizontal bajo ninguna circunstancia: el ancho es responsivo
+     (nunca excede el contenedor) y el canvas + las etiquetas se re-render
+     a la resolución real en cada resize (ver engine-wheel.js resize()).
+     880px es el tamaño de referencia — se alcanza en pantallas anchas,
+     nunca se fuerza en las angostas. */
   .wheel-stage {
     position: relative;
-    width: 880px;
-    height: 880px;
+    width: min(880px, 100%);
+    aspect-ratio: 1;
     margin: 0 auto;
-    flex: none;
   }
-  .wheel-stage[data-compact='1'] { width: 100%; max-width: 620px; height: 560px; }
+  .wheel-stage[data-compact='1'] { width: min(620px, 100%); aspect-ratio: 620 / 560; }
   .wheel-canvas { width: 100%; height: 100%; display: block; }
   .wheel-overlay { position: absolute; inset: 0; pointer-events: none; }
 
@@ -65,9 +68,10 @@ const { compact = false } = Astro.props;
     transition: opacity var(--t-ui) var(--ease);
   }
 
-  /* lockup de edge: ancho FIJO por contexto — el SVG (viewBox proporcional)
-     siempre escala dentro de ese ancho, así "intelligence" nunca desborda
-     su sector: se auto-ajusta proporcionalmente, nunca se sale. */
+  /* lockup de edge: ancho FIJO en el espacio de referencia de la rueda
+     (880px) — engine-wheel.js aplica una escala uniforme al conjunto
+     cuando la rueda se muestra más chica, así todos los edges achican
+     exactamente igual, nunca cada uno por separado. */
   .wl-edge { width: 118px; }
   [data-compact='1'] .wl-edge { width: 96px; }
 

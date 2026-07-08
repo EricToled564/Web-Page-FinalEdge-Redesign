@@ -116,17 +116,18 @@ h1, h2, h3 { font-weight: 500; }
   .cursor { animation: none; }
 }
 
-/* card de la rueda ENGINE (brand book §07): scroll horizontal, nada < 14px */
+/* card de la rueda ENGINE: la rueda es responsiva y SIEMPRE cabe entera
+   — nunca requiere scroll horizontal (ver EngineWheel.astro). */
 .wheel-card {
   border: 1px solid var(--hairline);
   background: var(--card);
   padding: 48px;
   display: flex;
   justify-content: center;
-  overflow-x: auto;
+  overflow: visible;
 }
 @media (max-width: 760px) {
-  .wheel-card { padding: 24px; }
+  .wheel-card { padding: 20px; }
 }
 
 /* Los lockups apilados (>_ + palabra + [tag]) se generan con el componente

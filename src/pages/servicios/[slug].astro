@@ -28,7 +28,7 @@ const phase = phaseOfEdge(edge);
           <a href={phase.slug}>FASE {phase.num} · {phase.label}</a>
         </p>
         <h1 class="svc-title reveal">
-          <LockupMark word={edge.id} tag="[AI]" color={phase.color} size="lg" />
+          <LockupMark word={edge.id} tag="[AI]" color={phase.color} variant="big" transition:name={`edge-${edge.id}`} />
         </h1>
         <p class="svc-service reveal">{edge.service}</p>
         <p class="svc-hook reveal">{edge.hook}</p>

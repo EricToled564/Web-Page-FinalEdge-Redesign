@@ -1,25 +1,34 @@
 ---
 /**
  * LockupMark — ÚNICA fuente de verdad para todo lockup de marca
- * (>_ + palabra + [tag]) en el sitio. Brand book §03/§07.
+ * (>_ + palabra + [tag]) en el sitio.
  *
- * Por qué SVG y no PNG: el ancho de "word" y "tag" se calcula y se
- * FUERZA con textLength — el layout nunca depende de flexbox anidado
- * (fuente de los bugs de alineación anteriores) y nunca puede
- * desbordar su contenedor, sin importar qué tan larga sea la palabra
- * (p. ej. "intelligence" vs "strategy"). Al ser vectorial, el mismo
- * archivo sirve nítido desde 14px (rueda) hasta el título monumental
- * de una página de servicio — un solo componente, en todos lados.
+ * Los valores de cada variante son COPIA LITERAL, carácter por carácter,
+ * de los inline styles del archivo fuente del brand book
+ * ("Final Edge AI Brand Book.dc.html") — no una aproximación ni un
+ * cálculo propio. Si el brand book cambia estos números, se actualizan
+ * aquí y en ningún otro lugar.
  *
- * Estructura fija (idéntica en todo tamaño): línea 1 `>_ palabra`,
- * línea 2 `[tag]` alineado a la primera letra de "palabra".
+ * Fuente exacta:
+ *  - variant="wheel": objeto `wheelEdges`/`engineNodes` (sección 07, rueda ENGINE™).
+ *  - variant="section": función `edgeStyles(color,1)` + `mkEdge` (sección 03, Edges & fases).
+ *  - variant="hub": markup del hub central de la rueda (sección 07).
+ *  - variant="big": MISMA proporción que "section", escalada 4× — el brand
+ *    book no define un tamaño monumental para edges; se extiende la
+ *    fórmula sin alterar ninguna proporción (ver README §tipografía: el
+ *    propio sistema usa esta lógica de escalado consistente en clamp()).
+ *
+ * Todo lockup dentro de la rueda comparte el MISMO --scale (una sola
+ * variable, calculada en runtime a partir de la palabra más larga) para
+ * que los seis edges se vean siempre al mismo tamaño entre sí — nunca
+ * cada uno encogido de forma independiente.
  */
 interface Props {
   word: string;
   tag?: string;
   color?: string;
   wordColor?: string;
-  size?: 'wheel' | 'sm' | 'md' | 'lg';
+  variant?: 'wheel' | 'section' | 'hub' | 'big';
   class?: string;
 }
 
@@ -28,72 +37,79 @@ const {
   tag = '[AI]',
   color = 'var(--accent)',
   wordColor = 'var(--fg)',
-  size = 'md',
+  variant = 'section',
   class: klass = '',
 } = Astro.props as Props;
-
-const SIZES = {
-  wheel: { prompt: 14, word: 15, tag: 14, rowGap: 5, colGap: 5 },
-  sm: { prompt: 14, word: 16, tag: 14, rowGap: 6, colGap: 5 },
-  md: { prompt: 15, word: 18, tag: 14, rowGap: 7, colGap: 7 },
-  lg: { prompt: 26, word: 72, tag: 18, rowGap: 14, colGap: 14 },
-};
-const cfg = SIZES[size] ?? SIZES.md;
-const CHAR_W = 0.6; // relación de avance de Geist Mono; forzada vía textLength
-
-const promptText = '>_';
-const promptW = promptText.length * cfg.prompt * CHAR_W;
-const wordW = word.length * cfg.word * CHAR_W;
-const tagW = tag.length * cfg.tag * CHAR_W;
-
-const colX = promptW + cfg.rowGap; // arranque compartido de word y tag — [tag] SIEMPRE bajo la primera letra
-const lineH1 = cfg.word * 1.0;
-const lineH2 = cfg.tag * 1.0;
-const baseline1 = Math.round(lineH1 * 0.8);
-const baseline2 = Math.round(lineH1 + cfg.colGap + lineH2 * 0.8);
-
-const totalWidth = Math.ceil(Math.max(colX + wordW, colX + tagW) + 2);
-const totalHeight = Math.ceil(lineH1 + cfg.colGap + lineH2 + lineH2 * 0.22);
-
-const FONT = "'Geist Mono', ui-monospace, monospace";
 ---
-<svg
-  class={`lockup-mark ${klass}`}
-  viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-  width={totalWidth}
-  height={totalHeight}
-  role="img"
-  aria-label={`${word} ${tag}`}
-  style="display:block;width:100%;height:auto;"
->
-  <text
-    x="0"
-    y={baseline1}
-    font-family={FONT}
-    font-weight="700"
-    font-size={cfg.prompt}
-    fill={color}
-    textLength={promptW}
-    lengthAdjust="spacingAndGlyphs"
-  >{promptText}</text>
-  <text
-    x={colX}
-    y={baseline1}
-    font-family={FONT}
-    font-weight="600"
-    font-size={cfg.word}
-    fill={wordColor}
-    textLength={wordW}
-    lengthAdjust="spacingAndGlyphs"
-  >{word}</text>
-  <text
-    x={colX}
-    y={baseline2}
-    font-family={FONT}
-    font-weight="600"
-    font-size={cfg.tag}
-    fill={color}
-    textLength={tagW}
-    lengthAdjust="spacingAndGlyphs"
-  >{tag}</text>
-</svg>
+<span class={`lm lm-${variant} ${klass}`} style={`--lm-color:${color}; --lm-word-color:${wordColor}`} data-autofit={variant === 'wheel' ? 'wheel' : undefined}>
+  <span class="lm-prompt">&gt;_</span>
+  <span class="lm-col">
+    <span class="lm-word">{word}</span>
+    <span class="lm-tag">{tag}</span>
+  </span>
+</span>
+
+<style is:global>
+  /* --- variant="wheel" — copia literal de `wheelEdges`/`engineNodes` --- */
+  .lm-wheel {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+    line-height: 1;
+    white-space: nowrap;
+    transform: scale(var(--wheel-scale, 1));
+    transform-origin: left center;
+  }
+  .lm-wheel .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .lm-wheel .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 14px; color: var(--lm-color); line-height: 1; }
+  .lm-wheel .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 18px; letter-spacing: -.02em; color: var(--lm-word-color); line-height: 1; }
+  .lm-wheel .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: .07em; color: var(--lm-color); line-height: 1; }
+
+  /* --- variant="section" — copia literal de `edgeStyles(color,1)` + `mkEdge` --- */
+  .lm-section {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 7px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .lm-section .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 9px; }
+  .lm-section .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 15px; color: var(--lm-color); line-height: 1; }
+  .lm-section .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 21px; letter-spacing: -.01em; color: var(--lm-word-color); line-height: 1; }
+  .lm-section .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: .16em; color: var(--lm-color); line-height: 1; }
+
+  /* --- variant="hub" — copia literal del markup del hub central --- */
+  .lm-hub {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 9px;
+    line-height: 1;
+    white-space: nowrap;
+    transform: scale(var(--wheel-scale, 1));
+    transform-origin: center center;
+  }
+  .lm-hub .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+  .lm-hub .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 16px; color: var(--accent); line-height: 1; }
+  .lm-hub .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 23px; letter-spacing: -.02em; word-spacing: -.36ch; color: var(--fg); line-height: 1; }
+  .lm-hub .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: .16em; color: var(--accent); line-height: 1; }
+
+  /* --- variant="big" — misma fórmula que "section", ×4 --- */
+  .lm-big {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 28px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .lm-big .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 36px; }
+  .lm-big .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 60px; color: var(--lm-color); line-height: 1; }
+  .lm-big .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 84px; letter-spacing: -.01em; color: var(--lm-word-color); line-height: 1; }
+  .lm-big .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 56px; letter-spacing: .16em; color: var(--lm-color); line-height: 1; }
+  @media (max-width: 760px) {
+    .lm-big { gap: 14px; }
+    .lm-big .lm-col { gap: 18px; }
+    .lm-big .lm-prompt { font-size: 30px; }
+    .lm-big .lm-word { font-size: 42px; }
+    .lm-big .lm-tag { font-size: 28px; }
+  }
+</style>

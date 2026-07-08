@@ -1,19 +1,10 @@
 ---
 import LockupMark from './LockupMark.astro';
-const links = [
-  { href: '/#engine', label: 'El ENGINE™' },
-  { href: '/#como-trabajamos', label: 'Cómo trabajamos' },
-  { href: '/#casos', label: 'Casos' },
-  { href: '/#nosotros', label: 'Nosotros' },
-];
 ---
 <header class="nav" id="site-nav">
   <a class="nav-brand" href="/" aria-label="Final Edge — inicio">
-    <LockupMark word="final edge" tag="[AI]" size="sm" />
+    <LockupMark word="final edge" tag="[AI]" variant="section" />
   </a>
-  <nav class="nav-links" aria-label="Navegación principal">
-    {links.map((l) => <a href={l.href}>{l.label}</a>)}
-  </nav>
   <div class="nav-side">
     <span class="nav-lang" title="English — disponible próximamente">
       <span class="nav-lang-on">ES</span> / <span class="nav-lang-off">EN</span>
@@ -32,29 +23,21 @@ const links = [
     justify-content: space-between;
     gap: 24px;
     padding: 0 32px;
-    height: 68px;
+    height: 92px;
     background: color-mix(in srgb, var(--panel) 82%, transparent);
     backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--hairline-nav);
     transition: transform var(--t-ui) var(--ease);
   }
   .nav.is-hidden { transform: translateY(-100%); }
-  .nav-brand { width: 116px; }
-  .nav-links { display: flex; gap: 28px; }
-  .nav-links a {
-    font-size: var(--text-label);
-    text-transform: uppercase;
-    letter-spacing: .14em;
-    color: var(--fg-2);
-  }
-  .nav-links a:hover { color: var(--fg); }
+  /* mínimo digital del brand book: logo ≥160px de ancho, en cualquier tratamiento */
+  .nav-brand { width: 168px; flex: none; }
   .nav-side { display: flex; align-items: center; gap: 20px; }
   .nav-lang { font-size: var(--text-label); letter-spacing: .14em; color: var(--fg-faint); }
   .nav-lang-on { color: var(--fg); }
   .nav-cta { padding: 10px 18px; }
   @media (max-width: 900px) {
     .nav { padding: 0 16px; }
-    .nav-links { display: none; }
   }
 </style>
 

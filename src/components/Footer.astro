@@ -1,5 +1,6 @@
 ---
 import { PHASES, EDGES } from '../data/engine.js';
+import LockupMark from './LockupMark.astro';
 ---
 <footer class="footer">
   <div class="footer-inner">
@@ -14,7 +15,7 @@ import { PHASES, EDGES } from '../data/engine.js';
     </div>
     <nav class="footer-nav" aria-label="Navegación completa">
       <div>
-        <p class="eyebrow"><span class="prompt">&gt;_</span>ENGINE™</p>
+        <div class="footer-nav-mark"><LockupMark word="final edge" tag="[ENGINE]" variant="wheel" /></div>
         <ul>
           {PHASES.map((p) => (
             <li><a href={p.slug}>{p.name}</a></li>
@@ -61,6 +62,7 @@ import { PHASES, EDGES } from '../data/engine.js';
   .footer-line { margin-top: 20px; color: var(--fg-2); font-size: var(--text-body); }
   .footer-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
   .footer-nav ul { list-style: none; margin-top: 16px; display: grid; gap: 10px; }
+  .footer-nav-mark { width: 140px; }
   .footer-nav a { color: var(--fg-muted); font-size: 14px; }
   .footer-nav a:hover { color: var(--fg); }
   .footer-meta {
