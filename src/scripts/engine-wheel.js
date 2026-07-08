@@ -1,14 +1,13 @@
 /**
  * ENGINE™ — rueda WebGL (Three.js), navegación viva del Final Edge Engine.
- * APARIENCIA: réplica exacta de la rueda del brand book (§07):
- *  · sectores planos con gradiente radial oscuro (stops 0.35→1, r 288 en espacio 720)
- *    y trazo 1.25 en color de fase (op .85)
- *  · banda exterior en color de fase SÓLIDO, trazo op .7
- *  · hub r84 relleno #0E0E12 con anillo #1A2A40
- *  · etiquetas como texto DOM ≥14px (nunca rasterizadas) — R6.2
- * COREOGRAFÍA (decisión del cliente 2026-07-08, inspiración igloo.inc):
+ * APARIENCIA: cara frontal = réplica exacta de la rueda del brand book (§07)
+ * (gradientes radiales oscuros, trazo de fase, banda sólida, hub #1A2A40) +
+ * VOLUMEN 3D (decisión del cliente 2026-07-08): extrusión con paredes, tilt
+ * de perspectiva, parallax con el puntero y rotación ligada al scroll.
+ * COREOGRAFÍA (inspiración igloo.inc):
  *  · click en FASE → se ilumina y gira; el resto se desvanece; queda como menú del hub
  *  · click en SERVICIO → el segmento se desprende, gira y se acopla como título
+ * Etiquetas SIEMPRE texto DOM ≥14px (R6.2).
  */
 import * as THREE from 'three';
 import { navigate } from 'astro:transitions/client';
@@ -16,6 +15,8 @@ import { PHASES, EDGES } from '../data/engine.js';
 
 const D2R = Math.PI / 180;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const DEPTH = 30;      // extrusión de sectores
+const BAND_DEPTH = 18; // extrusión de la banda
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -43,53 +44,65 @@ function masterEase(t) {
   return bezY(Math.min(1, Math.max(0, u)));
 }
 
-/* pos en pantalla: ángulo horario desde arriba → three.js (y arriba) */
 const posAt = (deg, r) => new THREE.Vector3(Math.sin(deg * D2R) * r, Math.cos(deg * D2R) * r, 0);
 
 function donutShape(ri, ro, a0deg, a1deg) {
-  const toRad = (d) => (90 - d) * D2R; // horario-desde-arriba → ccw-desde-+x
+  const toRad = (d) => (90 - d) * D2R;
   const shape = new THREE.Shape();
   shape.absarc(0, 0, ro, toRad(a0deg), toRad(a1deg), true);
   shape.absarc(0, 0, ri, toRad(a1deg), toRad(a0deg), false);
   return shape;
 }
 
-/* malla plana con gradiente radial por vértice (colores exactos, sin luces) */
-function flatMesh(shape, grad) {
-  const geo = new THREE.ShapeGeometry(shape, 64);
-  const pos = geo.attributes.position;
-  const colors = new Float32Array(pos.count * 3);
-  const c0 = new THREE.Color(grad[0]);
-  const c1 = new THREE.Color(grad[1]);
-  const c = new THREE.Color();
-  for (let i = 0; i < pos.count; i++) {
-    const r = Math.hypot(pos.getX(i), pos.getY(i));
-    const t = Math.min(1, Math.max(0, (r - GRAD_R0) / (GRAD_R1 - GRAD_R0)));
-    c.copy(c0).lerp(c1, t);
-    colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+/**
+ * Malla extruida con la cara frontal del brand book:
+ *  grad = [c0, c1] → gradiente radial por vértice · solid = color plano.
+ * Materiales: [caras (vertexColors o sólido), pared lateral oscura].
+ */
+function volumeMesh(shape, depth, { grad, solid }) {
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: false,
+    curveSegments: 48,
+  });
+  geo.translate(0, 0, -depth / 2);
+
+  let capMat;
+  if (grad) {
+    const pos = geo.attributes.position;
+    const colors = new Float32Array(pos.count * 3);
+    const c0 = new THREE.Color(grad[0]);
+    const c1 = new THREE.Color(grad[1]);
+    const c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const r = Math.hypot(pos.getX(i), pos.getY(i));
+      const t = Math.min(1, Math.max(0, (r - GRAD_R0) / (GRAD_R1 - GRAD_R0)));
+      c.copy(c0).lerp(c1, t);
+      colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    capMat = new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true });
+  } else {
+    capMat = new THREE.MeshBasicMaterial({ color: solid, transparent: true });
   }
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-  return new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, side: THREE.DoubleSide }));
+  const sideBase = new THREE.Color(solid ?? grad[1]).multiplyScalar(solid ? 0.42 : 0.9);
+  const sideMat = new THREE.MeshBasicMaterial({ color: sideBase, transparent: true });
+  return new THREE.Mesh(geo, [capMat, sideMat]);
 }
 
-function solidMesh(shape, hex) {
-  return new THREE.Mesh(
-    new THREE.ShapeGeometry(shape, 64),
-    new THREE.MeshBasicMaterial({ color: hex, transparent: true, side: THREE.DoubleSide })
-  );
-}
-
-/* contorno del sector (trazo del brand book) */
-function outline(ri, ro, a0deg, a1deg, hex, opacity) {
+/* contorno frontal del sector (trazo del brand book) */
+function outline(ri, ro, a0deg, a1deg, hex, opacity, z) {
   const pts = [];
   const steps = 48;
   for (let i = 0; i <= steps; i++) pts.push(posAt(a0deg + ((a1deg - a0deg) * i) / steps, ro));
   for (let i = steps; i >= 0; i--) pts.push(posAt(a0deg + ((a1deg - a0deg) * i) / steps, ri));
   pts.push(pts[0].clone());
-  return new THREE.Line(
+  const line = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints(pts),
     new THREE.LineBasicMaterial({ color: hex, transparent: true, opacity })
   );
+  line.position.z = z;
+  return line;
 }
 
 const routeState = () => {
@@ -114,6 +127,8 @@ class EngineWheel {
     this.tweens = [];
     this.hover = null;
     this.visible = true;
+    this.stateRot = 0;
+    this.tilt = 0;
     this.build();
     this.bind();
     this.state = routeState();
@@ -132,36 +147,32 @@ class EngineWheel {
     this.camera.position.set(0, 0, 1120);
     this.camera.lookAt(0, 0, 0);
 
-    /* grupo raíz: permite desplazar rueda + anillo por estado */
     this.rig = new THREE.Group();
     this.scene.add(this.rig);
     this.wheel = new THREE.Group();
     this.rig.add(this.wheel);
 
     this.parts = { sectors: {}, bands: {}, hub: null };
-    this.groups = {}; // id → grupo (mesh + contorno) para opacidad conjunta
 
     for (const edge of EDGES) {
       const phase = PHASES.find((p) => p.id === edge.phase);
       const a0 = edge.angle - 26, a1 = edge.angle + 26; // 60° − 4° de gap
       const g = new THREE.Group();
-      const fill = flatMesh(donutShape(96, 232, a0, a1), GRADS[phase.id]);
-      const rim = outline(96, 232, a0, a1, phase.color, 0.85);
-      rim.position.z = 1;
+      const fill = volumeMesh(donutShape(96, 232, a0, a1), DEPTH, { grad: GRADS[phase.id] });
+      const rim = outline(96, 232, a0, a1, phase.color, 0.85, DEPTH / 2 + 1);
       g.add(fill, rim);
       g.userData = { kind: 'sector', edge, fill, rim };
       fill.userData = g.userData;
       this.wheel.add(g);
       this.parts.sectors[edge.id] = g;
-      this.addAnchor('edge-' + edge.id, posAt(edge.angle, 168), g);
+      this.addAnchor('edge-' + edge.id, posAt(edge.angle, 168).setZ(DEPTH / 2 + 2), g);
     }
 
     for (const phase of PHASES) {
       const a0 = phase.startAngle + 5, a1 = phase.startAngle + 115; // 120° − 5° de gap
       const g = new THREE.Group();
-      const fill = solidMesh(donutShape(248, 278, a0, a1), phase.color);
-      const rim = outline(248, 278, a0, a1, phase.color, 0.7);
-      rim.position.z = 1;
+      const fill = volumeMesh(donutShape(248, 278, a0, a1), BAND_DEPTH, { solid: phase.color });
+      const rim = outline(248, 278, a0, a1, phase.color, 0.7, BAND_DEPTH / 2 + 1);
       g.add(fill, rim);
       g.userData = { kind: 'band', phase, fill, rim };
       fill.userData = g.userData;
@@ -169,13 +180,13 @@ class EngineWheel {
       this.parts.bands[phase.id] = g;
       const center = phase.startAngle + 60;
       const labelR = { evaluacion: 290, capacidades: 348, ejecucion: 338 }[phase.id];
-      this.addAnchor('phase-' + phase.id, posAt(center, labelR), g);
+      this.addAnchor('phase-' + phase.id, posAt(center, labelR).setZ(BAND_DEPTH / 2 + 2), g);
     }
 
-    /* hub: círculo Void + anillo #1A2A40 (brand book) */
+    /* hub 3D: cilindro Void + anillo #1A2A40 en la cara frontal */
     const hubG = new THREE.Group();
     const hubFill = new THREE.Mesh(
-      new THREE.CircleGeometry(84, 72),
+      new THREE.CylinderGeometry(84, 84, 24, 72).rotateX(Math.PI / 2),
       new THREE.MeshBasicMaterial({ color: 0x0e0e12, transparent: true })
     );
     const hubPts = [];
@@ -184,13 +195,13 @@ class EngineWheel {
       new THREE.BufferGeometry().setFromPoints(hubPts),
       new THREE.LineBasicMaterial({ color: 0x1a2a40, transparent: true })
     );
-    hubRim.position.z = 1;
+    hubRim.position.z = 13;
     hubG.add(hubFill, hubRim);
     hubG.userData = { kind: 'hub', fill: hubFill, rim: hubRim };
-    hubG.position.z = 2;
+    hubG.position.z = 4;
     this.wheel.add(hubG);
     this.parts.hub = hubG;
-    this.addAnchor('hub', new THREE.Vector3(0, 0, 4), hubG);
+    this.addAnchor('hub', new THREE.Vector3(0, 0, 14), hubG);
 
     /* anillo punteado exterior — animación opcional permitida (README §07) */
     const ringPts = [];
@@ -216,13 +227,16 @@ class EngineWheel {
     if (el) this.anchors.set(key, { obj: holder, el });
   }
 
-  /* opacidad + brillo conjunto de un grupo sector/banda (conserva el color base) */
+  /* materiales de un grupo: opacidad + brillo conservando color base */
   setLook(group, { op, glow }) {
-    const { fill, rim } = group.userData;
-    if (!group.userData.baseColor) group.userData.baseColor = fill.material.color.clone();
-    fill.material.opacity = op;
-    rim.material.opacity = op * (group.userData.kind === 'band' ? 0.7 : 0.85);
-    fill.material.color.copy(group.userData.baseColor).multiplyScalar(1 + glow);
+    const { fill, rim, kind } = group.userData;
+    const mats = Array.isArray(fill.material) ? fill.material : [fill.material];
+    if (!group.userData.base) group.userData.base = mats.map((m) => m.color.clone());
+    mats.forEach((m, i) => {
+      m.opacity = op;
+      m.color.copy(group.userData.base[i]).multiplyScalar(1 + glow);
+    });
+    rim.material.opacity = op * (kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1);
     group.userData.glow = glow;
     group.visible = op > 0.01;
   }
@@ -233,7 +247,7 @@ class EngineWheel {
     this.canvas.addEventListener('pointermove', (ev) => {
       const r = this.canvas.getBoundingClientRect();
       this.pointer.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
-      this.parallax = { x: this.pointer.y * 0.05, y: this.pointer.x * 0.07 };
+      this.parallax = { x: this.pointer.y * 0.09, y: this.pointer.x * 0.14 };
     });
 
     this.canvas.addEventListener('click', () => {
@@ -259,16 +273,14 @@ class EngineWheel {
     if (data.kind === 'sector') { target = { mode: 'service', edge: data.edge }; url = data.edge.slug; }
     else if (data.kind === 'band') { target = { mode: 'phase', phase: data.phase }; url = data.phase.slug; }
     else return;
-    if (sameState(target, this.state)) { navigate(url); return; }
-    if (REDUCED) { navigate(url); return; }
+    if (sameState(target, this.state) || REDUCED) { navigate(url); return; }
     this.busy = true;
     this.apply(target, false, () => { this.busy = false; });
-    setTimeout(() => navigate(url), 560); // la coreografía sigue viva durante el view-transition
+    setTimeout(() => navigate(url), 560);
   }
 
-  /** targets por estado — desprendimiento, giro, desvanecimiento y encuadre */
   targetsFor(state) {
-    const t = { rot: 0, scale: 1, spin: 0, offY: 0, items: new Map() };
+    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.30, items: new Map() };
     const set = (g, v) => t.items.set(g, v);
 
     if (state.mode === 'full') {
@@ -278,15 +290,15 @@ class EngineWheel {
       t.ringOp = 1;
     } else if (state.mode === 'phase') {
       const pid = state.phase.id;
-      const center = state.phase.startAngle + 60;
-      t.rot = center * D2R;   // la fase gira hasta quedar arriba
-      t.spin = Math.PI * 2;   // vuelta completa durante la transición («gire»)
+      t.rot = (state.phase.startAngle + 60) * D2R;
+      t.spin = Math.PI * 2;
       t.scale = 1.1;
-      t.offY = -150;          // encuadra el arco superior en el lienzo compacto
+      t.offY = -150;
+      t.tilt = -0.18;
       for (const e of EDGES) {
         const mine = e.phase === pid;
         set(this.parts.sectors[e.id], mine
-          ? { op: 1, fly: 0, lift: 24, glow: 0.55 }   // «se ilumina»
+          ? { op: 1, fly: 0, lift: 24, glow: 0.55 }
           : { op: 0, fly: 420, lift: -40, glow: 0 });
       }
       for (const p of PHASES) {
@@ -298,14 +310,15 @@ class EngineWheel {
       t.ringOp = 0.35;
     } else {
       const edge = state.edge;
-      t.rot = edge.angle * D2R; // el segmento gira hasta apuntar arriba
+      t.rot = edge.angle * D2R;
       t.spin = Math.PI * 2;
       t.scale = 1.16;
       t.offY = -130;
+      t.tilt = -0.2;
       for (const e of EDGES) {
         const sel = e.id === edge.id;
         set(this.parts.sectors[e.id], sel
-          ? { op: 1, fly: 0, lift: 60, glow: 0.65 }   // se desprende hacia la cámara
+          ? { op: 1, fly: 0, lift: 60, glow: 0.65 }
           : { op: 0, fly: 480, lift: -60, glow: 0 });
       }
       for (const p of PHASES) set(this.parts.bands[p.id], { op: 0, fly: 460, lift: -50, glow: 0 });
@@ -320,6 +333,7 @@ class EngineWheel {
     this.root.dataset.mode = state.mode;
     this.root.dataset.focus = state.mode === 'phase' ? state.phase.id : state.mode === 'service' ? state.edge.id : '';
     const t = this.targetsFor(state);
+    this.tilt = t.tilt;
 
     const jobs = [];
     for (const [g, v] of t.items) {
@@ -328,11 +342,11 @@ class EngineWheel {
         : g.userData.phase
           ? posAt(g.userData.phase.startAngle + 60, 1)
           : new THREE.Vector3(0, 0, 0);
-      const baseZ = g.userData.kind === 'hub' ? 2 : 0;
+      const baseZ = g.userData.kind === 'hub' ? 4 : 0;
       jobs.push({
         g,
         from: {
-          op: g.userData.fill.material.opacity,
+          op: (Array.isArray(g.userData.fill.material) ? g.userData.fill.material[0] : g.userData.fill.material).opacity,
           glow: g.userData.glow ?? 0,
           x: g.position.x, y: g.position.y, z: g.position.z,
         },
@@ -364,10 +378,15 @@ class EngineWheel {
       this.rig.position.y = fromOffY + (t.offY - fromOffY) * k;
     };
 
+    const finish = () => {
+      this.wheel.rotation.z = t.rot;
+      this.stateRot = t.rot;
+      for (const j of jobs) j.g.visible = j.to.op > 0.01;
+    };
+
     if (instant || REDUCED) {
       put(1);
-      this.wheel.rotation.z = t.rot;
-      for (const j of jobs) j.g.visible = j.to.op > 0.01;
+      finish();
       done && done();
       return;
     }
@@ -379,8 +398,7 @@ class EngineWheel {
         const k = masterEase(Math.min(1, (now - t0) / DUR));
         put(k);
         if (k >= 1) {
-          this.wheel.rotation.z = t.rot; // descuenta la vuelta completa
-          for (const j of jobs) j.g.visible = j.to.op > 0.01;
+          finish();
           this.tweens = [];
           done && done();
         }
@@ -389,9 +407,6 @@ class EngineWheel {
   }
 
   resize() {
-    /* rueda completa = 880 fijo (el card hace scroll horizontal, como el brand book);
-       compacta (hub/servicio) = responsiva. El modo se deriva de la RUTA: la isla
-       persistida conserva el dataset de la página anterior y no es confiable. */
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
     const w = compact ? Math.min(this.root.clientWidth || 620, 620) : 880;
@@ -419,19 +434,29 @@ class EngineWheel {
     for (const id in this.parts.bands) fills.push(this.parts.bands[id].userData.fill);
     const hits = this.raycaster
       .intersectObjects(fills, false)
-      .filter((h) => h.object.parent.visible && h.object.material.opacity > 0.5);
+      .filter((h) => {
+        const m = Array.isArray(h.object.material) ? h.object.material[0] : h.object.material;
+        return h.object.parent.visible && m.opacity > 0.5;
+      });
     const top = hits[0]?.object.parent ?? null;
     if (top !== this.hover) {
-      const base = () => {
-        const st = this.targetsFor(this.state).items;
-        return (g) => st.get(g)?.glow ?? 0;
-      };
-      const glowOf = base();
-      if (this.hover) this.setLook(this.hover, { op: this.hover.userData.fill.material.opacity, glow: glowOf(this.hover) });
+      const st = this.targetsFor(this.state).items;
+      const glowOf = (g) => st.get(g)?.glow ?? 0;
+      const opOf = (g) => (Array.isArray(g.userData.fill.material) ? g.userData.fill.material[0] : g.userData.fill.material).opacity;
+      if (this.hover) this.setLook(this.hover, { op: opOf(this.hover), glow: glowOf(this.hover) });
       this.hover = top;
-      if (top) this.setLook(top, { op: top.userData.fill.material.opacity, glow: glowOf(top) + 0.45 });
+      if (top) this.setLook(top, { op: opOf(top), glow: glowOf(top) + 0.45 });
       this.canvas.style.cursor = top ? 'pointer' : 'default';
     }
+  }
+
+  /* rotación ligada al scroll (lenguaje cosmos/igloo) — solo rueda completa */
+  scrollRot() {
+    if (this.state.mode !== 'full') return 0;
+    const r = this.root.getBoundingClientRect();
+    const vh = innerHeight || 800;
+    const p = Math.min(1, Math.max(0, (vh - r.top) / (vh + r.height)));
+    return (p - 0.5) * 0.55;
   }
 
   loop(now) {
@@ -440,9 +465,13 @@ class EngineWheel {
     for (const tw of this.tweens) tw.step(now);
     if (!REDUCED) {
       this.ring.rotation.z += 0.0012;
-      if (this.parallax) {
-        this.wheel.rotation.x += (this.parallax.x - this.wheel.rotation.x) * 0.06;
-        this.wheel.rotation.y += (this.parallax.y - this.wheel.rotation.y) * 0.06;
+      const px = this.parallax?.x ?? 0;
+      const py = this.parallax?.y ?? 0;
+      this.wheel.rotation.x += ((this.tilt + px) - this.wheel.rotation.x) * 0.06;
+      this.wheel.rotation.y += (py - this.wheel.rotation.y) * 0.06;
+      if (!this.tweens.length) {
+        const target = this.stateRot + this.scrollRot();
+        this.wheel.rotation.z += (target - this.wheel.rotation.z) * 0.08;
       }
     }
     if (!this.tweens.length) this.pick();
@@ -467,7 +496,7 @@ function boot() {
     }
     root.classList.add('is-webgl');
   } catch {
-    root.classList.add('is-fallback'); // sin WebGL: las etiquetas quedan como enlaces estáticos
+    root.classList.add('is-fallback');
   }
 }
 

@@ -129,11 +129,24 @@ h1, h2, h3 { font-weight: 500; }
   .wheel-card { padding: 24px; }
 }
 
-/* lockup de edge (fórmula: >_ + nombre + [AI]) */
-.lockup { display: inline-flex; align-items: baseline; gap: .55em; white-space: nowrap; }
-.lockup .prompt { font-size: 14px; }
-.lockup .lockup-name { font-size: 16px; font-weight: 500; color: var(--fg); letter-spacing: -.01em; }
-.lockup .tag-ai { font-size: 14px; }
-.lockup--big .prompt { font-size: clamp(20px, 2.4vw, 30px); }
-.lockup--big .lockup-name { font-size: clamp(40px, 6vw, 84px); font-weight: 600; letter-spacing: -.05em; }
-.lockup--big .tag-ai { font-size: clamp(16px, 1.6vw, 22px); }
+/* lockup canónico (brand book §03): >_ 15/700 color de fase · palabra 21/600
+   blanca · [AI] 14/600 tracking .16em color de fase, en SEGUNDO RENGLÓN
+   alineado a la primera letra de la palabra. Color vía --lc (default Edge Blue). */
+.lockup { display: inline-flex; align-items: baseline; gap: 7px; line-height: 1; white-space: nowrap; }
+.lockup .prompt { font-weight: 700; font-size: 15px; color: var(--lc, var(--accent)); line-height: 1; }
+.lockup-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 9px; }
+.lockup .lockup-name { font-weight: 600; font-size: 21px; letter-spacing: -.01em; color: var(--fg); line-height: 1; }
+.lockup .tag-ai { font-weight: 600; font-size: 14px; letter-spacing: .16em; color: var(--lc, var(--accent)); line-height: 1; }
+
+/* variante compacta (nav / listas): nombre 16px, [AI] nunca más ancho que el nombre */
+.lockup--sm { gap: 6px; }
+.lockup--sm .prompt { font-size: 14px; }
+.lockup--sm .lockup-col { gap: 4px; }
+.lockup--sm .lockup-name { font-size: 16px; }
+
+/* variante monumental (título de página de servicio) */
+.lockup--big { gap: 14px; }
+.lockup--big .prompt { font-size: clamp(18px, 2vw, 26px); }
+.lockup--big .lockup-col { gap: 14px; }
+.lockup--big .lockup-name { font-size: clamp(40px, 6vw, 84px); letter-spacing: -.05em; }
+.lockup--big .tag-ai { font-size: clamp(14px, 1.4vw, 18px); letter-spacing: .22em; }

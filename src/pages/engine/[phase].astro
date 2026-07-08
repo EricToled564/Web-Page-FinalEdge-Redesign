@@ -30,7 +30,10 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
             <a class="hub-item" href={e.slug}>
               <img src={e.icon} alt="" width="44" height="44" loading="lazy" />
               <span class="hub-item-txt">
-                <span class="lockup"><span class="prompt">&gt;_</span><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+                <span class="lockup" style={`--lc:${phase.color}`}>
+                  <span class="prompt">&gt;_</span>
+                  <span class="lockup-col"><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+                </span>
                 <span class="hub-item-service">{e.service}</span>
                 <span class="hub-item-hook">{e.hook}</span>
               </span>

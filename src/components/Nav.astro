@@ -7,10 +7,12 @@ const links = [
 ];
 ---
 <header class="nav" id="site-nav">
-  <a class="nav-brand lockup" href="/" aria-label="Final Edge — inicio">
+  <a class="nav-brand lockup lockup--sm" href="/" aria-label="Final Edge — inicio">
     <span class="prompt">&gt;_</span>
-    <span class="lockup-name">final edge</span>
-    <span class="tag-ai">[AI]</span>
+    <span class="lockup-col">
+      <span class="lockup-name">final edge</span>
+      <span class="tag-ai">[AI]</span>
+    </span>
   </a>
   <nav class="nav-links" aria-label="Navegación principal">
     {links.map((l) => <a href={l.href}>{l.label}</a>)}
@@ -40,7 +42,8 @@ const links = [
     transition: transform var(--t-ui) var(--ease);
   }
   .nav.is-hidden { transform: translateY(-100%); }
-  .nav-brand .lockup-name { font-size: 16px; }
+  /* [AI] en segundo renglón alineado a la "f" (estructura bloqueada del logo) */
+  .nav-brand .tag-ai { font-size: 14px; }
   .nav-links { display: flex; gap: 28px; }
   .nav-links a {
     font-size: var(--text-label);

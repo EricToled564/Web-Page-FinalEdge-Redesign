@@ -29,7 +29,10 @@ import { PHASES, EDGES } from '../../data/engine.js';
           <p class="phase-tagline">{p.tagline}</p>
           <p class="phase-edges">
             {EDGES.filter((e) => e.phase === p.id).map((e) => (
-              <span class="lockup"><span class="prompt">&gt;_</span><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+              <span class="lockup lockup--sm" style={`--lc:${p.color}`}>
+                <span class="prompt">&gt;_</span>
+                <span class="lockup-col"><span class="lockup-name">{e.id}</span><span class="tag-ai">[AI]</span></span>
+              </span>
             ))}
           </p>
         </a>

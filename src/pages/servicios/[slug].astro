@@ -27,10 +27,12 @@ const phase = phaseOfEdge(edge);
           <a href={phase.slug}>FASE {phase.num} · {phase.label}</a>
         </p>
         <h1 class="svc-title reveal">
-          <span class="lockup lockup--big">
+          <span class="lockup lockup--big" style={`--lc:${phase.color}`}>
             <span class="prompt">&gt;_</span>
-            <span class="lockup-name">{edge.id}</span>
-            <span class="tag-ai">[AI]</span>
+            <span class="lockup-col">
+              <span class="lockup-name">{edge.id}</span>
+              <span class="tag-ai">[AI]</span>
+            </span>
           </span>
         </h1>
         <p class="svc-service reveal">{edge.service}</p>
