@@ -89,14 +89,22 @@ import LockupMark from '../components/LockupMark.astro';
     </div>
   </section>
 
-  <!-- placa Edge Blue — cierre de la página principal. Texto centrado en
-       la misma cuadrícula de 1180px que usa "la presión" (max-width:1180
-       + margin:auto), con la tipografía (letter-spacing y line-height)
-       del h1 del hero y un relieve 3D vía gradiente — nunca box-shadow/
-       text-shadow, prohibidos por R3.2. -->
+  <!-- placa Edge Blue — cierre de la página principal. Mismo tratamiento
+       de relieve 3D que logo-finaledge.png (R5.4: monocromos/marca
+       siempre como PNG horneado con relieve 3D intacto, nunca
+       CSS-simulado): el texto se generó como un asset real con bisel +
+       iluminación calculada (tools/plate-3d — ver script fuente en el
+       historial de commits), no con box-shadow/text-shadow (R3.2).
+       Centrado en la misma cuadrícula de 1180px que usa "la presión". -->
   <section class="plate" aria-label="Tu ventaja final">
     <div class="plate-scene">
-      <p class="plate-text" data-text="Tu ventaja final.">Tu ventaja final<span class="plate-dot">.</span></p>
+      <img
+        class="plate-img"
+        src="/assets/plate-3d.png"
+        width="4630"
+        height="714"
+        alt="Tu ventaja final."
+      />
     </div>
   </section>
 
@@ -322,52 +330,21 @@ import LockupMark from '../components/LockupMark.astro';
     overflow: hidden;
   }
   /* mismo lenguaje de relieve 3D que el logotipo horneado
-     (logo-finaledge.png / R5.4): letras "infladas" con cara frontal en
-     degradado claro, un trazo navy fino de contorno, y una copia sólida
-     navy desplazada hacia abajo-derecha como canto/profundidad del
-     bloque — nunca box-shadow/text-shadow/drop-shadow (R3.2). Todos los
-     colores son tokens existentes (R1.1); --hub-ring es el mismo navy
-     que usa el canto del logotipo. */
+     (logo-finaledge.png / R5.4 — monocromos SIEMPRE como PNG horneado
+     con relieve 3D intacto, nunca CSS-simulado): asset real con bisel +
+     iluminación calculada, mismo navy de canto (--hub-ring) que usa el
+     logotipo. Escala con --text-plate para conservar el tamaño ya
+     aprobado en cualquier ancho de viewport. */
   .plate-scene {
     max-width: 1180px;
     margin: 0 auto;
-  }
-  .plate-text {
-    position: relative;
     text-align: center;
-    font-size: var(--text-plate);
-    font-weight: 600;
-    /* letter-spacing y line-height del h1 del hero — el tamaño se
-       queda en --text-plate, no en el clamp del hero. */
-    letter-spacing: -.03em;
-    line-height: 1.08;
-    /* cara frontal: gradiente (claro arriba, gris abajo) + trazo navy
-       fino, igual que el brillo/contorno de las letras del logotipo. */
-    background: linear-gradient(180deg, var(--on-accent) 0%, var(--fg-2) 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-stroke: 1.5px var(--hub-ring);
-    color: transparent;
   }
-  /* canto/profundidad: copia sólida navy del mismo texto, desplazada
-     hacia abajo-derecha — el "grosor" visible del bloque inflado, un
-     color sólido sin blur ni opacidad, igual que el canto horneado del
-     logotipo. */
-  .plate-text::before {
-    content: attr(data-text);
-    position: absolute;
-    inset: 0;
-    transform: translate(6px, 8px);
-    color: var(--hub-ring);
-    z-index: -1;
-    pointer-events: none;
-  }
-  .plate-dot {
-    background: var(--void-deep);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-stroke: 1.5px var(--hub-ring);
-    color: transparent;
+  .plate-img {
+    display: inline-block;
+    width: calc(var(--text-plate) * 6.4846);
+    max-width: 100%;
+    height: auto;
   }
 
   @media (max-width: 760px) {
