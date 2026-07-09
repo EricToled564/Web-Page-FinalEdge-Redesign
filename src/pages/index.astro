@@ -347,17 +347,19 @@ import LockupMark from '../components/LockupMark.astro';
        pegado justo debajo del nav. */
     padding-top: 104px;
     padding-bottom: 72px;
-    padding-right: 72px;
     /* SIN max-width + margin:auto propio: eso centraba el bloque en su
        PROPIA caja de 1800px, una referencia distinta a la que usa
        .presion-inner (max-width:1180 dentro del padding de 72px de
-       .presion-band) — el texto de esta sección y el de "la presión"
-       terminaban en columnas distintas, visiblemente desalineadas.
-       Este padding-left reproduce EXACTAMENTE la misma fórmula que el
-       centrado de .presion-inner (72px de piso, o el margen que le
-       tocaría a una caja de 1180px centrada) para que el texto de
-       ambas secciones arranque siempre en la misma x. */
+       .presion-band) — el texto arrancaba en una columna distinta Y la
+       rueda (sin tope a la derecha) se salía del ancho de esa misma
+       cuadrícula. padding-left y padding-right usan la MISMA fórmula
+       que el centrado de .presion-inner (72px de piso, o el margen que
+       le tocaría a una caja de 1180px centrada) — el área de contenido
+       resultante mide exactamente 1180px, igual que "la presión", así
+       que el borde derecho de la rueda (flex-end dentro de su columna)
+       coincide con el borde derecho real de esa cuadrícula. */
     padding-left: max(72px, calc(50vw - 590px));
+    padding-right: max(72px, calc(50vw - 590px));
   }
   .engine-col-text { padding-right: 24px; }
   /* mismo tamaño (alto) que .hero-logo (~59.5px: 220px de ancho ×
