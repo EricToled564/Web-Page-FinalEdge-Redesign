@@ -289,7 +289,10 @@ import LockupMark from '../components/LockupMark.astro';
     gap: 14px;
     font-family: var(--font-ui);
     font-weight: 600;
-    font-size: clamp(28px, 3.6vw, 48px);
+    /* equivalente al lockup >_ FINAL EDGE [ENGINE] de la sección
+       siguiente (18px base × escala 1.6 = 28.8px) — antes crecía hasta
+       48px con el viewport y quedaba mucho más grande que ese logo. */
+    font-size: clamp(20px, 6vw, 29px);
     letter-spacing: -.02em;
     color: var(--on-accent);
   }
@@ -342,15 +345,19 @@ import LockupMark from '../components/LockupMark.astro';
     /* un poco más de aire arriba que abajo — empuja el contenido
        ligeramente hacia abajo dentro de la sección, en vez de quedar
        pegado justo debajo del nav. */
-    padding: 104px 72px 72px;
-    /* mucho más ancho que el contenedor de 1080px de las demás
-       secciones (así se diferencia y la rueda tiene espacio real para
-       dominar), pero SIGUE acotado y centrado — sin este tope, en
-       pantallas anchas el texto quedaba pegado al margen izquierdo del
-       nav mientras la rueda flotaba lejos a la derecha con un vacío
-       enorme en medio. */
-    max-width: 1800px;
-    margin: 0 auto;
+    padding-top: 104px;
+    padding-bottom: 72px;
+    padding-right: 72px;
+    /* SIN max-width + margin:auto propio: eso centraba el bloque en su
+       PROPIA caja de 1800px, una referencia distinta a la que usa
+       .presion-inner (max-width:1180 dentro del padding de 72px de
+       .presion-band) — el texto de esta sección y el de "la presión"
+       terminaban en columnas distintas, visiblemente desalineadas.
+       Este padding-left reproduce EXACTAMENTE la misma fórmula que el
+       centrado de .presion-inner (72px de piso, o el margen que le
+       tocaría a una caja de 1180px centrada) para que el texto de
+       ambas secciones arranque siempre en la misma x. */
+    padding-left: max(72px, calc(50vw - 590px));
   }
   .engine-col-text { padding-right: 24px; }
   /* mismo tamaño (alto) que .hero-logo (~59.5px: 220px de ancho ×
@@ -363,7 +370,7 @@ import LockupMark from '../components/LockupMark.astro';
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
      contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
      text-transform: mayúsculas y minúsculas normales, como el copy. */
-  .engine-h2 { font-size: clamp(14px, 1.45vw, 19px); letter-spacing: -.025em; margin-top: 20px; }
+  .engine-h2 { font-size: clamp(14px, 1.45vw, 19px); font-weight: 400; letter-spacing: -.025em; margin-top: 20px; }
   .engine-col-wheel {
     display: flex;
     align-items: center;
