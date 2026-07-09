@@ -17,6 +17,7 @@ const D2R = Math.PI / 180;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEPTH = 58;      // extrusión de sectores — volumen 3D deliberadamente visible
 const BAND_DEPTH = 34; // extrusión de la banda
+const HOVER_LIFT = 14; // cuánto se despega un bloque al pasarle el mouse (ver hoverLift())
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -322,6 +323,21 @@ class EngineWheel {
        para que la rueda regrese sola a la posición de frente. */
     this.canvas.addEventListener('pointerleave', () => {
       this.parallax = { x: 0, y: 0 };
+      /* pick() decide a quién resaltar con el puntero 3D (raycaster)
+         proyectado desde this.pointer — al salir el mouse del canvas ya
+         no llegan más pointermove, así que this.pointer se queda con la
+         ÚLTIMA posición conocida y, sin este aviso, pick() seguiría
+         "viendo" hover ahí para siempre (el sector se quedaría
+         levantado y brillando aunque el mouse ya no esté encima). */
+      if (this.hover) {
+        const st = this.targetsFor(this.state).items;
+        this.setLook(this.hover, {
+          op: (Array.isArray(this.hover.userData.fill.material) ? this.hover.userData.fill.material[0] : this.hover.userData.fill.material).opacity,
+          glow: st.get(this.hover)?.glow ?? 0,
+        });
+        this.hover = null;
+        this.canvas.style.cursor = 'default';
+      }
     });
 
     this.canvas.addEventListener('click', () => {
@@ -499,7 +515,15 @@ class EngineWheel {
     const finish = () => {
       this.wheel.rotation.z = t.rot;
       this.stateRot = t.rot;
-      for (const j of jobs) j.g.visible = j.to.op > 0.01;
+      for (const j of jobs) {
+        j.g.visible = j.to.op > 0.01;
+        /* posición de reposo — la base sobre la que loop() suma el
+           levante de hover (ver hoverLift()). Solo se actualiza acá,
+           cuando una transición de estado termina; mientras el hover es
+           puramente una animación continua sobre esa base, nunca la
+           reemplaza. */
+        j.g.userData.restZ = j.g.position.z;
+      }
     };
 
     if (instant || REDUCED) {
@@ -654,6 +678,34 @@ class EngineWheel {
     }
   }
 
+  /* referencia real (igloo.inc, video del cliente): al pasar el mouse
+     sobre un bloque, ese bloque se despega/levanta levemente ADEMÁS de
+     iluminarse — nunca todos a la vez ni por un temporizador propio,
+     solo el que está bajo el cursor en ese momento (confirmado viendo
+     el cursor en los frames del video, siempre parado junto a los
+     bloques activos). Continuo, no un tween de estado — por eso corre
+     aparte del sistema de tweens de apply()/put() y se apoya en
+     restZ (la posición de reposo que finish() graba) en vez de pisarla:
+     mientras hay un tween activo, put() ya controla position.z, así que
+     esta pasada se salta por completo (mismo guard que this.pick()). */
+  hoverLift(now) {
+    const dt = Math.min(0.05, (now - (this._lastHoverT ?? now)) / 1000);
+    this._lastHoverT = now;
+    const groups = [...Object.values(this.parts.sectors), ...Object.values(this.parts.bands)];
+    for (const g of groups) {
+      const target = g === this.hover ? 1 : 0;
+      const cur = g.userData.hoverT ?? 0;
+      /* suavizado independiente del framerate (a diferencia de otros
+         "* 0.06" del loop, que asumen ~60fps) — el hover puede quedar
+         mucho tiempo en su valor estable, así que una tasa constante
+         por cuadro se nota más si el frame rate varía. */
+      const next = cur + (target - cur) * (1 - Math.pow(0.001, dt));
+      g.userData.hoverT = next;
+      const restZ = g.userData.restZ ?? g.position.z;
+      g.position.z = restZ + next * HOVER_LIFT;
+    }
+  }
+
   /* rotación ligada al scroll (lenguaje cosmos/igloo) — solo rueda completa */
   scrollRot() {
     if (this.state.mode !== 'full') return 0;
@@ -687,7 +739,10 @@ class EngineWheel {
       for (const id in this.parts.sectors) this.breathe(this.parts.sectors[id], breath);
       for (const id in this.parts.bands) this.breathe(this.parts.bands[id], breath);
     }
-    if (!this.tweens.length) this.pick();
+    if (!this.tweens.length) {
+      this.pick();
+      this.hoverLift(now);
+    }
     this.projectLabels();
     this.renderer.render(this.scene, this.camera);
   }
