@@ -84,7 +84,7 @@ import LockupMark from '../components/LockupMark.astro';
     </div>
     <div class="engine-col-wheel">
       <div class="wheel-card" id="wheel-entry">
-        <EngineWheel />
+        <EngineWheel fitHeight />
       </div>
     </div>
   </section>
@@ -370,15 +370,16 @@ import LockupMark from '../components/LockupMark.astro';
   }
   /* dentro del split, la rueda flota libre — sin el marco de "tarjeta"
      (borde + fondo + padding) que usa en otras páginas: en las
-     referencias el gráfico sangra al borde, no vive dentro de una caja */
+     referencias el gráfico sangra al borde, no vive dentro de una caja.
+     Alto FIJO (no 100%/100vh): con fitHeight, engine-wheel.js lee este
+     alto para limitar el tamaño de la rueda — un valor fijo la mantiene
+     legible (nombres de servicio a tamaño normal) sin depender de la
+     altura de la ventana ni desbordar la sección. */
   .engine-col-wheel .wheel-card {
     display: flex;
     width: 100%;
-    /* tope de tamaño: sin esto la rueda crece hasta su referencia
-       completa (820px) y se pasa del espacio disponible en pantallas
-       normales — 620px la mantiene al tamaño que ya se veía bien. */
-    max-width: 620px;
-    height: 100%;
+    max-width: 900px;
+    height: 720px;
     align-items: center;
     justify-content: flex-end;
     border: none;
@@ -393,6 +394,7 @@ import LockupMark from '../components/LockupMark.astro';
     }
     .engine-col-text { padding-right: 0; }
     .engine-col-wheel { justify-content: center; padding: 0; }
+    .engine-col-wheel .wheel-card { height: auto; max-width: 100%; }
   }
 
   .val-steps { list-style: none; margin-top: 28px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
