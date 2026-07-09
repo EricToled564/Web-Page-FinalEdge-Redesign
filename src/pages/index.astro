@@ -1,28 +1,325 @@
 ---
 import Base from '../layouts/Base.astro';
+import EngineWheel from '../components/EngineWheel.astro';
+import LockupMark from '../components/LockupMark.astro';
 ---
 <Base>
-  <!-- placa Edge Blue — única sección de la página principal. Texto
-       centrado en la misma cuadrícula de 1180px que usa "la presión"
-       (max-width:1180 + margin:auto), con la tipografía (letter-spacing
-       y line-height) del h1 del hero y un relieve 3D vía gradiente —
-       nunca box-shadow/text-shadow, prohibidos por R3.2. -->
+  <!-- 00 · HERO — video de fondo (fotograma clave: filamento del foco en
+       forma de cerebro, se enciende en azul acento — misma paleta que
+       la marca) con velo oscuro para garantizar contraste con el texto,
+       texto centrado en toda la pantalla. -->
+  <section class="hero" id="inicio">
+    <video
+      class="hero-video"
+      src="/assets/video/hero-bg.mp4"
+      poster="/assets/video/hero-bg-poster.jpg"
+      autoplay
+      muted
+      loop
+      playsinline
+      aria-hidden="true"
+    ></video>
+    <div class="hero-scrim" aria-hidden="true"></div>
+    <div class="hero-inner">
+      <p class="eyebrow hero-eyebrow reveal">
+        <span class="prompt hero-eyebrow-prompt">&gt;_</span> Tu próxima ventaja competitiva<span class="cursor">▌</span>
+      </p>
+      <img
+        class="hero-logo reveal"
+        src="/assets/logos/logo-mono-light.png"
+        alt="final edge [AI]"
+        width="300"
+      />
+      <h1 class="hero-h1 reveal">
+        30 años de experiencia dirigen.<br />Nuestros flujos de trabajo propietarios de IA ejecutan.
+      </h1>
+      <p class="hero-sub reveal">Haz más. Sin contratar más.</p>
+    </div>
+  </section>
+
+  <!-- 01 · LA PRESIÓN — franja Edge Blue full-bleed, mismo tratamiento
+       que la placa final ("Tu ventaja final"): sin número de sección,
+       solo el heading y las tres cifras. El >_ hereda el font-size del
+       heading (mismo elemento), así queda exactamente a la altura de
+       la "L" de "La", nunca más chico. -->
+  <section class="presion-band" id="presion">
+    <div class="presion-inner">
+      <p class="presion-h2 reveal">
+        <img class="presion-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
+        La Presión
+      </p>
+      <div class="presion-facts reveal">
+        <div class="presion-fact">
+          <p class="presion-fact-num">48<span class="presion-fact-arrow">→</span>40</p>
+          <p class="presion-fact-txt">horas de jornada laboral semanal hacia 2030</p>
+        </div>
+        <div class="presion-fact">
+          <p class="presion-fact-num">+26.6<span class="presion-fact-unit">%</span></p>
+          <p class="presion-fact-txt">acumulado en el salario mínimo en los últimos dos años</p>
+        </div>
+        <div class="presion-fact">
+          <p class="presion-fact-num">+52<span class="presion-fact-unit">%</span></p>
+          <p class="presion-fact-txt">impacto acumulado en el costo laboral</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 · EL ENGINE — pantalla completa, a dos columnas, usando todo el
+       ancho de la ventana (referencia: las páginas anexas, no el
+       contenedor centrado de 1080px que usan las demás secciones). La
+       rueda es la única fuente de los nombres de servicio: no se repiten
+       en una lista aparte. Titular al tamaño del hero (R5.8: el nombre
+       del sistema nunca va como texto plano — el lockup de arriba ya lo
+       muestra, el h2 solo continúa la frase). -->
+  <section class="engine-split" id="engine">
+    <div class="engine-col-text">
+      <header class="section-head reveal">
+        <p class="eyebrow eyebrow--lockup">
+          <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
+        </p>
+        <hr />
+      </header>
+      <h2 class="h2 engine-h2 reveal">El sistema que potencializa tu productividad y la convierte en una ventaja competitiva.</h2>
+    </div>
+    <div class="engine-col-wheel">
+      <div class="wheel-card" id="wheel-entry">
+        <EngineWheel fitHeight />
+      </div>
+    </div>
+  </section>
+
+  <!-- placa Edge Blue — cierre de la página principal. Texto centrado en
+       la misma cuadrícula de 1180px que usa "la presión" (max-width:1180
+       + margin:auto), con la tipografía (letter-spacing y line-height)
+       del h1 del hero y un relieve 3D vía gradiente — nunca box-shadow/
+       text-shadow, prohibidos por R3.2. -->
   <section class="plate" aria-label="Tu ventaja final">
     <p class="plate-text">Tu ventaja final<span class="plate-dot">.</span></p>
   </section>
+
+  <script>
+    /* Transición hero → rueda ligada al scroll (lenguaje cosmos.so):
+       el hero se eleva y desvanece; la rueda entra escalando y subiendo.
+       Mapeo posicional directo (sin easing: el scroll ES la línea de tiempo). */
+    function initCosmosScroll() {
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      const hero = document.querySelector('.hero-inner') as HTMLElement | null;
+      const card = document.getElementById('wheel-entry');
+      if (!hero && !card) return;
+      let ticking = false;
+      function update() {
+        ticking = false;
+        const vh = innerHeight || 800;
+        if (hero) {
+          const p = Math.min(1, scrollY / (vh * 0.9));
+          hero.style.transform = `translateY(${scrollY * 0.14}px)`;
+          hero.style.opacity = String(1 - p * 0.4);
+        }
+        if (card) {
+          const r = card.getBoundingClientRect();
+          const p = Math.min(1, Math.max(0, (vh - r.top) / (vh * 0.6)));
+          card.style.transform = `translateY(${(1 - p) * 48}px) scale(${0.94 + p * 0.06})`;
+          card.style.opacity = String(0.35 + p * 0.65);
+        }
+      }
+      addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(update);
+      }, { passive: true });
+      update();
+    }
+    initCosmosScroll();
+    document.addEventListener('astro:page-load', initCosmosScroll);
+  </script>
 </Base>
 
 <style>
+  /* el hero mantiene su peso completo (logotipo, titular, párrafo, dos
+     CTA) pero SIN el hueco muerto de ~150px que dejaba entre el nav y el
+     primer texto — el contenido arranca inmediatamente bajo el nav. */
+  /* fondo de video: cubre el hero entero, recortado sin distorsión
+     (object-fit:cover) y siempre detrás del velo + el texto. */
+  .hero {
+    position: relative;
+    padding: 48px 72px 64px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: calc(100vh - 92px);
+  }
+  .hero-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    filter: saturate(1.5) brightness(1.08);
+  }
+  /* velo oscuro UNIFORME: garantiza contraste de texto sin importar el
+     fotograma del video (pasa de campo claro al atardecer a foco
+     encendido en azul) — el texto está centrado en TODA la pantalla,
+     así que el oscurecimiento tiene que ser parejo, no solo detrás de
+     un bloque de texto en una esquina. Opacidad reducida a la mitad
+     (82% → 41%) para que el foco se vea más brillante. */
+  .hero-scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: color-mix(in srgb, var(--bg) 41%, transparent);
+  }
+  .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+  .hero-eyebrow { color: var(--fg); }
+  .hero-eyebrow-prompt { color: var(--silver); }
+  .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
+  .hero-h1 {
+    font-size: clamp(17px, 2.3vw, 32px);
+    font-weight: 600;
+    letter-spacing: -.03em;
+    line-height: 1.08;
+    color: var(--fg);
+  }
+  .hero-sub {
+    margin-top: 24px;
+    font-size: clamp(14px, 1.45vw, 19px);
+    letter-spacing: -.025em;
+    color: var(--fg);
+  }
+  /* franja "la presión" — mismo tratamiento full-bleed que .plate (placa
+     final): fondo Edge Blue sólido, contenido acotado y centrado, texto
+     en --on-accent (blanco) porque azul sobre azul no se leería. */
+  .presion-band { background: var(--accent); padding: 96px 72px; overflow: hidden; }
+  .presion-inner { max-width: 1180px; margin: 0 auto; }
+  .presion-h2 {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-ui);
+    font-weight: 600;
+    /* equivalente al lockup >_ FINAL EDGE [ENGINE] de la sección
+       siguiente (18px base × escala 1.6 = 28.8px) — antes crecía hasta
+       48px con el viewport y quedaba mucho más grande que ese logo. */
+    font-size: clamp(20px, 6vw, 29px);
+    letter-spacing: -.02em;
+    color: var(--on-accent);
+  }
+  /* >_ con relieve 3D real (R5.4: "siempre los PNG horneados, relieve 3D
+     intacto") — recorte exacto del símbolo de logo-mono-light.png, la
+     variante plata aprobada para fondos accent/void. Nunca CSS
+     box-shadow/text-shadow para simular volumen (R3.2 los prohíbe). La
+     altura sigue el font-size del heading (em), así se mantiene a la
+     altura de la "L" de "La" en cualquier tamaño de pantalla. */
+  .presion-prompt-img { height: 0.78em; width: auto; display: block; }
+  /* bloques con delimitación clara: misma retícula hairline que el
+     resto del sitio (gap:1px + fondo de línea), adaptada a superficie
+     accent — cada bloque es un rectángulo vertical con el número
+     centrado arriba del texto, nunca a la izquierda. */
+  .presion-facts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 56px;
+    background: color-mix(in srgb, var(--on-accent) 30%, transparent);
+    border: 1px solid color-mix(in srgb, var(--on-accent) 30%, transparent);
+  }
+  .presion-fact {
+    background: var(--accent);
+    padding: 40px 28px;
+    min-height: 240px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .presion-fact-num { font-size: clamp(28px, 3.2vw, 44px); font-weight: 600; letter-spacing: -.03em; color: var(--on-accent); white-space: nowrap; }
+  .presion-fact-unit { font-size: 0.55em; }
+  .presion-fact-arrow { display: inline-block; margin: 0 .2em; font-weight: 400; font-size: .7em; }
+  .presion-fact-txt { margin-top: 16px; font-size: var(--text-body); line-height: 1.5; color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
+
+  /* El Engine — pantalla completa a dos columnas, ancho real de la
+     ventana (no el contenedor de 1080px de .section), igual que las
+     referencias: texto corto a la izquierda, gráfico dominante a la
+     derecha, sangrado hacia el borde. La rueda se dimensiona a sí misma
+     en engine-wheel.js para NUNCA exceder el alto disponible de esta
+     fila — así siempre cabe entera en una sola pantalla. */
+  .engine-split {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+    align-items: center;
+    gap: 24px;
+    /* un poco más de aire arriba que abajo — empuja el contenido
+       ligeramente hacia abajo dentro de la sección, en vez de quedar
+       pegado justo debajo del nav. */
+    padding-top: 104px;
+    padding-bottom: 72px;
+    /* SIN max-width + margin:auto propio: eso centraba el bloque en su
+       PROPIA caja de 1800px, una referencia distinta a la que usa
+       .presion-inner (max-width:1180 dentro del padding de 72px de
+       .presion-band) — el texto arrancaba en una columna distinta Y la
+       rueda (sin tope a la derecha) se salía del ancho de esa misma
+       cuadrícula. padding-left y padding-right usan la MISMA fórmula
+       que el centrado de .presion-inner (72px de piso, o el margen que
+       le tocaría a una caja de 1180px centrada) — el área de contenido
+       resultante mide exactamente 1180px, igual que "la presión", así
+       que el borde derecho de la rueda (flex-end dentro de su columna)
+       coincide con el borde derecho real de esa cuadrícula. */
+    padding-left: max(72px, calc(50vw - 590px));
+    padding-right: max(72px, calc(50vw - 590px));
+  }
+  .engine-col-text { padding-right: 24px; }
+  /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
+     contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
+     text-transform: mayúsculas y minúsculas normales, como el copy. */
+  .engine-h2 { font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
+  .engine-col-wheel {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+    padding: 8px 16px 8px 0;
+  }
+  /* dentro del split, la rueda flota libre — sin el marco de "tarjeta"
+     (borde + fondo + padding) que usa en otras páginas: en las
+     referencias el gráfico sangra al borde, no vive dentro de una caja.
+     Alto FIJO (no 100%/100vh): con fitHeight, engine-wheel.js lee este
+     alto para limitar el tamaño de la rueda — un valor fijo la mantiene
+     legible (nombres de servicio a tamaño normal) sin depender de la
+     altura de la ventana ni desbordar la sección. */
+  .engine-col-wheel .wheel-card {
+    display: flex;
+    width: 100%;
+    max-width: 900px;
+    height: 720px;
+    align-items: center;
+    justify-content: flex-end;
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+  @media (max-width: 900px) {
+    .engine-split {
+      grid-template-columns: 1fr;
+      padding: 56px 24px;
+      gap: 32px;
+    }
+    .engine-col-text { padding-right: 0; }
+    .engine-col-wheel { justify-content: center; padding: 0; }
+    .engine-col-wheel .wheel-card { height: auto; max-width: 100%; }
+  }
+
+  /* placa Edge Blue de cierre — misma cuadrícula de 1180px que
+     .presion-inner (arriba), texto centrado dentro de ella. */
   .plate {
     background: var(--accent);
     padding: 120px 72px;
     overflow: hidden;
-    min-height: calc(100vh - 92px);
-    display: flex;
-    align-items: center;
   }
   .plate-text {
-    width: 100%;
     max-width: 1180px;
     margin: 0 auto;
     text-align: center;
@@ -46,7 +343,12 @@ import Base from '../layouts/Base.astro';
     -webkit-background-clip: text;
     color: transparent;
   }
+
   @media (max-width: 760px) {
+    .hero { padding: 32px 24px 48px; }
     .plate { padding: 88px 24px; }
+    .presion-band { padding: 64px 24px; }
+    .presion-facts { grid-template-columns: 1fr; margin-top: 40px; }
+    .presion-fact { min-height: 0; padding: 32px 24px; }
   }
 </style>
