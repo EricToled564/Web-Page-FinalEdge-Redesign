@@ -27,6 +27,13 @@ function fitAll() {
       const scale = Math.max(0.4, boxW / naturalW);
       el.style.transformOrigin = 'left top';
       el.style.transform = `scale(${scale})`;
+      /* bug real de navegador: un hijo con transform:scale() sigue
+         aportando su ancho ANTES de la escala al scrollWidth del
+         contenedor — visualmente no se nota nada (el lockup se ve bien
+         encogido), pero aparece scroll horizontal invisible en toda la
+         página. overflow:hidden en el padre inmediato lo recorta sin
+         cambiar nada visible (el contenido escalado ya cabe dentro). */
+      parent.style.overflow = 'hidden';
     }
   });
 }

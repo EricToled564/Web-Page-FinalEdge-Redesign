@@ -399,6 +399,11 @@ import LockupMark from '../components/LockupMark.astro';
     padding: 0;
   }
   @media (max-width: 900px) {
+    /* el scale(1.6) de .engine-lockup (pensado para el ancho amplio del
+       layout de escritorio) desbordaba la pantalla en móvil — hasta
+       228px fuera del viewport, forzando scroll horizontal en TODO el
+       sitio. En la columna angosta apilada, tamaño natural. */
+    .engine-lockup { transform: none; }
     .engine-split {
       grid-template-columns: 1fr;
       padding: 56px 24px;

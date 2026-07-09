@@ -34,7 +34,12 @@ a:hover { color: var(--fg); }
    Engine" como texto plano — el lockup real junto al sufijo opcional de
    numeración (R5.8, tools/brand-guard.mjs). */
 .eyebrow--lockup { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.eyebrow--lockup .lm { transform: none; }
+/* .eyebrow hereda text-transform:uppercase a todos sus hijos — el
+   lockup ("final edge", minúsculas, tal como está en el brand book)
+   lo heredaba también y se mostraba "FINAL EDGE" en pantalla aunque
+   el código dijera minúsculas. El lockup es una marca, nunca se
+   transforma como si fuera texto normal. */
+.eyebrow--lockup .lm { transform: none; text-transform: none; }
 .eyebrow--lockup .lm-wheel .lm-word { font-size: 15px; }
 .eyebrow--lockup span { font-size: var(--text-label); letter-spacing: .18em; color: var(--fg-muted); }
 
