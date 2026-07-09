@@ -99,7 +99,12 @@ const { compact = false, fitHeight = false } = Astro.props;
      ilegible (mismo color sobre mismo color). El fondo sólido garantiza
      contraste sin importar qué haya detrás — anillo, línea punteada o
      vacío — sin usar sombras (R3.2, prohibidas). */
-  .wl-band { font-size: 16px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
+  /* +25% respecto al tamaño anterior (16px) — pedido explícito de que
+     SOLO crezca el nombre de la fase. El label se posiciona con
+     translate(-50%,-50%) sobre su propio centro (ver projectLabels() en
+     engine-wheel.js), así que agrandarlo no mueve ni un solo punto de
+     la geometría 3D de la rueda. */
+  .wl-band { font-size: 20px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
 
   .wl-hub { width: 148px; }
 
