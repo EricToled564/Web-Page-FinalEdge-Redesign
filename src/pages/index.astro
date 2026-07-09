@@ -21,12 +21,12 @@ import LockupMark from '../components/LockupMark.astro';
     ></video>
     <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-inner">
-      <p class="eyebrow reveal">
-        <span class="prompt">&gt;_</span>inicializando ventaja<span class="cursor">▌</span>
+      <p class="eyebrow hero-eyebrow reveal">
+        <span class="prompt hero-eyebrow-prompt">&gt;_</span> Tu próxima ventaja competitiva<span class="cursor">▌</span>
       </p>
       <img
         class="hero-logo reveal"
-        src="/assets/logos/logo-finaledge.png"
+        src="/assets/logos/logo-mono-light.png"
         alt="final edge [AI]"
         width="300"
       />
@@ -281,6 +281,7 @@ import LockupMark from '../components/LockupMark.astro';
     background: color-mix(in srgb, var(--bg) 41%, transparent);
   }
   .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+  .hero-eyebrow-prompt { color: var(--silver); }
   .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
   .hero-h1 {
     font-size: clamp(17px, 2.3vw, 32px);
@@ -293,7 +294,7 @@ import LockupMark from '../components/LockupMark.astro';
     margin-top: 24px;
     font-size: clamp(14px, 1.45vw, 19px);
     letter-spacing: -.025em;
-    color: var(--accent);
+    color: var(--fg);
   }
   /* franja "la presión" — mismo tratamiento full-bleed que .plate (placa
      final): fondo Edge Blue sólido, contenido acotado y centrado, texto
