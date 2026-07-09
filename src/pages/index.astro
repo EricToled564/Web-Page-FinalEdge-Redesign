@@ -360,7 +360,10 @@ import LockupMark from '../components/LockupMark.astro';
   .engine-lockup { transform: scale(1.6); transform-origin: left top; margin-bottom: 4px; }
   /* titular al mismo tamaño que el h1 del hero (clamp 17–32px), no el
      --text-h2 genérico (36–56px) que usan las demás secciones. */
-  .engine-h2 { font-size: clamp(17px, 2.3vw, 32px); margin-top: 20px; }
+  /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
+     contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
+     text-transform: mayúsculas y minúsculas normales, como el copy. */
+  .engine-h2 { font-size: clamp(14px, 1.45vw, 19px); letter-spacing: -.025em; margin-top: 20px; }
   .engine-col-wheel {
     display: flex;
     align-items: center;
