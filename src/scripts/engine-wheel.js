@@ -29,7 +29,19 @@ const BAND_DEPTH = 34; // extrusión de la banda
 const HOVER_LIFT_Z = 130;   // avance hacia la cámara
 const HOVER_OUT = 50;       // salida radial (alejándose del centro)
 const HOVER_SCALE = 0.24;   // +24% de tamaño
-const HOVER_GLOW = 1.1;     // brillo extra sobre el brillo base
+const HOVER_GLOW = 1.1;     // brillo extra sobre el brillo base (SOLO sectores)
+/* las bandas son un arco de ~120°, mucho más área de pantalla que un
+   sector individual — el mismo HOVER_GLOW que en un sector se ve
+   "99% igloo" ahí, en una banda el bloom real (UnrealBloomPass) cubre
+   tanto pixel brillante que se come el arco entero y se derrama sobre
+   el resto de la escena (se vio en captura: un borrón amarillo que
+   tapaba hasta las etiquetas). Las bandas piden un glow de color
+   NOTORIO pero controlado (nunca el mismo movimiento que un sector,
+   piden explícitamente que no se muevan), así que usan su propio techo,
+   mucho más bajo, para que el arco se ilumine sin saturar el cuadro. */
+const BAND_HOVER_GLOW = 0.32;
+const GLOW_MAX_OPACITY = 0.85; // opacidad máxima del sprite de luz derramada
+const BAND_GLOW_MAX_OPACITY = 0.4;
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -124,6 +136,39 @@ function outline(ri, ro, a0deg, a1deg, hex, opacity, z) {
   return line;
 }
 
+/* malla PLANA e INVISIBLE, solo para raycasting — nunca se mueve, nunca
+   se dibuja. El hover movía la pieza VISIBLE (fill) y also raycasteaba
+   contra esa misma pieza: en cuanto se desplazaba lo suficiente (que es
+   justo el pedido de "que se note"), el rayo del mouse dejaba de
+   tocarla, el hover se apagaba, la pieza volvía a su lugar, el rayo
+   volvía a tocarla, el hover se prendía de nuevo — un ciclo de
+   retroalimentación que se ve como temblor. Esta malla queda fija en la
+   posición de reposo (z=0, la de ExtrudeGeometry antes de cualquier
+   transform) mientras la visible es libre de moverse. */
+function hitProxy(shape) {
+  const geo = new THREE.ShapeGeometry(shape);
+  const mat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false, colorWrite: false });
+  return new THREE.Mesh(geo, mat);
+}
+
+/* textura de degradado radial (blanco centro → transparente borde) para
+   los sprites de resplandor — un solo canvas, reutilizado por las 9
+   piezas vía CanvasTexture, nunca regenerado por pieza. */
+function glowTexture() {
+  const size = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+  g.addColorStop(0, 'rgba(255,255,255,1)');
+  g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
 const routeState = () => {
   const path = location.pathname.replace(/\/+$/, '') + '/';
   const edge = EDGES.find((e) => e.slug === path);
@@ -179,31 +224,66 @@ class EngineWheel {
     this.rig.add(this.wheel);
 
     this.parts = { sectors: {}, bands: {}, hub: null };
+    this.glowTex = glowTexture();
+
+    /* sprite de resplandor por pieza — luz de color propio "derramándose"
+       detrás/debajo del bloque activo (referencia igloo.inc: los bloques
+       iluminados bañan de luz la nieve/los bloques vecinos, no solo
+       brillan ellos mismos). Aditivo (se suma a lo que hay detrás, nunca
+       tapa) y con blend "screen"-like vía AdditiveBlending — no es texto
+       ni relleno de marca, así que no lo alcanza R1.1/R6.1; es luz, no
+       color de superficie. Hijo del propio grupo: se mueve/escala solo
+       con hoverLift(), sin lógica de posición aparte. depthWrite:false
+       para que nunca "tape" al resto de la rueda por z-fighting. */
+    function makeGlow(color, tex) {
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+        map: tex, color, transparent: true, opacity: 0,
+        blending: THREE.AdditiveBlending, depthWrite: false, depthTest: true,
+      }));
+      spr.scale.set(1, 1, 1);
+      spr.position.set(0, -18, -46); // detrás (−Z) y hacia abajo (−Y local)
+      spr.renderOrder = -1;
+      return spr;
+    }
 
     for (const edge of EDGES) {
       const phase = PHASES.find((p) => p.id === edge.phase);
       const a0 = edge.angle - 26, a1 = edge.angle + 26; // 60° − 4° de gap
+      const shape = donutShape(96, 232, a0, a1);
       const g = new THREE.Group();
-      const fill = volumeMesh(donutShape(96, 232, a0, a1), DEPTH, { grad: GRADS[phase.id] });
+      const fill = volumeMesh(shape, DEPTH, { grad: GRADS[phase.id] });
       const rim = outline(96, 232, a0, a1, phase.color, 0.85, DEPTH / 2 + 1);
-      g.add(fill, rim);
-      g.userData = { kind: 'sector', edge, fill, rim };
+      const glowSprite = makeGlow(phase.color, this.glowTex);
+      glowSprite.scale.set(260, 260, 1);
+      g.add(fill, rim, glowSprite);
+      g.userData = { kind: 'sector', edge, fill, rim, glowSprite };
       fill.userData = g.userData;
       this.wheel.add(g);
       this.parts.sectors[edge.id] = g;
+      const hit = hitProxy(shape);
+      hit.userData = { group: g };
+      this.wheel.add(hit);
+      g.userData.hit = hit;
       this.addAnchor('edge-' + edge.id, posAt(edge.angle, 168).setZ(DEPTH / 2 + 2), g);
     }
 
     for (const phase of PHASES) {
       const a0 = phase.startAngle + 5, a1 = phase.startAngle + 115; // 120° − 5° de gap
+      const shape = donutShape(248, 278, a0, a1);
       const g = new THREE.Group();
-      const fill = volumeMesh(donutShape(248, 278, a0, a1), BAND_DEPTH, { solid: phase.color });
+      const fill = volumeMesh(shape, BAND_DEPTH, { solid: phase.color });
       const rim = outline(248, 278, a0, a1, phase.color, 0.7, BAND_DEPTH / 2 + 1);
-      g.add(fill, rim);
-      g.userData = { kind: 'band', phase, fill, rim };
+      const glowSprite = makeGlow(phase.color, this.glowTex);
+      glowSprite.scale.set(320, 320, 1);
+      g.add(fill, rim, glowSprite);
+      g.userData = { kind: 'band', phase, fill, rim, glowSprite };
       fill.userData = g.userData;
       this.wheel.add(g);
       this.parts.bands[phase.id] = g;
+      const hit = hitProxy(shape);
+      hit.userData = { group: g };
+      this.wheel.add(hit);
+      g.userData.hit = hit;
       const center = phase.startAngle + 60;
       /* mismo radio para las 3: el anillo de fase termina en radio 278
          (donutShape(248,278,...) más arriba), así que 296 deja ~18
@@ -299,44 +379,71 @@ class EngineWheel {
   }
 
   /* materiales de un grupo: opacidad + brillo conservando color base */
-  setLook(group, { op, glow }) {
-    const { fill, rim, kind } = group.userData;
-    const mats = Array.isArray(fill.material) ? fill.material : [fill.material];
-    if (!group.userData.base) group.userData.base = mats.map((m) => m.color.clone());
-    mats.forEach((m, i) => {
-      m.opacity = op;
-      m.color.copy(group.userData.base[i]).multiplyScalar(1 + glow);
-    });
-    const rimOp = op * (kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1);
-    rim.material.opacity = rimOp;
-    /* el trazo (rim) es la parte brillante de cada pieza — el relleno de
-       los SECTORES es a propósito un gradiente oscuro (look de marca,
-       R6.1), así que subirle el brillo ahí casi no se nota y nunca
-       cruza el umbral del bloom. El "glow" de hover tiene que subir
-       también el color del trazo, si no, hover nunca produce el halo. */
-    if (!rim.userData.baseColor) rim.userData.baseColor = rim.material.color.clone();
-    rim.material.color.copy(rim.userData.baseColor).multiplyScalar(1 + glow);
-    /* el "aliento" ambiental (ver breathe()) multiplica sobre esta base
-       cada cuadro — sin guardarla, cada multiplicación se acumularía
-       sobre el valor ya modulado del cuadro anterior y el brillo
-       decaería o crecería sin control. */
-    if (kind === 'sector' || kind === 'band') rim.userData.baseOp = rimOp;
-    group.userData.glow = glow;
+  /* setLook SOLO guarda la intención (opacidad/brillo de interacción —
+     hover, foco de fase/servicio, tweens de apply()); paintAll() es
+     quien de verdad escribe en los materiales, UNA vez por cuadro,
+     combinando esa intención con el pulso ambiental y el oscurecido de
+     "otra fase en foco" — repartir esas tres cosas en varios métodos
+     que cada uno escribe directo al material (como antes) lleva a que
+     el último en correr pise a los demás. */
+  /* rimGlow es DISTINTO de glow a propósito: glow (relleno) lo usan
+     tanto el hover como el foco de fase/servicio al navegar (targetsFor,
+     valores 0.35/0.55/0.65 ya calibrados desde antes de esta sesión).
+     rimGlow (trazo) es SOLO del hover — si el trazo también subiera de
+     color con el glow de navegación, esos mismos valores (pensados para
+     un simple cambio de opacidad, sin bloom) ahora cruzarían el umbral
+     de bloom igual que el hover y la página de un servicio individual
+     (rueda ya enfocada/ampliada en esa pieza) se vería como una esfera
+     brillante irreconocible en vez del gajo real — pasó, se detectó en
+     capturas y se corrigió separando esto. */
+  setLook(group, { op, glow, rimGlow = 0 }) {
+    group.userData.opBase = op;
+    group.userData.glowBase = glow;
+    group.userData.rimGlowBase = rimGlow;
     group.visible = op > 0.01;
   }
 
-  /* pulso ambiental continuo — referencia real: el anillo fragmentado de
-     igloo.inc "respira" (el brillo del filo sube y baja en ciclo) aun en
-     reposo, no solo al hacer click (eso ya lo cubre pulseBurst). Sube y
-     baja la opacidad del TRAZO (rim) de cada bloque — nunca el color de
-     relleno, que son los tonos canónicos del brand book (R6.1) — con la
-     misma curva de una sola velocidad en toda la rueda, nunca cada
-     bloque por separado (eso leería como parpadeo aleatorio, no como
-     un único objeto respirando). */
-  breathe(group, k) {
-    const rim = group.userData.rim;
-    if (rim.userData.baseOp == null) return;
-    rim.material.opacity = rim.userData.baseOp * k;
+  /* pinta los materiales reales de TODOS los sectores/bandas, una vez
+     por cuadro, combinando tres capas sobre la intención (opBase/glowBase
+     de setLook):
+       · aliento ambiental (breath) — el trazo respira aun en reposo
+         (referencia igloo.inc), nunca el color de relleno (R6.1).
+       · brillo de interacción (glowBase en el relleno, rimGlowBase en el
+         trazo — ver nota arriba de por qué van separados).
+       · oscurecido de fase — al pasar el mouse sobre una BANDA (fase),
+         todo lo que no sea de esa fase (las otras 2 bandas + sus
+         sectores) se atenúa; nunca al pasar sobre un SECTOR (servicio),
+         que no oscurece al resto. */
+  paintAll(breath) {
+    const hoveredPhase = this.hover?.userData.kind === 'band' ? this.hover.userData.phase.id : null;
+    const groups = [...Object.values(this.parts.sectors), ...Object.values(this.parts.bands), this.parts.hub];
+    for (const g of groups) {
+      const { fill, rim, kind } = g.userData;
+      const op = g.userData.opBase ?? 1;
+      const glow = g.userData.glowBase ?? 0;
+
+      const belongs = kind === 'hub' || !hoveredPhase || (kind === 'band' ? g.userData.phase.id === hoveredPhase : g.userData.edge.phase === hoveredPhase);
+      const dimTarget = hoveredPhase && !belongs ? 1 : 0;
+      const dimCur = g.userData.dimT ?? 0;
+      const dimNext = dimCur + (dimTarget - dimCur) * 0.12;
+      g.userData.dimT = dimNext;
+      const dim = 1 - dimNext * 0.65;
+
+      const mats = Array.isArray(fill.material) ? fill.material : [fill.material];
+      if (!g.userData.base) g.userData.base = mats.map((m) => m.color.clone());
+      mats.forEach((m, i) => {
+        m.opacity = op * dim;
+        m.color.copy(g.userData.base[i]).multiplyScalar(1 + glow);
+      });
+
+      const rimGlow = g.userData.rimGlowBase ?? 0;
+      const rimBase = kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1;
+      rim.material.opacity = op * rimBase * breath * dim;
+      if (!rim.userData.baseColor) rim.userData.baseColor = rim.material.color.clone();
+      rim.material.color.copy(rim.userData.baseColor).multiplyScalar(1 + rimGlow);
+
+      g.visible = op > 0.01;
+    }
   }
 
   bind() {
@@ -505,6 +612,22 @@ class EngineWheel {
 
   apply(state, instant, done) {
     this.state = state;
+    /* hover (mover/iluminar al pasar el mouse) es EXCLUSIVO del modo
+       'full' (rueda completa, home) — 'phase'/'service' tienen su
+       propio zoom/encuadre y nunca pidieron reacción de hover. Sin este
+       reset, un hover que quedó activo justo antes de navegar (o el
+       raycast por defecto en el centro del canvas, ver pick()) se
+       congelaba en su valor — sprite de luz al 85% incluido — y quedaba
+       pegado sobre la pieza ya enfocada/ampliada por el zoom de esas
+       páginas, viéndose como una esfera brillante en vez del gajo real. */
+    if (state.mode !== 'full') {
+      this.hover = null;
+      const groups = [...Object.values(this.parts.sectors), ...Object.values(this.parts.bands)];
+      for (const g of groups) {
+        g.userData.hoverT = 0;
+        if (g.userData.glowSprite) g.userData.glowSprite.material.opacity = 0;
+      }
+    }
     this.root.dataset.mode = state.mode;
     this.root.dataset.focus = state.mode === 'phase' ? state.phase.id : state.mode === 'service' ? state.edge.id : '';
     const t = this.targetsFor(state);
@@ -610,8 +733,13 @@ class EngineWheel {
        color de la rueda (necesita separarse del anillo) y nunca se
        corta contra el borde (necesita quedar dentro del recorte). Sin
        este margen ambos requisitos compiten por los mismos pocos
-       píxeles. */
-    const BUFFER = 26;
+       píxeles. Subido de 26 a 70: con el desprendimiento agresivo de
+       hover (HOVER_OUT/HOVER_LIFT_Z/HOVER_SCALE) ya arreglado el
+       temblor, el sector SÍ llega y se queda en su desplazamiento
+       máximo — medido hasta 32px de excedente real en los edges
+       laterales (90°/270°); antes el bug del temblor lo cortaba a
+       mitad de camino y este desborde nunca se veía. */
+    const BUFFER = 70;
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
     const refW = compact ? 620 : 820;
@@ -705,23 +833,29 @@ class EngineWheel {
   pick() {
     if (!this.pointer) return;
     this.raycaster.setFromCamera(this.pointer, this.camera);
-    const fills = [];
-    for (const id in this.parts.sectors) fills.push(this.parts.sectors[id].userData.fill);
-    for (const id in this.parts.bands) fills.push(this.parts.bands[id].userData.fill);
+    /* raycastea contra las mallas planas ESTÁTICAS (hit), nunca contra
+       las piezas visibles (fill) — esas las mueve hoverLift() cada
+       cuadro; detectar hover contra un blanco que el propio hover
+       desplaza es un ciclo de retroalimentación (se ve como temblor:
+       toca → se mueve → deja de tocar → vuelve → vuelve a tocar…). */
+    const targets = [];
+    for (const id in this.parts.sectors) targets.push(this.parts.sectors[id].userData.hit);
+    for (const id in this.parts.bands) targets.push(this.parts.bands[id].userData.hit);
     const hits = this.raycaster
-      .intersectObjects(fills, false)
-      .filter((h) => {
-        const m = Array.isArray(h.object.material) ? h.object.material[0] : h.object.material;
-        return h.object.parent.visible && m.opacity > 0.5;
-      });
-    const top = hits[0]?.object.parent ?? null;
+      .intersectObjects(targets, false)
+      .filter((h) => h.object.userData.group.visible);
+    const top = hits[0]?.object.userData.group ?? null;
     if (top !== this.hover) {
       const st = this.targetsFor(this.state).items;
+      const opOf = (g) => st.get(g)?.op ?? 1;
       const glowOf = (g) => st.get(g)?.glow ?? 0;
-      const opOf = (g) => (Array.isArray(g.userData.fill.material) ? g.userData.fill.material[0] : g.userData.fill.material).opacity;
       if (this.hover) this.setLook(this.hover, { op: opOf(this.hover), glow: glowOf(this.hover) });
       this.hover = top;
-      if (top) this.setLook(top, { op: opOf(top), glow: glowOf(top) + HOVER_GLOW });
+      if (top) {
+        const isBand = top.userData.kind === 'band';
+        const g = isBand ? BAND_HOVER_GLOW : HOVER_GLOW;
+        this.setLook(top, { op: opOf(top), glow: glowOf(top) + g, rimGlow: g });
+      }
       this.canvas.style.cursor = top ? 'pointer' : 'default';
     }
   }
@@ -749,24 +883,31 @@ class EngineWheel {
          por cuadro se nota más si el frame rate varía. */
       const next = cur + (target - cur) * (1 - Math.pow(0.00005, dt));
       g.userData.hoverT = next;
-      const restZ = g.userData.restZ ?? g.position.z;
-      const restX = g.userData.restX ?? g.position.x;
-      const restY = g.userData.restY ?? g.position.y;
-      /* salida radial (alejándose del centro, en su propio eje) + avance
-         hacia cámara + crecimiento — un solo eje (Z) apenas se nota a la
-         distancia de cámara de esta escena; los tres juntos sí leen
-         como "el bloque se despega", igual que la referencia. */
-      const dir = g.userData.edge
-        ? posAt(g.userData.edge.angle, 1)
-        : g.userData.phase
-          ? posAt(g.userData.phase.startAngle + 60, 1)
-          : new THREE.Vector3(0, 0, 0);
-      g.position.set(
-        restX + dir.x * next * HOVER_OUT,
-        restY + dir.y * next * HOVER_OUT,
-        restZ + next * HOVER_LIFT_Z
-      );
-      g.scale.setScalar(1 + next * HOVER_SCALE);
+      /* pedido explícito del cliente: los arcos de FASE (bandas) y sus
+         nombres NUNCA se mueven de lugar — solo brillan (paintAll ya lo
+         cubre vía glowBase) y apagan al resto de la rueda (dim, también
+         en paintAll). El desprendimiento físico (salida + avance +
+         escala) es EXCLUSIVO de los segmentos de SERVICIO (sectores). */
+      if (g.userData.kind === 'sector') {
+        const restZ = g.userData.restZ ?? g.position.z;
+        const restX = g.userData.restX ?? g.position.x;
+        const restY = g.userData.restY ?? g.position.y;
+        const dir = posAt(g.userData.edge.angle, 1);
+        g.position.set(
+          restX + dir.x * next * HOVER_OUT,
+          restY + dir.y * next * HOVER_OUT,
+          restZ + next * HOVER_LIFT_Z
+        );
+        g.scale.setScalar(1 + next * HOVER_SCALE);
+      }
+      /* luz que se derrama detrás/debajo del bloque activo (referencia
+         igloo.inc) — para sectores Y bandas por igual (a la banda le
+         toca "un efecto de glow en el color de la fase", pedido
+         explícito, sin moverse). Mismo hoverT que ya se calculó arriba. */
+      if (g.userData.glowSprite) {
+        const cap = g.userData.kind === 'band' ? BAND_GLOW_MAX_OPACITY : GLOW_MAX_OPACITY;
+        g.userData.glowSprite.material.opacity = next * cap;
+      }
     }
   }
 
@@ -794,26 +935,35 @@ class EngineWheel {
         const target = this.stateRot + this.scrollRot();
         this.wheel.rotation.z += (target - this.wheel.rotation.z) * 0.08;
       }
-      /* pulso ambiental — DESPUÉS de tw.step()/pick() (que ya corrieron
-         setLook y fijaron rim.userData.baseOp para este cuadro), así el
-         "aliento" siempre multiplica sobre el valor recién calculado,
-         nunca sobre uno viejo de un cuadro anterior. Ciclo de ~3.9s,
-         misma curva para toda la rueda (nunca cada bloque por separado). */
-      /* techo bajado a 0.82 (antes llegaba a 1.0, el mismo brillo de
-         reposo pleno): con el bloom nuevo, tocar el 100% de opacidad en
-         el pico de la respiración alcanzaba a cruzar el umbral por sí
-         solo y producía destellos sin que nadie tocara nada — deja
-         margen real para que SOLO el brillo explícito de hover cruce. */
-      const breath = 0.63 + 0.19 * Math.sin(now * 0.0016);
-      for (const id in this.parts.sectors) this.breathe(this.parts.sectors[id], breath);
-      for (const id in this.parts.bands) this.breathe(this.parts.bands[id], breath);
     }
-    if (!this.tweens.length) {
+    if (!this.tweens.length && this.state?.mode === 'full') {
       this.pick();
       this.hoverLift(now);
     }
+    /* pulso ambiental — techo bajado a 0.82 (antes llegaba a 1.0, el
+       mismo brillo de reposo pleno): con el bloom, tocar el 100% en el
+       pico de la respiración alcanzaba a cruzar el umbral por sí solo y
+       producía destellos sin que nadie tocara nada — deja margen real
+       para que SOLO el brillo explícito de hover cruce. Ciclo de ~3.9s,
+       misma curva para toda la rueda (nunca cada bloque por separado).
+       Bajo prefers-reduced-motion no respira (queda fijo en su techo). */
+    const breath = REDUCED ? 0.82 : 0.63 + 0.19 * Math.sin(now * 0.0016);
+    /* paintAll SIEMPRE al final, después de pick()/hoverLift() (que
+       fijan this.hover/opBase/glowBase para este cuadro) — es la única
+       pasada que de verdad escribe en los materiales, así nunca hay dos
+       pasadas peleándose por el mismo valor. */
+    this.paintAll(breath);
     this.projectLabels();
-    if (this.composer) this.composer.render();
+    /* el bloom SOLO corre en modo 'full' (rueda completa, home): es la
+       reacción de hover "99% igloo" que pidió el cliente ahí. En modo
+       'phase'/'service' la cámara encuadra en close-up UNA sola pieza
+       (llena casi toda la pantalla) — el mismo bloom, pensado para una
+       cuña chica dentro de la rueda entera, sobre ese encuadre cercano
+       se veía como una esfera/borrón que se comía la forma real (se
+       detectó en captura al verificar la página de un servicio). Esas
+       páginas nunca pidieron el efecto igloo, así que ahí se renderiza
+       sin post-proceso, como siempre antes de esta sesión. */
+    if (this.composer && this.state?.mode === 'full') this.composer.render();
     else this.renderer.render(this.scene, this.camera);
   }
 }
