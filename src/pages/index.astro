@@ -84,7 +84,7 @@ import LockupMark from '../components/LockupMark.astro';
     </div>
     <div class="engine-col-wheel">
       <div class="wheel-card" id="wheel-entry">
-        <EngineWheel fitHeight />
+        <EngineWheel />
       </div>
     </div>
   </section>
@@ -339,14 +339,20 @@ import LockupMark from '../components/LockupMark.astro';
     grid-template-columns: minmax(280px, 420px) 1fr;
     align-items: center;
     gap: 24px;
-    padding: 16px 72px 16px 72px;
-    min-height: calc(100vh - 92px);
+    padding: 88px 72px;
+    /* SIN min-height:100vh: esa altura exacta de pantalla completa
+       obligaba a hacer scroll al pixel exacto donde empieza la sección
+       para verla completa — cualquier desvío de scroll mostraba una
+       porción desplazada (la rueda SÍ centrada dentro de la sección
+       real, pero no dentro de lo que alcanzaba a verse en pantalla).
+       Con alto por contenido + padding fijo, la sección completa cabe
+       holgadamente sin depender de un punto de scroll exacto. */
     /* mucho más ancho que el contenedor de 1080px de las demás
        secciones (así se diferencia y la rueda tiene espacio real para
        dominar), pero SIGUE acotado y centrado — sin este tope, en
        pantallas anchas el texto quedaba pegado al margen izquierdo del
-       nav mientras la rueda (limitada por el alto disponible, no por el
-       ancho) flotaba lejos a la derecha con un vacío enorme en medio. */
+       nav mientras la rueda flotaba lejos a la derecha con un vacío
+       enorme en medio. */
     max-width: 1800px;
     margin: 0 auto;
   }
@@ -363,8 +369,6 @@ import LockupMark from '../components/LockupMark.astro';
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    height: 100%;
-    min-height: 0;
     min-width: 0;
     padding: 8px 16px 8px 0;
   }
@@ -384,12 +388,11 @@ import LockupMark from '../components/LockupMark.astro';
   @media (max-width: 900px) {
     .engine-split {
       grid-template-columns: 1fr;
-      min-height: auto;
       padding: 56px 24px;
       gap: 32px;
     }
     .engine-col-text { padding-right: 0; }
-    .engine-col-wheel { justify-content: center; padding: 0; height: auto; }
+    .engine-col-wheel { justify-content: center; padding: 0; }
   }
 
   .val-steps { list-style: none; margin-top: 28px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
