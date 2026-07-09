@@ -22,7 +22,7 @@ import LockupMark from '../components/LockupMark.astro';
     <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-inner">
       <p class="eyebrow hero-eyebrow reveal">
-        <span class="prompt hero-eyebrow-prompt">&gt;_</span> Tu próxima ventaja competitiva<span class="cursor">▌</span>
+        <span class="prompt hero-eyebrow-prompt">&gt;_</span> Tu ventaja definitiva<span class="cursor">▌</span>
       </p>
       <img
         class="hero-logo reveal"
@@ -95,16 +95,21 @@ import LockupMark from '../components/LockupMark.astro';
        CSS-simulado): el texto se generó como un asset real con bisel +
        iluminación calculada (tools/plate-3d — ver script fuente en el
        historial de commits), no con box-shadow/text-shadow (R3.2).
-       Centrado en la misma cuadrícula de 1180px que usa "la presión". -->
-  <section class="plate" aria-label="Tu ventaja final">
+       Centrado en la misma cuadrícula de 1180px que usa "la presión".
+       Al entrar en pantalla se revela pixel por pixel (plate-pixel-
+       reveal.js) — estilo videojuego vintage, saltos discretos por
+       celda, no una curva de easing suave. -->
+  <section class="plate" aria-label="Tu ventaja definitiva">
     <div class="plate-scene">
-      <img
-        class="plate-img"
-        src="/assets/plate-3d.png"
-        width="7406"
-        height="1225"
-        alt="Tu ventaja final."
-      />
+      <span class="plate-img-wrap">
+        <img
+          class="plate-img"
+          src="/assets/plate-3d.png"
+          width="9396"
+          height="1225"
+          alt="Tu ventaja definitiva."
+        />
+      </span>
     </div>
   </section>
 
@@ -142,6 +147,9 @@ import LockupMark from '../components/LockupMark.astro';
     }
     initCosmosScroll();
     document.addEventListener('astro:page-load', initCosmosScroll);
+  </script>
+  <script>
+    import '../scripts/plate-pixel-reveal.js';
   </script>
 </Base>
 
@@ -340,13 +348,21 @@ import LockupMark from '../components/LockupMark.astro';
     margin: 0 auto;
     text-align: center;
   }
+  /* envoltura al tamaño exacto de la imagen (inline-block se ajusta al
+     contenido) — el canvas del revelado pixel por pixel se posiciona
+     dentro de esta caja, nunca de .plate-scene (que ocupa todo el ancho
+     del grid, no el tamaño real de la imagen). */
+  .plate-img-wrap { position: relative; display: inline-block; }
   .plate-img {
-    display: inline-block;
-    /* +50% respecto al tamaño anterior (pedido explícito) */
-    width: calc(var(--text-plate) * 9.0686);
+    display: block;
+    width: calc(var(--text-plate) * 11.5053);
     max-width: 100%;
     height: auto;
   }
+  /* cuadrícula de bloques que cubre la imagen y se va borrando celda a
+     celda (plate-pixel-reveal.js) — mismo azul que el fondo, así que
+     hasta que el JS actúa, se ve exactamente igual que el fondo liso. */
+  .plate-cover { position: absolute; inset: 0; pointer-events: none; }
 
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
