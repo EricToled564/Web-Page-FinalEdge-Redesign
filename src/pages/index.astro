@@ -44,7 +44,10 @@ import LockupMark from '../components/LockupMark.astro';
        la "L" de "La", nunca más chico. -->
   <section class="presion-band" id="presion">
     <div class="presion-inner">
-      <p class="presion-h2 reveal"><span class="presion-prompt">&gt;_</span> La Presión</p>
+      <p class="presion-h2 reveal">
+        <img class="presion-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
+        La Presión
+      </p>
       <div class="presion-facts reveal">
         <div class="presion-fact">
           <p class="presion-fact-num">48<span class="presion-fact-arrow">→</span>40</p>
@@ -304,7 +307,7 @@ import LockupMark from '../components/LockupMark.astro';
   .presion-inner { max-width: 1180px; margin: 0 auto; }
   .presion-h2 {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 14px;
     font-family: var(--font-ui);
     font-weight: 600;
@@ -312,10 +315,13 @@ import LockupMark from '../components/LockupMark.astro';
     letter-spacing: -.02em;
     color: var(--on-accent);
   }
-  /* el >_ NO tiene font-size propio: hereda el de .presion-h2, así queda
-     exactamente a la altura de la "L" de "La" — nunca más chico. Color
-     plata para diferenciarlo del resto del heading. */
-  .presion-prompt { color: var(--silver); }
+  /* >_ con relieve 3D real (R5.4: "siempre los PNG horneados, relieve 3D
+     intacto") — recorte exacto del símbolo de logo-mono-light.png, la
+     variante plata aprobada para fondos accent/void. Nunca CSS
+     box-shadow/text-shadow para simular volumen (R3.2 los prohíbe). La
+     altura sigue el font-size del heading (em), así se mantiene a la
+     altura de la "L" de "La" en cualquier tamaño de pantalla. */
+  .presion-prompt-img { height: 0.78em; width: auto; display: block; }
   /* bloques con delimitación clara: misma retícula hairline que el
      resto del sitio (gap:1px + fondo de línea), adaptada a superficie
      accent — cada bloque es un rectángulo vertical con el número
