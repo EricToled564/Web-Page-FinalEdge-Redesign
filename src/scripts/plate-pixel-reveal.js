@@ -4,18 +4,23 @@
  * cuadrícula de bloques sólidos del mismo azul que el fondo, y los va
  * borrando en orden aleatorio (sin easing suave: son saltos discretos,
  * cuadro a cuadro, como un dissolve de 8-bit) hasta dejar la imagen
- * horneada al descubierto. Sin box-shadow/text-shadow (R3.2); el único
- * color usado es --accent, ya un token existente (R1.1).
+ * horneada al descubierto — y luego los vuelve a pintar para repetir el
+ * ciclo EN LOOP mientras la sección esté en pantalla. Sin box-shadow/
+ * text-shadow (R3.2); el único color usado es --accent, ya un token
+ * existente (R1.1).
  *
  * La cobertura se pinta de inmediato al montar (no al hacer scroll): si
  * se espera a la intersección para recién ahí dibujar el canvas, la
  * imagen real queda visible sin nada encima desde que carga la página
  * — no hay nada que "revelar" cuando el usuario llega a la sección. El
- * IntersectionObserver solo dispara el BORRADO progresivo, nunca la
- * cobertura inicial.
+ * IntersectionObserver solo arranca/pausa el loop (se congela fuera de
+ * pantalla para no gastar batería de más).
  */
 const CELL = 14; // px de cuadrícula, a resolución de pantalla (no de imagen)
-const DURATION = 1100;
+const REVEAL_MS = 1100;
+const HOLD_MS = 1700; // texto completo, legible, antes de re-cubrirse
+const COVER_MS = 700; // re-cubrir es más rápido que revelar
+const GAP_MS = 250; // pausa cubierta antes de volver a revelar
 
 function setup(img) {
   if (img.dataset.pixelRevealDone) return;
@@ -44,80 +49,120 @@ function setup(img) {
 
   let cells = [];
   let ctx;
-  let started = false;
+  let w = 0, h = 0;
 
-  function cover() {
+  function layout() {
     const r = img.getBoundingClientRect();
-    const w = Math.round(r.width);
-    const h = Math.round(r.height);
-    if (!w || !h) return false;
+    const nw = Math.round(r.width);
+    const nh = Math.round(r.height);
+    if (!nw || !nh) return false;
+    w = nw; h = nh;
     canvas.width = w;
     canvas.height = h;
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     ctx = canvas.getContext('2d');
-    ctx.fillStyle = accent;
-    ctx.fillRect(0, 0, w, h);
-    cells = [];
     const cols = Math.ceil(w / CELL);
     const rows = Math.ceil(h / CELL);
+    cells = [];
     for (let cy = 0; cy < rows; cy++) {
       for (let cx = 0; cx < cols; cx++) {
-        cells.push({ x: cx * CELL, y: cy * CELL, t: Math.random() });
+        cells.push({ x: cx * CELL, y: cy * CELL });
       }
     }
-    cells.sort((a, b) => a.t - b.t);
     return true;
   }
 
+  function shuffle() {
+    for (let i = cells.length - 1; i > 0; i--) {
+      const j = (Math.random() * (i + 1)) | 0;
+      [cells[i], cells[j]] = [cells[j], cells[i]];
+    }
+  }
+
+  function fillAll() {
+    ctx.fillStyle = accent;
+    ctx.fillRect(0, 0, w, h);
+  }
+
   // cobertura inmediata — antes de cualquier scroll o intersección.
-  let covered = cover();
-  if (!covered) {
-    // la imagen todavía no tiene tamaño de layout (ej. fuentes/CSS sin
-    // resolver todavía) — reintenta en el próximo frame.
-    requestAnimationFrame(() => { covered = cover(); });
+  let ready = layout();
+  if (ready) fillAll();
+  else requestAnimationFrame(() => { ready = layout(); if (ready) fillAll(); });
+
+  let visible = false;
+  let started = false;
+  // fases: 'cover' (estado inicial, quieto) -> 'revealing' -> 'hold' ->
+  // 'covering' -> 'gap' -> 'revealing' -> ... (loop)
+  let phase = 'cover';
+  let phaseStart = 0;
+  let idx = 0;
+
+  function enter(next, now) {
+    phase = next;
+    phaseStart = now;
+    idx = 0;
+    if (next === 'revealing' || next === 'covering') shuffle();
   }
 
   function onResize() {
-    if (!started) cover();
+    // solo re-layout mientras está totalmente cubierto (entre ciclos) —
+    // evita saltos visuales a mitad de un borrado/pintado.
+    if (phase === 'cover' || phase === 'gap') {
+      layout();
+      fillAll();
+    }
   }
   addEventListener('resize', onResize, { passive: true });
 
-  function run() {
-    if (started) return;
-    if (!ctx) cover();
-    started = true;
-    removeEventListener('resize', onResize);
-    const start = performance.now();
-    let idx = 0;
-    function frame(now) {
-      const p = Math.min(1, (now - start) / DURATION);
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!visible || !ready) return;
+
+    if (phase === 'cover') {
+      enter('revealing', now);
+      return;
+    }
+
+    const elapsed = now - phaseStart;
+
+    if (phase === 'revealing') {
+      const p = Math.min(1, elapsed / REVEAL_MS);
       const targetIdx = Math.floor(p * cells.length);
       while (idx < targetIdx) {
         const c = cells[idx];
         ctx.clearRect(c.x, c.y, CELL, CELL);
         idx++;
       }
-      if (p < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        canvas.remove();
-        img.dataset.pixelRevealDone = '1';
+      if (p >= 1) enter('hold', now);
+    } else if (phase === 'hold') {
+      if (elapsed >= HOLD_MS) enter('covering', now);
+    } else if (phase === 'covering') {
+      const p = Math.min(1, elapsed / COVER_MS);
+      const targetIdx = Math.floor(p * cells.length);
+      while (idx < targetIdx) {
+        const c = cells[idx];
+        ctx.fillStyle = accent;
+        ctx.fillRect(c.x, c.y, CELL, CELL);
+        idx++;
       }
+      if (p >= 1) enter('gap', now);
+    } else if (phase === 'gap') {
+      if (elapsed >= GAP_MS) enter('revealing', now);
     }
-    requestAnimationFrame(frame);
   }
 
   const io = new IntersectionObserver(
     (entries) => {
       for (const en of entries) {
-        if (en.isIntersecting) {
-          run();
-          io.disconnect();
+        visible = en.isIntersecting;
+        if (visible && !started) {
+          started = true;
+          requestAnimationFrame(frame);
         }
       }
     },
-    { threshold: 0.35 }
+    { threshold: 0.2 }
   );
   io.observe(img);
 }

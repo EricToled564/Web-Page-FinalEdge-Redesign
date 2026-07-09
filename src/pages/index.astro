@@ -96,9 +96,10 @@ import LockupMark from '../components/LockupMark.astro';
        iluminación calculada (tools/plate-3d — ver script fuente en el
        historial de commits), no con box-shadow/text-shadow (R3.2).
        Centrado en la misma cuadrícula de 1180px que usa "la presión".
-       Al entrar en pantalla se revela pixel por pixel (plate-pixel-
-       reveal.js) — estilo videojuego vintage, saltos discretos por
-       celda, no una curva de easing suave. -->
+       Al entrar en pantalla se revela pixel por pixel EN LOOP
+       (plate-pixel-reveal.js) — estilo videojuego vintage, saltos
+       discretos por celda, no una curva de easing suave; se congela
+       fuera de pantalla para no gastar batería de más. -->
   <section class="plate" aria-label="Tu ventaja definitiva">
     <div class="plate-scene">
       <span class="plate-img-wrap">
