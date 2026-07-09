@@ -6,6 +6,13 @@
  * cuadro a cuadro, como un dissolve de 8-bit) hasta dejar la imagen
  * horneada al descubierto. Sin box-shadow/text-shadow (R3.2); el único
  * color usado es --accent, ya un token existente (R1.1).
+ *
+ * La cobertura se pinta de inmediato al montar (no al hacer scroll): si
+ * se espera a la intersección para recién ahí dibujar el canvas, la
+ * imagen real queda visible sin nada encima desde que carga la página
+ * — no hay nada que "revelar" cuando el usuario llega a la sección. El
+ * IntersectionObserver solo dispara el BORRADO progresivo, nunca la
+ * cobertura inicial.
  */
 const CELL = 14; // px de cuadrícula, a resolución de pantalla (no de imagen)
 const DURATION = 1100;
@@ -22,7 +29,15 @@ function setup(img) {
 
   const canvas = document.createElement('canvas');
   canvas.className = 'plate-cover';
-  wrap.style.position = wrap.style.position || 'relative';
+  /* estilos críticos inline: un elemento creado en runtime por un script
+     importado NUNCA recibe el atributo data-astro-cid-* que Astro usa
+     para aplicar el <style> con scope del componente — la regla
+     ".plate-cover" de index.astro simplemente no matchea nada aquí, y
+     el canvas quedaba en position:static (fuera de lugar, sin cubrir
+     nada). Fijar la posición por JS lo hace independiente del scoping. */
+  canvas.style.position = 'absolute';
+  canvas.style.inset = '0';
+  canvas.style.pointerEvents = 'none';
   wrap.appendChild(canvas);
 
   const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#1E80F0';
@@ -31,7 +46,7 @@ function setup(img) {
   let ctx;
   let started = false;
 
-  function layout() {
+  function cover() {
     const r = img.getBoundingClientRect();
     const w = Math.round(r.width);
     const h = Math.round(r.height);
@@ -55,10 +70,24 @@ function setup(img) {
     return true;
   }
 
+  // cobertura inmediata — antes de cualquier scroll o intersección.
+  let covered = cover();
+  if (!covered) {
+    // la imagen todavía no tiene tamaño de layout (ej. fuentes/CSS sin
+    // resolver todavía) — reintenta en el próximo frame.
+    requestAnimationFrame(() => { covered = cover(); });
+  }
+
+  function onResize() {
+    if (!started) cover();
+  }
+  addEventListener('resize', onResize, { passive: true });
+
   function run() {
     if (started) return;
-    if (!layout()) return;
+    if (!ctx) cover();
     started = true;
+    removeEventListener('resize', onResize);
     const start = performance.now();
     let idx = 0;
     function frame(now) {

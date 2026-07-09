@@ -359,10 +359,11 @@ import LockupMark from '../components/LockupMark.astro';
     max-width: 100%;
     height: auto;
   }
-  /* cuadrícula de bloques que cubre la imagen y se va borrando celda a
-     celda (plate-pixel-reveal.js) — mismo azul que el fondo, así que
-     hasta que el JS actúa, se ve exactamente igual que el fondo liso. */
-  .plate-cover { position: absolute; inset: 0; pointer-events: none; }
+  /* el canvas .plate-cover (cuadrícula que cubre la imagen y se borra
+     celda a celda) lo crea plate-pixel-reveal.js en runtime — un
+     elemento creado por un script importado no recibe el atributo de
+     scope de Astro, así que su posicionamiento se fija por JS
+     (canvas.style.position/inset), no aquí; esta regla no aplicaría. */
 
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
