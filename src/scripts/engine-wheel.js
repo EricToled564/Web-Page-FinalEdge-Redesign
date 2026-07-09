@@ -142,6 +142,12 @@ class EngineWheel {
     this.apply(this.state, true);
     this.loop = this.loop.bind(this);
     requestAnimationFrame(this.loop);
+    /* fitWheelLabels() mide el ancho REAL de cada lockup para decidir si
+       encoge --wheel-scale — si se mide antes de que cargue Geist Mono
+       (fuente de reemplazo, con métricas distintas y casi siempre más
+       angosta), el cálculo sale mal Y NUNCA se repite (nada más dispara
+       otro resize()), dejando el error permanente. */
+    if ('fonts' in document) document.fonts.ready.then(() => this.fitWheelLabels());
   }
 
   build() {
@@ -566,6 +572,51 @@ class EngineWheel {
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
     this.fitScale = w / refW;
+    this.fitWheelLabels();
+  }
+
+  /**
+   * Fija --wheel-scale (LockupMark.astro la referencia pero nada la
+   * calculaba — quedaba en su valor por defecto, 1, siempre). Sin esto,
+   * una palabra larga como "intelligence" desborda la caja fija de
+   * .wl-edge (118px/96px compacto, white-space:nowrap, sin encoger):
+   * el elemento se sigue centrando por su caja ORIGINAL de 118px (el
+   * translate(-50%,-50%) de projectLabels no sabe nada del desborde),
+   * así que el texto visible queda descentrado respecto a su ancla real.
+   * Una sola escala compartida para los 6 edges (+ el hub, mismo --var)
+   * — nunca cada lockup encogido por separado, se verían inconsistentes
+   * entre sí. */
+  fitWheelLabels() {
+    const compact = this.root.dataset.compact === '1';
+    const edgeBox = compact ? 96 : 118;
+    const hubBox = 148;
+    /* la medición tiene que ser inmune al transform que projectLabels()
+       aplica cada cuadro sobre CADA .wl (translate + scale(fitScale) —
+       el tamaño general de la rueda, algo totalmente aparte de si una
+       palabra puntual como "intelligence" desborda su caja): si se mide
+       mientras ese transform ya está puesto, el resultado queda
+       contaminado por fitScale y la comparación contra el ancho lógico
+       (118/96px) deja de ser válida — por eso el cálculo salía distinto
+       según CUÁNDO se llamaba (antes o después de que el loop() ya
+       hubiera pintado un cuadro). Se anulan ambos transforms (el del
+       ancla .wl Y el --wheel-scale del propio lockup) antes de medir, y
+       se restauran después — projectLabels() los vuelve a pisar en el
+       siguiente cuadro de todas formas. */
+    const anchors = [...this.overlay.querySelectorAll('.wl-edge'), this.overlay.querySelector('.wl-hub')].filter(Boolean);
+    const savedTransforms = anchors.map((a) => a.style.transform);
+    anchors.forEach((a) => { a.style.transform = 'none'; });
+    this.root.style.setProperty('--wheel-scale', 1);
+
+    let scale = 1;
+    for (const a of anchors) {
+      const lm = a.querySelector('.lm-wheel');
+      if (!lm) continue;
+      const box = a.classList.contains('wl-hub') ? hubBox : edgeBox;
+      const w = lm.getBoundingClientRect().width;
+      if (w > box) scale = Math.min(scale, box / w);
+    }
+    this.root.style.setProperty('--wheel-scale', scale);
+    anchors.forEach((a, i) => { a.style.transform = savedTransforms[i]; });
   }
 
   projectLabels() {
