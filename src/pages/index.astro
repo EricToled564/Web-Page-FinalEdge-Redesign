@@ -101,8 +101,8 @@ import LockupMark from '../components/LockupMark.astro';
       <img
         class="plate-img"
         src="/assets/plate-3d.png"
-        width="3783"
-        height="786"
+        width="7330"
+        height="1141"
         alt="Tu ventaja final."
       />
     </div>
@@ -342,7 +342,8 @@ import LockupMark from '../components/LockupMark.astro';
   }
   .plate-img {
     display: inline-block;
-    width: calc(var(--text-plate) * 4.8130);
+    /* +50% respecto al tamaño anterior (pedido explícito) */
+    width: calc(var(--text-plate) * 9.6363);
     max-width: 100%;
     height: auto;
   }
