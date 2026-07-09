@@ -291,6 +291,12 @@ class EngineWheel {
       this.pointer.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
       this.parallax = { x: this.pointer.y * 0.16, y: this.pointer.x * 0.22 };
     });
+    /* al quitar el mouse, el parallax vuelve a 0 — el loop() ya suaviza
+       hacia (this.tilt + parallax) cada frame, así que esto solo basta
+       para que la rueda regrese sola a la posición de frente. */
+    this.canvas.addEventListener('pointerleave', () => {
+      this.parallax = { x: 0, y: 0 };
+    });
 
     this.canvas.addEventListener('click', () => {
       if (this.hover) this.go(this.hover.userData);
@@ -363,7 +369,7 @@ class EngineWheel {
        book); el volumen 3D se lee por la extrusión y la luz, no por el
        ángulo. El tilt pronunciado es una REACCIÓN — al pasar el mouse
        (parallax) o durante el giro de una elección — nunca la posición fija. */
-    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: -0.09, yaw: 0.04, items: new Map() };
+    const t = { rot: 0, scale: 1, spin: 0, offY: 0, tilt: 0, yaw: 0, items: new Map() };
     const set = (g, v) => t.items.set(g, v);
 
     if (state.mode === 'full') {
