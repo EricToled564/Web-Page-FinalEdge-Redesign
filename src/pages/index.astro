@@ -75,8 +75,7 @@ import LockupMark from '../components/LockupMark.astro';
   <section class="engine-split" id="engine">
     <div class="engine-col-text">
       <header class="section-head reveal">
-        <p class="section-num">02</p>
-        <p class="eyebrow eyebrow--lockup">
+        <p class="eyebrow eyebrow--lockup engine-lockup">
           <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
         </p>
         <hr />
@@ -352,6 +351,11 @@ import LockupMark from '../components/LockupMark.astro';
     margin: 0 auto;
   }
   .engine-col-text { padding-right: 24px; }
+  /* mismo tamaño (alto) que .hero-logo (~59.5px: 220px de ancho ×
+     370/1368 de aspect ratio) — escala el lockup completo en vez de
+     inflar el font-size a mano, para no romper la proporción interna
+     entre >_, la palabra y el tag. */
+  .engine-lockup { transform: scale(1.6); transform-origin: left top; margin-bottom: 4px; }
   /* titular al mismo tamaño que el h1 del hero (clamp 17–32px), no el
      --text-h2 genérico (36–56px) que usan las demás secciones. */
   .engine-h2 { font-size: clamp(17px, 2.3vw, 32px); margin-top: 20px; }
