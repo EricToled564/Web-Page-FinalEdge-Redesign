@@ -40,7 +40,6 @@ a:hover { color: var(--fg); }
    el código dijera minúsculas. El lockup es una marca, nunca se
    transforma como si fuera texto normal. */
 .eyebrow--lockup .lm { transform: none; text-transform: none; }
-.eyebrow--lockup .lm-wheel .lm-word { font-size: 15px; }
 .eyebrow--lockup span { font-size: var(--text-label); letter-spacing: .18em; color: var(--fg-muted); }
 
 .tag-ai {

@@ -75,8 +75,8 @@ import LockupMark from '../components/LockupMark.astro';
   <section class="engine-split" id="engine">
     <div class="engine-col-text">
       <header class="section-head reveal">
-        <p class="eyebrow eyebrow--lockup engine-lockup">
-          <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+        <p class="eyebrow eyebrow--lockup">
+          <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
         </p>
         <hr />
       </header>
@@ -362,11 +362,6 @@ import LockupMark from '../components/LockupMark.astro';
     padding-right: max(72px, calc(50vw - 590px));
   }
   .engine-col-text { padding-right: 24px; }
-  /* mismo tamaño (alto) que .hero-logo (~59.5px: 220px de ancho ×
-     370/1368 de aspect ratio) — escala el lockup completo en vez de
-     inflar el font-size a mano, para no romper la proporción interna
-     entre >_, la palabra y el tag. */
-  .engine-lockup { transform: scale(1.6); transform-origin: left top; margin-bottom: 4px; }
   /* titular al mismo tamaño que el h1 del hero (clamp 17–32px), no el
      --text-h2 genérico (36–56px) que usan las demás secciones. */
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
@@ -399,11 +394,6 @@ import LockupMark from '../components/LockupMark.astro';
     padding: 0;
   }
   @media (max-width: 900px) {
-    /* el scale(1.6) de .engine-lockup (pensado para el ancho amplio del
-       layout de escritorio) desbordaba la pantalla en móvil — hasta
-       228px fuera del viewport, forzando scroll horizontal en TODO el
-       sitio. En la columna angosta apilada, tamaño natural. */
-    .engine-lockup { transform: none; }
     .engine-split {
       grid-template-columns: 1fr;
       padding: 56px 24px;

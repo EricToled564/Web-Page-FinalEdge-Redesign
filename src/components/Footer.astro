@@ -14,8 +14,8 @@ import LockupMark from './LockupMark.astro';
       <p class="footer-line">La IA ejecuta. La experiencia decide.</p>
     </div>
     <nav class="footer-nav" aria-label="Navegación completa">
+      <div class="footer-nav-mark"><LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" /></div>
       <div>
-        <div class="footer-nav-mark"><LockupMark word="final edge" tag="[ENGINE]" variant="wheel" /></div>
         <ul>
           {PHASES.map((p) => (
             <li><a href={p.slug}>{p.name}</a></li>
@@ -62,7 +62,11 @@ import LockupMark from './LockupMark.astro';
   .footer-line { margin-top: 20px; color: var(--fg-2); font-size: var(--text-body); }
   .footer-nav { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
   .footer-nav ul { list-style: none; margin-top: 16px; display: grid; gap: 10px; }
-  .footer-nav-mark { width: 140px; }
+  /* la cuadrícula anidada de 2 columnas → 3 columnas dejaba solo ~130px
+     por columna, muy poco para el tamaño estándar del logo (.brand-lockup,
+     ~208px de ancho) — abarca las 3 columnas como una franja propia
+     arriba de la lista, así tiene el ancho real que necesita. */
+  .footer-nav-mark { grid-column: 1 / -1; margin-bottom: 24px; }
   .footer-nav a { color: var(--fg-muted); font-size: 14px; }
   .footer-nav a:hover { color: var(--fg); }
   .footer-meta {

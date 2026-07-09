@@ -65,6 +65,22 @@ const {
   .lm-wheel .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 18px; letter-spacing: -.02em; color: var(--lm-word-color); line-height: 1; }
   .lm-wheel .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: .07em; color: var(--lm-color); line-height: 1; }
 
+  /* --- .brand-lockup — tamaño FIJO único para el logo ">_ final edge
+     [ENGINE]" en TODAS las colocaciones estáticas del sitio (nav,
+     footer, encabezado de /engine/, sección Engine del home): mismo
+     font-size, misma proporción. La única excepción es el hub central
+     de la rueda 3D — ESE no es una colocación de logo, es parte de la
+     escena 3D y escala junto con el diámetro de la rueda por necesidad
+     técnica.
+     SIN !important en transform: fit-lockups.js sigue siendo el dueño
+     del transform inline (lo resetea a 'none' y solo lo encoge si de
+     verdad no cabe) — forzarlo con !important bloquearía ese seguro
+     universal contra desbordes y volveríamos a tener scroll horizontal
+     en pantallas angostas. */
+  .lm-wheel.brand-lockup .lm-prompt,
+  .lm-wheel.brand-lockup .lm-word { font-size: 28px; }
+  .lm-wheel.brand-lockup .lm-tag { font-size: 22px; }
+
   /* --- variant="section" — copia literal de `edgeStyles(color,1)` + `mkEdge` --- */
   .lm-section {
     display: inline-flex;

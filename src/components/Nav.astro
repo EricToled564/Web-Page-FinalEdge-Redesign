@@ -11,7 +11,7 @@ import LockupMark from './LockupMark.astro';
       <span class="nav-cta-short">Valoración</span>
     </a>
     <a class="btn btn--ghost nav-cta nav-cta--lockup" href="/#engine">
-      Conoce el<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
+      Conoce el<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
     </a>
   </div>
   <span class="nav-lang" title="English — disponible próximamente">
@@ -59,10 +59,6 @@ import LockupMark from './LockupMark.astro';
      vea igual que en cualquier otro lugar del sitio, nunca distorsionado
      por el estilo del botón. */
   .nav-cta--lockup { display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
-  .nav-cta--lockup .lm { transform: none; }
-  .nav-cta--lockup .lm-wheel .lm-prompt,
-  .nav-cta--lockup .lm-wheel .lm-word { font-size: 14px; }
-  .nav-cta--lockup .lm-wheel .lm-tag { font-size: 14px; }
   @media (max-width: 1100px) {
     .nav { padding: 0 24px; }
     .nav-cta { padding: 8px 14px; }
