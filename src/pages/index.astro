@@ -65,44 +65,23 @@ import LockupMark from '../components/LockupMark.astro';
     </div>
   </section>
 
-  <!-- 02 · LA DIFERENCIA -->
-  <section class="section" id="diferencia">
-    <header class="section-head reveal">
-      <p class="section-num">02</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>la diferencia · 02 / 07</p>
-      <hr />
-    </header>
-    <div class="diff-mark reveal">
-      <img src="/assets/logos/logo-finaledge.png" alt="final edge [AI]" width="520" height="140" />
-    </div>
-    <div class="hairline-grid grid-2 reveal" style="margin-top:32px">
-      <div>
-        <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a agencias y consultoras</p>
-        <p class="body-2">Lo que ellas hacen en semanas, aquí ocurre en horas.</p>
-      </div>
-      <div>
-        <p class="eyebrow" style="margin-bottom:16px"><span class="prompt">&gt;_</span>frente a proveedores técnicos</p>
-        <p class="body-2">No vendemos experimentos: entregamos resultados.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- 03 · EL ENGINE — pantalla completa, a dos columnas, usando todo el
+  <!-- 02 · EL ENGINE — pantalla completa, a dos columnas, usando todo el
        ancho de la ventana (referencia: las páginas anexas, no el
        contenedor centrado de 1080px que usan las demás secciones). La
        rueda es la única fuente de los nombres de servicio: no se repiten
-       en una lista aparte. -->
+       en una lista aparte. Titular al tamaño del hero (R5.8: el nombre
+       del sistema nunca va como texto plano — el lockup de arriba ya lo
+       muestra, el h2 solo continúa la frase). -->
   <section class="engine-split" id="engine">
     <div class="engine-col-text">
       <header class="section-head reveal">
-        <p class="section-num">03</p>
+        <p class="section-num">02</p>
         <p class="eyebrow eyebrow--lockup">
           <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" />
         </p>
         <hr />
       </header>
-      <h2 class="h2 reveal">Un sistema, no una lista de&nbsp;servicios.</h2>
-      <p class="body-2 reveal" style="margin-top:12px">Tres fases, seis servicios, un solo sistema.</p>
+      <h2 class="h2 engine-h2 reveal">El sistema que potencializa tu productividad y la convierte en una ventaja competitiva.</h2>
     </div>
     <div class="engine-col-wheel">
       <div class="wheel-card" id="wheel-entry">
@@ -111,11 +90,11 @@ import LockupMark from '../components/LockupMark.astro';
     </div>
   </section>
 
-  <!-- 04 · CÓMO TRABAJAMOS -->
+  <!-- 03 · CÓMO TRABAJAMOS -->
   <section class="section" id="como-trabajamos">
     <header class="section-head reveal">
-      <p class="section-num">04</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>cómo trabajamos · 04 / 07</p>
+      <p class="section-num">03</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>cómo trabajamos · 03 / 06</p>
       <hr />
     </header>
     <h2 class="h2 reveal">El mejor talento del mundo, reunido para tu proyecto.</h2>
@@ -131,8 +110,8 @@ import LockupMark from '../components/LockupMark.astro';
   <!-- 05 · NOSOTROS -->
   <section class="section" id="nosotros">
     <header class="section-head reveal">
-      <p class="section-num">05</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>nosotros · 05 / 07</p>
+      <p class="section-num">04</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>nosotros · 04 / 06</p>
       <hr />
     </header>
     <h2 class="h2 reveal">30 años del lado del cliente. La experiencia que dirige la IA.</h2>
@@ -158,8 +137,8 @@ import LockupMark from '../components/LockupMark.astro';
   <!-- 06 · CASOS -->
   <section class="section" id="casos">
     <header class="section-head reveal">
-      <p class="section-num">06</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>casos · 06 / 07</p>
+      <p class="section-num">05</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>casos · 05 / 06</p>
       <hr />
     </header>
     <h2 class="h2 reveal">Trabajo real, entregado a clientes reales.</h2>
@@ -186,8 +165,8 @@ import LockupMark from '../components/LockupMark.astro';
   <!-- 07 · VALORACIÓN -->
   <section class="section" id="valoracion">
     <header class="section-head reveal">
-      <p class="section-num">07</p>
-      <p class="eyebrow"><span class="prompt">&gt;_</span>valoración · 07 / 07</p>
+      <p class="section-num">06</p>
+      <p class="eyebrow"><span class="prompt">&gt;_</span>valoración · 06 / 06</p>
       <hr />
     </header>
     <h2 class="h2 reveal">La competencia te entrega promedio. Final Edge te entrega la ventaja.</h2>
@@ -350,9 +329,6 @@ import LockupMark from '../components/LockupMark.astro';
   .presion-fact-txt { margin-top: 16px; font-size: var(--text-body); line-height: 1.5; color: color-mix(in srgb, var(--on-accent) 78%, transparent); }
   .body-2 { color: var(--fg-2); font-size: var(--text-body); }
 
-  .diff-mark { width: min(520px, 100%); }
-  .diff-mark img { width: 100%; height: auto; display: block; }
-
   /* El Engine — pantalla completa a dos columnas, ancho real de la
      ventana (no el contenedor de 1080px de .section), igual que las
      referencias: texto corto a la izquierda, gráfico dominante a la
@@ -376,6 +352,9 @@ import LockupMark from '../components/LockupMark.astro';
     margin: 0 auto;
   }
   .engine-col-text { padding-right: 24px; }
+  /* titular al mismo tamaño que el h1 del hero (clamp 17–32px), no el
+     --text-h2 genérico (36–56px) que usan las demás secciones. */
+  .engine-h2 { font-size: clamp(17px, 2.3vw, 32px); margin-top: 20px; }
   .engine-col-wheel {
     display: flex;
     align-items: center;
