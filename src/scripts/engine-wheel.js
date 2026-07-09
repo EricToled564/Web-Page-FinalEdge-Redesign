@@ -265,9 +265,29 @@ class EngineWheel {
       m.opacity = op;
       m.color.copy(group.userData.base[i]).multiplyScalar(1 + glow);
     });
-    rim.material.opacity = op * (kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1);
+    const rimOp = op * (kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1);
+    rim.material.opacity = rimOp;
+    /* el "aliento" ambiental (ver breathe()) multiplica sobre esta base
+       cada cuadro — sin guardarla, cada multiplicación se acumularía
+       sobre el valor ya modulado del cuadro anterior y el brillo
+       decaería o crecería sin control. */
+    if (kind === 'sector' || kind === 'band') rim.userData.baseOp = rimOp;
     group.userData.glow = glow;
     group.visible = op > 0.01;
+  }
+
+  /* pulso ambiental continuo — referencia real: el anillo fragmentado de
+     igloo.inc "respira" (el brillo del filo sube y baja en ciclo) aun en
+     reposo, no solo al hacer click (eso ya lo cubre pulseBurst). Sube y
+     baja la opacidad del TRAZO (rim) de cada bloque — nunca el color de
+     relleno, que son los tonos canónicos del brand book (R6.1) — con la
+     misma curva de una sola velocidad en toda la rueda, nunca cada
+     bloque por separado (eso leería como parpadeo aleatorio, no como
+     un único objeto respirando). */
+  breathe(group, k) {
+    const rim = group.userData.rim;
+    if (rim.userData.baseOp == null) return;
+    rim.material.opacity = rim.userData.baseOp * k;
   }
 
   bind() {
@@ -607,6 +627,14 @@ class EngineWheel {
         const target = this.stateRot + this.scrollRot();
         this.wheel.rotation.z += (target - this.wheel.rotation.z) * 0.08;
       }
+      /* pulso ambiental — DESPUÉS de tw.step()/pick() (que ya corrieron
+         setLook y fijaron rim.userData.baseOp para este cuadro), así el
+         "aliento" siempre multiplica sobre el valor recién calculado,
+         nunca sobre uno viejo de un cuadro anterior. Ciclo de ~3.9s,
+         misma curva para toda la rueda (nunca cada bloque por separado). */
+      const breath = 0.72 + 0.28 * Math.sin(now * 0.0016);
+      for (const id in this.parts.sectors) this.breathe(this.parts.sectors[id], breath);
+      for (const id in this.parts.bands) this.breathe(this.parts.bands[id], breath);
     }
     if (!this.tweens.length) this.pick();
     this.projectLabels();
