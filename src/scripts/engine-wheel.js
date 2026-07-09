@@ -10,6 +10,10 @@
  * Etiquetas SIEMPRE texto DOM ≥14px (R6.2).
  */
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { navigate } from 'astro:transitions/client';
 import { PHASES, EDGES } from '../data/engine.js';
 
@@ -17,7 +21,15 @@ const D2R = Math.PI / 180;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const DEPTH = 58;      // extrusión de sectores — volumen 3D deliberadamente visible
 const BAND_DEPTH = 34; // extrusión de la banda
-const HOVER_LIFT = 14; // cuánto se despega un bloque al pasarle el mouse (ver hoverLift())
+/* referencia igloo.inc — el bloque activo se despega de forma OBVIA
+   (no un matiz sutil): sale hacia afuera en su propio eje radial,
+   avanza hacia la cámara y crece un poco, todo junto — un solo número
+   de "Z apenas más cerca" es casi imperceptible a la distancia de
+   cámara de esta escena (le tomó 3 intentos al cliente confirmarlo). */
+const HOVER_LIFT_Z = 130;   // avance hacia la cámara
+const HOVER_OUT = 50;       // salida radial (alejándose del centro)
+const HOVER_SCALE = 0.24;   // +24% de tamaño
+const HOVER_GLOW = 1.1;     // brillo extra sobre el brillo base
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -252,6 +264,29 @@ class EngineWheel {
 
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
+
+    /* bloom real (referencia igloo.inc: EffectComposer + UnrealBloomPass)
+       — un cambio de brillo plano en MeshBasicMaterial nunca se va a ver
+       como el halo/resplandor de la referencia, sin importar cuánto se
+       suba el número: el bloom es lo que hace que un pixel brillante
+       "sangre" luz hacia afuera. threshold alto a propósito: el trazo y
+       la banda EN REPOSO ya son colores de marca bastante saturados, y
+       si todo blooméa todo el tiempo se pierde el look plano de la
+       marca — solo lo que cruza el brillo extra de hover/aliento
+       ambiental (setLook multiplica el color por 1+glow) debe cruzar el
+       umbral. Envuelto en try/catch: si por lo que sea falla en algún
+       navegador, la rueda sigue funcionando sin bloom en vez de caer al
+       fallback de lista estática (ver boot()). */
+    try {
+      this.composer = new EffectComposer(renderer);
+      this.composer.addPass(new RenderPass(this.scene, this.camera));
+      this.bloomPass = new UnrealBloomPass(new THREE.Vector2(1, 1), 1.9, 0.5, 0.64);
+      this.composer.addPass(this.bloomPass);
+      this.composer.addPass(new OutputPass());
+    } catch {
+      this.composer = null;
+    }
+
     this.resize();
   }
 
@@ -274,6 +309,13 @@ class EngineWheel {
     });
     const rimOp = op * (kind === 'band' ? 0.7 : kind === 'sector' ? 0.85 : 1);
     rim.material.opacity = rimOp;
+    /* el trazo (rim) es la parte brillante de cada pieza — el relleno de
+       los SECTORES es a propósito un gradiente oscuro (look de marca,
+       R6.1), así que subirle el brillo ahí casi no se nota y nunca
+       cruza el umbral del bloom. El "glow" de hover tiene que subir
+       también el color del trazo, si no, hover nunca produce el halo. */
+    if (!rim.userData.baseColor) rim.userData.baseColor = rim.material.color.clone();
+    rim.material.color.copy(rim.userData.baseColor).multiplyScalar(1 + glow);
     /* el "aliento" ambiental (ver breathe()) multiplica sobre esta base
        cada cuadro — sin guardarla, cada multiplicación se acumularía
        sobre el valor ya modulado del cuadro anterior y el brillo
@@ -523,6 +565,8 @@ class EngineWheel {
            puramente una animación continua sobre esa base, nunca la
            reemplaza. */
         j.g.userData.restZ = j.g.position.z;
+        j.g.userData.restX = j.g.position.x;
+        j.g.userData.restY = j.g.position.y;
       }
     };
 
@@ -595,6 +639,10 @@ class EngineWheel {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    if (this.composer) {
+      this.composer.setSize(w, h);
+      this.bloomPass?.setSize(w, h);
+    }
     this.fitScale = w / refW;
     this.fitWheelLabels();
   }
@@ -673,7 +721,7 @@ class EngineWheel {
       const opOf = (g) => (Array.isArray(g.userData.fill.material) ? g.userData.fill.material[0] : g.userData.fill.material).opacity;
       if (this.hover) this.setLook(this.hover, { op: opOf(this.hover), glow: glowOf(this.hover) });
       this.hover = top;
-      if (top) this.setLook(top, { op: opOf(top), glow: glowOf(top) + 0.45 });
+      if (top) this.setLook(top, { op: opOf(top), glow: glowOf(top) + HOVER_GLOW });
       this.canvas.style.cursor = top ? 'pointer' : 'default';
     }
   }
@@ -699,10 +747,26 @@ class EngineWheel {
          "* 0.06" del loop, que asumen ~60fps) — el hover puede quedar
          mucho tiempo en su valor estable, así que una tasa constante
          por cuadro se nota más si el frame rate varía. */
-      const next = cur + (target - cur) * (1 - Math.pow(0.001, dt));
+      const next = cur + (target - cur) * (1 - Math.pow(0.00005, dt));
       g.userData.hoverT = next;
       const restZ = g.userData.restZ ?? g.position.z;
-      g.position.z = restZ + next * HOVER_LIFT;
+      const restX = g.userData.restX ?? g.position.x;
+      const restY = g.userData.restY ?? g.position.y;
+      /* salida radial (alejándose del centro, en su propio eje) + avance
+         hacia cámara + crecimiento — un solo eje (Z) apenas se nota a la
+         distancia de cámara de esta escena; los tres juntos sí leen
+         como "el bloque se despega", igual que la referencia. */
+      const dir = g.userData.edge
+        ? posAt(g.userData.edge.angle, 1)
+        : g.userData.phase
+          ? posAt(g.userData.phase.startAngle + 60, 1)
+          : new THREE.Vector3(0, 0, 0);
+      g.position.set(
+        restX + dir.x * next * HOVER_OUT,
+        restY + dir.y * next * HOVER_OUT,
+        restZ + next * HOVER_LIFT_Z
+      );
+      g.scale.setScalar(1 + next * HOVER_SCALE);
     }
   }
 
@@ -735,7 +799,12 @@ class EngineWheel {
          "aliento" siempre multiplica sobre el valor recién calculado,
          nunca sobre uno viejo de un cuadro anterior. Ciclo de ~3.9s,
          misma curva para toda la rueda (nunca cada bloque por separado). */
-      const breath = 0.72 + 0.28 * Math.sin(now * 0.0016);
+      /* techo bajado a 0.82 (antes llegaba a 1.0, el mismo brillo de
+         reposo pleno): con el bloom nuevo, tocar el 100% de opacidad en
+         el pico de la respiración alcanzaba a cruzar el umbral por sí
+         solo y producía destellos sin que nadie tocara nada — deja
+         margen real para que SOLO el brillo explícito de hover cruce. */
+      const breath = 0.63 + 0.19 * Math.sin(now * 0.0016);
       for (const id in this.parts.sectors) this.breathe(this.parts.sectors[id], breath);
       for (const id in this.parts.bands) this.breathe(this.parts.bands[id], breath);
     }
@@ -744,7 +813,8 @@ class EngineWheel {
       this.hoverLift(now);
     }
     this.projectLabels();
-    this.renderer.render(this.scene, this.camera);
+    if (this.composer) this.composer.render();
+    else this.renderer.render(this.scene, this.camera);
   }
 }
 
