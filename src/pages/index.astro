@@ -339,14 +339,10 @@ import LockupMark from '../components/LockupMark.astro';
     grid-template-columns: minmax(280px, 420px) 1fr;
     align-items: center;
     gap: 24px;
-    padding: 88px 72px;
-    /* SIN min-height:100vh: esa altura exacta de pantalla completa
-       obligaba a hacer scroll al pixel exacto donde empieza la sección
-       para verla completa — cualquier desvío de scroll mostraba una
-       porción desplazada (la rueda SÍ centrada dentro de la sección
-       real, pero no dentro de lo que alcanzaba a verse en pantalla).
-       Con alto por contenido + padding fijo, la sección completa cabe
-       holgadamente sin depender de un punto de scroll exacto. */
+    /* un poco más de aire arriba que abajo — empuja el contenido
+       ligeramente hacia abajo dentro de la sección, en vez de quedar
+       pegado justo debajo del nav. */
+    padding: 104px 72px 72px;
     /* mucho más ancho que el contenedor de 1080px de las demás
        secciones (así se diferencia y la rueda tiene espacio real para
        dominar), pero SIGUE acotado y centrado — sin este tope, en
@@ -378,6 +374,10 @@ import LockupMark from '../components/LockupMark.astro';
   .engine-col-wheel .wheel-card {
     display: flex;
     width: 100%;
+    /* tope de tamaño: sin esto la rueda crece hasta su referencia
+       completa (820px) y se pasa del espacio disponible en pantallas
+       normales — 620px la mantiene al tamaño que ya se veía bien. */
+    max-width: 620px;
     height: 100%;
     align-items: center;
     justify-content: flex-end;
