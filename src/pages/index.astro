@@ -321,14 +321,16 @@ import LockupMark from '../components/LockupMark.astro';
     padding: 120px 72px;
     overflow: hidden;
   }
-  /* escena en perspectiva real (no simulada): el texto es un plano que
-     gira en el eje X, con una copia sólida detrás actuando como cara de
-     profundidad (extrusión) — relieve 3D genuino via transform, nunca
-     box-shadow/text-shadow/drop-shadow (R3.2 los prohíbe). */
+  /* mismo lenguaje de relieve 3D que el logotipo horneado
+     (logo-finaledge.png / R5.4): letras "infladas" con cara frontal en
+     degradado claro, un trazo navy fino de contorno, y una copia sólida
+     navy desplazada hacia abajo-derecha como canto/profundidad del
+     bloque — nunca box-shadow/text-shadow/drop-shadow (R3.2). Todos los
+     colores son tokens existentes (R1.1); --hub-ring es el mismo navy
+     que usa el canto del logotipo. */
   .plate-scene {
     max-width: 1180px;
     margin: 0 auto;
-    perspective: 900px;
   }
   .plate-text {
     position: relative;
@@ -339,26 +341,24 @@ import LockupMark from '../components/LockupMark.astro';
        queda en --text-plate, no en el clamp del hero. */
     letter-spacing: -.03em;
     line-height: 1.08;
-    transform: rotateX(10deg);
-    transform-style: preserve-3d;
-    /* cara frontal: gradiente (claro arriba, gris abajo) para simular
-       la luz que le pega a la cara visible del bloque extruido. Ambos
-       colores son tokens existentes (R1.1). */
+    /* cara frontal: gradiente (claro arriba, gris abajo) + trazo navy
+       fino, igual que el brillo/contorno de las letras del logotipo. */
     background: linear-gradient(180deg, var(--on-accent) 0%, var(--fg-2) 100%);
     background-clip: text;
     -webkit-background-clip: text;
+    -webkit-text-stroke: 1.5px var(--hub-ring);
     color: transparent;
   }
-  /* cara de profundidad: copia sólida del mismo texto, empujada hacia
-     atrás en el eje Z y desplazada hacia abajo — el "grosor" visible
-     del bloque, no una sombra (sin blur, sin opacidad, un color sólido
-     de marca). */
+  /* canto/profundidad: copia sólida navy del mismo texto, desplazada
+     hacia abajo-derecha — el "grosor" visible del bloque inflado, un
+     color sólido sin blur ni opacidad, igual que el canto horneado del
+     logotipo. */
   .plate-text::before {
     content: attr(data-text);
     position: absolute;
     inset: 0;
-    transform: translateZ(-22px) translateY(14px);
-    color: var(--accent-active);
+    transform: translate(6px, 8px);
+    color: var(--hub-ring);
     z-index: -1;
     pointer-events: none;
   }
@@ -366,6 +366,7 @@ import LockupMark from '../components/LockupMark.astro';
     background: var(--void-deep);
     background-clip: text;
     -webkit-background-clip: text;
+    -webkit-text-stroke: 1.5px var(--hub-ring);
     color: transparent;
   }
 
