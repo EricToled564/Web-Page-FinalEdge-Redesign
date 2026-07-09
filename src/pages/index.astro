@@ -95,7 +95,9 @@ import LockupMark from '../components/LockupMark.astro';
        del h1 del hero y un relieve 3D vía gradiente — nunca box-shadow/
        text-shadow, prohibidos por R3.2. -->
   <section class="plate" aria-label="Tu ventaja final">
-    <p class="plate-text">Tu ventaja final<span class="plate-dot">.</span></p>
+    <div class="plate-scene">
+      <p class="plate-text" data-text="Tu ventaja final.">Tu ventaja final<span class="plate-dot">.</span></p>
+    </div>
   </section>
 
   <script>
@@ -319,9 +321,17 @@ import LockupMark from '../components/LockupMark.astro';
     padding: 120px 72px;
     overflow: hidden;
   }
-  .plate-text {
+  /* escena en perspectiva real (no simulada): el texto es un plano que
+     gira en el eje X, con una copia sólida detrás actuando como cara de
+     profundidad (extrusión) — relieve 3D genuino via transform, nunca
+     box-shadow/text-shadow/drop-shadow (R3.2 los prohíbe). */
+  .plate-scene {
     max-width: 1180px;
     margin: 0 auto;
+    perspective: 900px;
+  }
+  .plate-text {
+    position: relative;
     text-align: center;
     font-size: var(--text-plate);
     font-weight: 600;
@@ -329,13 +339,28 @@ import LockupMark from '../components/LockupMark.astro';
        queda en --text-plate, no en el clamp del hero. */
     letter-spacing: -.03em;
     line-height: 1.08;
-    /* relieve 3D via gradiente (claro arriba, gris abajo), no sombra:
-       R3.2 prohibe box-shadow, text-shadow y drop-shadow. Ambos
+    transform: rotateX(10deg);
+    transform-style: preserve-3d;
+    /* cara frontal: gradiente (claro arriba, gris abajo) para simular
+       la luz que le pega a la cara visible del bloque extruido. Ambos
        colores son tokens existentes (R1.1). */
     background: linear-gradient(180deg, var(--on-accent) 0%, var(--fg-2) 100%);
     background-clip: text;
     -webkit-background-clip: text;
     color: transparent;
+  }
+  /* cara de profundidad: copia sólida del mismo texto, empujada hacia
+     atrás en el eje Z y desplazada hacia abajo — el "grosor" visible
+     del bloque, no una sombra (sin blur, sin opacidad, un color sólido
+     de marca). */
+  .plate-text::before {
+    content: attr(data-text);
+    position: absolute;
+    inset: 0;
+    transform: translateZ(-22px) translateY(14px);
+    color: var(--accent-active);
+    z-index: -1;
+    pointer-events: none;
   }
   .plate-dot {
     background: var(--void-deep);
