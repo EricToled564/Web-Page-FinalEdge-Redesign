@@ -50,6 +50,16 @@ const HOVER_GLOW = 1.1;     // brillo extra sobre el brillo base (SOLO sectores)
 const BAND_HOVER_GLOW = 0.32;
 const GLOW_MAX_OPACITY = 0.85; // opacidad máxima del sprite de luz derramada
 const BAND_GLOW_MAX_OPACITY = 0.4;
+/* el bloom (UnrealBloomPass) no responde igual a los 3 colores de fase:
+   el cian de Capacidades (#15D9D9) tiene luminancia BT.709
+   (0.2126R+0.7152G+0.0722B) más alta que el ámbar o el magenta, así que
+   el MISMO BAND_HOVER_GLOW numérico cruza el umbral de bloom mucho más
+   fuerte ahí — medido en captura: con el valor idéntico en las 3,
+   Capacidades se veía como un borrón que se comía media rueda mientras
+   Evaluación/Ejecución quedaban contenidos y parejos entre sí. Este
+   factor compensa por fase para que el brillo PERCIBIDO sea igual entre
+   las 3, no el valor numérico que se le pasa al material. */
+const PHASE_GLOW_FACTOR = { evaluacion: 1, capacidades: 0.4, ejecucion: 1 };
 
 /* gradientes radiales del brand book: [stop 0.35, stop 1.0] con radio 288 */
 const GRADS = {
@@ -209,11 +219,28 @@ class EngineWheel {
     this.loop = this.loop.bind(this);
     requestAnimationFrame(this.loop);
     /* fitWheelLabels() mide el ancho REAL de cada lockup para decidir si
-       encoge --wheel-scale — si se mide antes de que cargue Geist Mono
-       (fuente de reemplazo, con métricas distintas y casi siempre más
-       angosta), el cálculo sale mal Y NUNCA se repite (nada más dispara
-       otro resize()), dejando el error permanente. */
-    if ('fonts' in document) document.fonts.ready.then(() => this.fitWheelLabels());
+       encoge --wheel-scale. Un solo disparo (fonts.ready, un resize()
+       puntual) no es confiable: el ResizeObserver de bind() dispara su
+       propia primera notificación muy temprano (a veces antes de que
+       Geist Mono termine de cargar), y ese resize() cambia el tamaño de
+       this.root — a lo que el MISMO observer reacciona con otra ronda,
+       en una secuencia de reflows que no tiene un único punto "ya está,
+       mide ahora" confiable (medido: "intelligence" se quedaba ~6px más
+       ancho que su caja hasta que un resize() posterior, real, lo
+       recalculaba).
+       setInterval, NO requestAnimationFrame: colgarlo del loop() de
+       render (rAF) lo ata al framerate REAL del WebGL — en un equipo con
+       GPU lenta (o este entorno de prueba, medido: ~2 cuadros completos
+       en 4 segundos por el costo del post-proceso de bloom) la ventana
+       de asentamiento nunca alcanza a correr las veces suficientes para
+       agarrar el layout ya con la fuente asentada. Un intervalo aparte
+       corre en su propio reloj, sin depender de cuántos frames renderice
+       Three.js. Nunca afloja respecto al mínimo ya visto (ver
+       fitWheelLabels) — converge sola sin importar cuándo asiente la
+       fuente, y se detiene sola a los 4s. */
+    const settleTimer = setInterval(() => this.fitWheelLabels(), 120);
+    setTimeout(() => clearInterval(settleTimer), 4000);
+    this._settleUntil = performance.now() + 4000;
   }
 
   build() {
@@ -314,6 +341,21 @@ class EngineWheel {
          ningún ángulo (antes competían por el mismo espacio). */
       const labelR = 296;
       this.addAnchor('phase-' + phase.id, posAt(center, labelR).setZ(BAND_DEPTH / 2 + 2), g);
+      /* pedido explícito: el arco se ilumina igual al tocar el arco EN SÍ
+         o su NOMBRE — el nombre vive a radio 296, fuera del anillo de
+         color (que termina en 278) y del hit-proxy que raycastea pick(),
+         así que sin esto tocar solo el texto nunca activaba nada. */
+      const labelEl = this.anchors.get('phase-' + phase.id)?.el;
+      if (labelEl) {
+        labelEl.addEventListener('pointerenter', () => {
+          this._labelHover = g;
+          this.activateHover(g);
+        });
+        labelEl.addEventListener('pointerleave', () => {
+          this._labelHover = null;
+          this.activateHover(null);
+        });
+      }
     }
 
     /* hub 3D: cilindro Void + anillo #1A2A40 en la cara frontal */
@@ -819,33 +861,47 @@ class EngineWheel {
     const compact = this.root.dataset.compact === '1';
     const edgeBox = compact ? 96 : 118;
     const hubBox = 148;
-    /* la medición tiene que ser inmune al transform que projectLabels()
-       aplica cada cuadro sobre CADA .wl (translate + scale(fitScale) —
-       el tamaño general de la rueda, algo totalmente aparte de si una
-       palabra puntual como "intelligence" desborda su caja): si se mide
-       mientras ese transform ya está puesto, el resultado queda
-       contaminado por fitScale y la comparación contra el ancho lógico
-       (118/96px) deja de ser válida — por eso el cálculo salía distinto
-       según CUÁNDO se llamaba (antes o después de que el loop() ya
-       hubiera pintado un cuadro). Se anulan ambos transforms (el del
-       ancla .wl Y el --wheel-scale del propio lockup) antes de medir, y
-       se restauran después — projectLabels() los vuelve a pisar en el
-       siguiente cuadro de todas formas. */
+    /* Medir CON el transform real puesto (nunca anularlo): un mismo
+       texto, bajo un CSS transform:scale(), puede rasterizarse con un
+       ancho ligeramente distinto al que mide sin transform — hinting de
+       subpíxel a distinta escala efectiva, no error de cálculo (medido:
+       "intelligence" a transform:none daba 172.4px estables, pero la
+       página YA RENDERIZADA con su transform real siempre medía 183.4px
+       — 6.4% de diferencia real, no ruido). Anular el transform para
+       "medir limpio" mide algo que la página nunca muestra así. En vez
+       de eso: solo se anula --wheel-scale (a 1, para no medir un
+       encogimiento previo aplicado sobre sí mismo) y la caja de
+       referencia se ajusta por fitScale — así SIEMPRE se mide bajo el
+       mismo contexto de transform (translate+scale(fitScale) del ancla,
+       intacto) que el usuario realmente ve. */
+    const fit = this.fitScale || 1;
     const anchors = [...this.overlay.querySelectorAll('.wl-edge'), this.overlay.querySelector('.wl-hub')].filter(Boolean);
-    const savedTransforms = anchors.map((a) => a.style.transform);
-    anchors.forEach((a) => { a.style.transform = 'none'; });
     this.root.style.setProperty('--wheel-scale', 1);
 
     let scale = 1;
     for (const a of anchors) {
       const lm = a.querySelector('.lm-wheel');
       if (!lm) continue;
-      const box = a.classList.contains('wl-hub') ? hubBox : edgeBox;
+      const box = (a.classList.contains('wl-hub') ? hubBox : edgeBox) * fit;
       const w = lm.getBoundingClientRect().width;
       if (w > box) scale = Math.min(scale, box / w);
     }
+    /* durante la ventana de asentamiento (ver constructor) esta función
+       se llama muchas veces porque NO hay un solo punto confiable
+       "ya cargó todo, mide ahora" (fonts.ready puede resolver antes de
+       que el navegador termine de reflowar los lockups con la fuente ya
+       cargada). Por eso, SOLO mientras la ventana sigue abierta, nunca
+       se afloja respecto al mínimo ya visto — si una corrida más
+       adelantada mide más angosto (fuente ya asentada), gana esa; si una
+       corrida más floja llegara después por casualidad, no puede pisar
+       la más angosta ya encontrada. Terminada la ventana, un resize()
+       real (el usuario cambiando el viewport) SÍ debe recalcular libre,
+       sin este candado — por eso no se aplica fuera de la ventana. */
+    if (this._settleUntil && performance.now() < this._settleUntil) {
+      scale = Math.min(scale, this._settleTightest ?? 1);
+      this._settleTightest = scale;
+    }
     this.root.style.setProperty('--wheel-scale', scale);
-    anchors.forEach((a, i) => { a.style.transform = savedTransforms[i]; });
   }
 
   projectLabels() {
@@ -861,6 +917,14 @@ class EngineWheel {
 
   pick(now) {
     if (!this.pointer) return;
+    /* mientras el mouse está sobre la ETIQUETA de una fase (nombre
+       "EVALUACIÓN"/etc.), el canvas ya no recibe pointermove (la
+       etiqueta, un <a>, se lo queda) — this.pointer se congela en la
+       última posición real sobre el canvas. Sin este freno, el raycast
+       de ESE punto viejo (que puede no coincidir con nada, o con otra
+       pieza) pisaría cada cuadro el hover que puso activateHover() vía
+       el listener de la etiqueta. */
+    if (this._labelHover) return;
     this.raycaster.setFromCamera(this.pointer, this.camera);
     /* raycastea contra las mallas planas ESTÁTICAS (hit), nunca contra
        las piezas visibles (fill) — esas las mueve hoverLift() cada
@@ -881,29 +945,42 @@ class EngineWheel {
        humano dispare varios cambios de hover por segundo; como el brillo
        aditivo de cada pieza tarda varios cuadros en apagarse (la misma
        curva que tarda en encender), dos o tres piezas vecinas quedaban
-       con brillo simultáneo y sus luces (aditivas) se sumaban — eso, no
-       un valor distinto por fase, era la "explosión" de luz que se veía
-       mucho más notoria en cian que en magenta/ámbar por cómo se ve un
-       blanco sobreexpuesto sobre cada color, aunque el bug era el mismo
-       en las 3 fases. */
+       con brillo simultáneo y sus luces (aditivas) se sumaban — esta
+       parte del bug era la misma en las 3 fases. Aparte de esto (ver
+       PHASE_GLOW_FACTOR arriba) el cian de Capacidades SÍ necesita su
+       propio valor, más bajo: incluso sin flicker, el mismo glow
+       numérico cruza el umbral de bloom mucho más fuerte en cian que en
+       ámbar/magenta por la luminancia del color en sí — dos causas
+       distintas de la misma "explosión de luz", ambas confirmadas por
+       separado con captura. */
     if (top !== this._pendingHover) {
       this._pendingHover = top;
       this._pendingSince = now;
     }
     const settled = top === this.hover || now - (this._pendingSince ?? 0) >= HOVER_DWELL_MS;
-    if (top !== this.hover && settled) {
-      const st = this.targetsFor(this.state).items;
-      const opOf = (g) => st.get(g)?.op ?? 1;
-      const glowOf = (g) => st.get(g)?.glow ?? 0;
-      if (this.hover) this.setLook(this.hover, { op: opOf(this.hover), glow: glowOf(this.hover) });
-      this.hover = top;
-      if (top) {
-        const isBand = top.userData.kind === 'band';
-        const g = isBand ? BAND_HOVER_GLOW : HOVER_GLOW;
-        this.setLook(top, { op: opOf(top), glow: glowOf(top) + g, rimGlow: g });
-      }
-      this.canvas.style.cursor = top ? 'pointer' : 'default';
+    if (top !== this.hover && settled) this.activateHover(top);
+  }
+
+  /* aplica de verdad el cambio de this.hover — la usan tanto pick()
+     (raycast sobre el canvas) como los listeners de las ETIQUETAS de
+     fase (pointerenter/pointerleave en el nombre "EVALUACIÓN"/etc.):
+     pedido explícito del cliente, el arco debe iluminarse igual al
+     tocar el propio arco O su nombre, no solo el arco. */
+  activateHover(top) {
+    if (top === this.hover) return;
+    const st = this.targetsFor(this.state).items;
+    const opOf = (g) => st.get(g)?.op ?? 1;
+    const glowOf = (g) => st.get(g)?.glow ?? 0;
+    if (this.hover) this.setLook(this.hover, { op: opOf(this.hover), glow: glowOf(this.hover) });
+    this.hover = top;
+    if (top) {
+      const isBand = top.userData.kind === 'band';
+      const base = isBand ? BAND_HOVER_GLOW : HOVER_GLOW;
+      const factor = isBand ? (PHASE_GLOW_FACTOR[top.userData.phase.id] ?? 1) : 1;
+      const g = base * factor;
+      this.setLook(top, { op: opOf(top), glow: glowOf(top) + g, rimGlow: g });
     }
+    this.canvas.style.cursor = top ? 'pointer' : 'default';
   }
 
   /* referencia real (igloo.inc, video del cliente): al pasar el mouse
@@ -951,7 +1028,9 @@ class EngineWheel {
          toca "un efecto de glow en el color de la fase", pedido
          explícito, sin moverse). Mismo hoverT que ya se calculó arriba. */
       if (g.userData.glowSprite) {
-        const cap = g.userData.kind === 'band' ? BAND_GLOW_MAX_OPACITY : GLOW_MAX_OPACITY;
+        const isBand = g.userData.kind === 'band';
+        const factor = isBand ? (PHASE_GLOW_FACTOR[g.userData.phase.id] ?? 1) : 1;
+        const cap = (isBand ? BAND_GLOW_MAX_OPACITY : GLOW_MAX_OPACITY) * factor;
         g.userData.glowSprite.material.opacity = next * cap;
       }
     }
@@ -969,6 +1048,7 @@ class EngineWheel {
   loop(now) {
     requestAnimationFrame(this.loop);
     if (!this.visible || document.hidden) return;
+    if (this._settleUntil && now < this._settleUntil) this.fitWheelLabels();
     for (const tw of this.tweens) tw.step(now);
     this.stepPulses(now);
     if (!REDUCED) {
