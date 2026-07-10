@@ -106,7 +106,30 @@ const { compact = false, fitHeight = false } = Astro.props;
      la geometría 3D de la rueda. */
   .wl-band { font-size: 20px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
 
-  .wl-hub { width: 148px; }
+  /* el ancla (.wl-hub) SÍ queda centrada en la rueda vía translate(-50%,-50%)
+     en projectLabels() (engine-wheel.js) — eso nunca fue el problema. El
+     lockup de adentro (el span ">_ final edge [ENGINE]") es un elemento
+     inline dentro de un contenedor block, así que por defecto se pega al
+     borde IZQUIERDO de esos 148px en vez de quedar centrado dentro de
+     ellos — dos cosas distintas: el ancla estaba centrada, su CONTENIDO
+     no (medido: ~24px de diferencia entre el centro real del canvas y el
+     centro del texto visible). flex + centrado en ambos ejes resuelve el
+     contenido sin tocar cómo se posiciona el ancla en sí. */
+  .wl-hub { width: 148px; display: flex; align-items: center; justify-content: center; }
+  /* .lm-wheel vive en LockupMark.astro (otro componente) — un selector
+     normal aquí escrito como ".wl-hub .lm-wheel" nunca lo alcanza: el
+     CSS con scope de Astro solo afecta elementos escritos EN ESTE
+     archivo, no los que renderiza un componente hijo (por eso
+     LockupMark.astro usa <style is:global> para sus propias reglas).
+     :global() es lo mismo, apuntado, sin tener que marcar TODO este
+     bloque como global. transform-origin:left center (el default de
+     .lm-wheel) es correcto para los 6 edges, pero en el hub — ya
+     centrado por el flex de arriba — ese origen IZQUIERDO hacía que el
+     encogimiento de --wheel-scale (el seguro contra desbordes) tirara el
+     contenido hacia la izquierda en vez de encoger parejo desde el
+     centro: el mismo bug de "no centrado", ahora causado por la escala
+     en vez del layout. Solo el hub se recentra; los edges no se tocan. */
+  .wl-hub :global(.lm-wheel) { transform-origin: center center; }
 
   /* estados: en el hub de fase solo vive la fase enfocada; en servicio, nada */
   [data-mode='service'] .wl,
