@@ -109,6 +109,13 @@ import LockupMark from '../components/LockupMark.astro';
           alt="Tu ventaja definitiva."
         />
       </span>
+      <!-- sin destino funcional todavía (pedido explícito) — <button>,
+           no <a href="#">, para no simular una navegación que no existe. -->
+      <div class="plate-ctas">
+        <button type="button" class="plate-cta">Por qué elegirnos</button>
+        <button type="button" class="plate-cta">Test: ¿Estás preparado para trabajar con IA?</button>
+        <button type="button" class="plate-cta">Bitácora [AI]</button>
+      </div>
     </div>
   </section>
 
@@ -372,6 +379,34 @@ import LockupMark from '../components/LockupMark.astro';
     max-width: 100%;
     height: auto;
   }
+  /* 3 botones debajo de la frase, pedido explícito — mismo lenguaje que
+     .btn (brand book: piso de 14px, sin border-radius R3.1, una sola
+     curva de easing R3.4) pero invertido para fondo accent (azul): .btn
+     usa color/borde accent sobre fondo claro, aquí sería azul sobre
+     azul, ilegible — mismo patrón ya usado en esta página para texto
+     sobre accent (--on-accent, ver .presion-*). Sin destino funcional
+     todavía (pedido explícito), por eso son <button>, no enlaces. */
+  .plate-ctas {
+    margin-top: 48px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+  .plate-cta {
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: .14em;
+    color: var(--on-accent);
+    background: transparent;
+    border: 1px solid color-mix(in srgb, var(--on-accent) 40%, transparent);
+    padding: 16px 28px;
+    cursor: pointer;
+    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
+  }
+  .plate-cta:hover { background: var(--on-accent); color: var(--accent); border-color: var(--on-accent); }
+  .plate-cta:active { background: color-mix(in srgb, var(--on-accent) 85%, transparent); }
 
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
