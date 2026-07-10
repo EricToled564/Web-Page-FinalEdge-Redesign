@@ -26,9 +26,17 @@ const BAND_DEPTH = 34; // extrusión de la banda
    avanza hacia la cámara y crece un poco, todo junto — un solo número
    de "Z apenas más cerca" es casi imperceptible a la distancia de
    cámara de esta escena (le tomó 3 intentos al cliente confirmarlo). */
-const HOVER_LIFT_Z = 130;   // avance hacia la cámara
-const HOVER_OUT = 50;       // salida radial (alejándose del centro)
-const HOVER_SCALE = 0.24;   // +24% de tamaño
+/* recalibrados hacia abajo respecto al primer intento "99% igloo": ese
+   desplazamiento necesitaba un BUFFER (ver resize()) tan grande que, en
+   la columna real del home (ancho fijo, sin espacio de sobra), terminaba
+   achicando la rueda entera para hacerle lugar — el cliente pidió
+   explícitamente que la rueda NUNCA se achique de su tamaño original.
+   Estos valores son los más altos que caben sin desbordar el recorte
+   con el BUFFER original (26px), medido con Playwright en los 6 edges. */
+const HOVER_LIFT_Z = 70;    // avance hacia la cámara
+const HOVER_OUT = 26;       // salida radial (alejándose del centro)
+const HOVER_SCALE = 0.13;   // +13% de tamaño
+const HOVER_DWELL_MS = 60;  // ver histéresis en pick()
 const HOVER_GLOW = 1.1;     // brillo extra sobre el brillo base (SOLO sectores)
 /* las bandas son un arco de ~120°, mucho más área de pantalla que un
    sector individual — el mismo HOVER_GLOW que en un sector se ve
@@ -733,13 +741,21 @@ class EngineWheel {
        color de la rueda (necesita separarse del anillo) y nunca se
        corta contra el borde (necesita quedar dentro del recorte). Sin
        este margen ambos requisitos compiten por los mismos pocos
-       píxeles. Subido de 26 a 70: con el desprendimiento agresivo de
-       hover (HOVER_OUT/HOVER_LIFT_Z/HOVER_SCALE) ya arreglado el
-       temblor, el sector SÍ llega y se queda en su desplazamiento
-       máximo — medido hasta 32px de excedente real en los edges
-       laterales (90°/270°); antes el bug del temblor lo cortaba a
-       mitad de camino y este desborde nunca se veía. */
-    const BUFFER = 70;
+       píxeles.
+
+       VALOR ORIGINAL (26), no lo subas: esta cifra se resta del ancho
+       real disponible ANTES de calcular el tamaño del canvas (ver
+       availW abajo) — en la columna del home (ancho fijo, sin espacio
+       de sobra) cualquier aumento aquí se traduce directo en una rueda
+       más chica. Se probó subirlo a 70 para darle lugar al desprendimiento
+       agresivo de hover, y aunque evitó el corte, redujo la rueda entera
+       (~15% en 1400px) — el cliente pidió explícitamente que el tamaño
+       original nunca se toque. La solución real fue la otra punta:
+       HOVER_OUT/HOVER_LIFT_Z/HOVER_SCALE se recalibraron hacia abajo
+       (ver arriba) para que el desplazamiento máximo quepa DENTRO de
+       este margen original — medido con Playwright en los 6 edges, cero
+       píxeles de excedente contra el borde de recorte. */
+    const BUFFER = 26;
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
     const refW = compact ? 620 : 820;
@@ -830,7 +846,7 @@ class EngineWheel {
     }
   }
 
-  pick() {
+  pick(now) {
     if (!this.pointer) return;
     this.raycaster.setFromCamera(this.pointer, this.camera);
     /* raycastea contra las mallas planas ESTÁTICAS (hit), nunca contra
@@ -845,7 +861,24 @@ class EngineWheel {
       .intersectObjects(targets, false)
       .filter((h) => h.object.userData.group.visible);
     const top = hits[0]?.object.userData.group ?? null;
-    if (top !== this.hover) {
+    /* histéresis: el candidato tiene que sostenerse HOVER_DWELL_MS antes
+       de volverse this.hover de verdad. Sin esto, la frontera entre dos
+       piezas vecinas (p. ej. "readiness"/"flow"/banda capacidades, que
+       se tocan en una esquina) hace que un temblor normal del mouse
+       humano dispare varios cambios de hover por segundo; como el brillo
+       aditivo de cada pieza tarda varios cuadros en apagarse (la misma
+       curva que tarda en encender), dos o tres piezas vecinas quedaban
+       con brillo simultáneo y sus luces (aditivas) se sumaban — eso, no
+       un valor distinto por fase, era la "explosión" de luz que se veía
+       mucho más notoria en cian que en magenta/ámbar por cómo se ve un
+       blanco sobreexpuesto sobre cada color, aunque el bug era el mismo
+       en las 3 fases. */
+    if (top !== this._pendingHover) {
+      this._pendingHover = top;
+      this._pendingSince = now;
+    }
+    const settled = top === this.hover || now - (this._pendingSince ?? 0) >= HOVER_DWELL_MS;
+    if (top !== this.hover && settled) {
       const st = this.targetsFor(this.state).items;
       const opOf = (g) => st.get(g)?.op ?? 1;
       const glowOf = (g) => st.get(g)?.glow ?? 0;
@@ -937,7 +970,7 @@ class EngineWheel {
       }
     }
     if (!this.tweens.length && this.state?.mode === 'full') {
-      this.pick();
+      this.pick(now);
       this.hoverLift(now);
     }
     /* pulso ambiental — techo bajado a 0.82 (antes llegaba a 1.0, el
