@@ -29,7 +29,30 @@ function scrollToEngineCentered() {
   const prevTransform = card ? card.style.transform : null;
   if (card) card.style.transform = 'none';
   const rect = target.getBoundingClientRect();
-  const targetY = scrollY + (rect.top + rect.bottom) / 2 - innerHeight / 2;
+  /* el nav es sticky (position:sticky, top:0, z-index:50) y se queda
+     pintado ENCIMA de cualquier contenido que quede detrás de él — un
+     centrado contra innerHeight completo ignora esa franja ocupada y
+     puede dejar la parte de arriba de la rueda (la etiqueta EVALUACIÓN,
+     la más alta) tapada detrás del nav. La zona real y segura para
+     centrar es el espacio POR DEBAJO del nav, no la pantalla completa. */
+  const nav = document.getElementById('site-nav');
+  const navHeight = nav ? nav.getBoundingClientRect().height : 0;
+  const safeCenterY = navHeight + (innerHeight - navHeight) / 2;
+  const centeredTargetY = scrollY + (rect.top + rect.bottom) / 2 - safeCenterY;
+  /* en pantallas bajas (p. ej. 700px de alto → solo ~608px libres bajo
+     el nav) la rueda puede ser más alta que la zona segura disponible:
+     ningún centrado cabe entero ahí, y centrar a la fuerza vuelve a
+     tapar la parte de arriba (EVALUACIÓN) detrás del nav. Se predice el
+     borde superior que resultaría del centrado puro (misma fórmula que
+     projectLabels() usa para la posición final, sin volver a scrollear)
+     y, SOLO si ese borde quedaría detrás del nav, se cambia de
+     estrategia a alinear el borde superior justo debajo del nav — nunca
+     al revés, para no descentrar los casos que sí caben (la mayoría). */
+  const gap = 16;
+  const predictedTop = safeCenterY - (rect.bottom - rect.top) / 2;
+  const targetY = predictedTop < navHeight
+    ? scrollY + rect.top - (navHeight + gap)
+    : centeredTargetY;
   if (card) card.style.transform = prevTransform;
   scrollTo({ top: Math.max(0, targetY), left: 0, behavior: 'instant' });
 }
