@@ -96,10 +96,8 @@ import LockupMark from '../components/LockupMark.astro';
        iluminación calculada (tools/plate-3d — ver script fuente en el
        historial de commits), no con box-shadow/text-shadow (R3.2).
        Centrado en la misma cuadrícula de 1180px que usa "la presión".
-       Al entrar en pantalla se revela pixel por pixel EN LOOP
-       (plate-pixel-reveal.js) — estilo videojuego vintage, saltos
-       discretos por celda, no una curva de easing suave; se congela
-       fuera de pantalla para no gastar batería de más. -->
+       Sin animación (pedido explícito) — estática, tamaño de fuente
+       igual al h1 del hero (ver .plate-img). -->
   <section class="plate" aria-label="Tu ventaja definitiva">
     <div class="plate-scene">
       <span class="plate-img-wrap">
@@ -148,9 +146,6 @@ import LockupMark from '../components/LockupMark.astro';
     }
     initCosmosScroll();
     document.addEventListener('astro:page-load', initCosmosScroll);
-  </script>
-  <script>
-    import '../scripts/plate-pixel-reveal.js';
   </script>
 </Base>
 
@@ -362,21 +357,21 @@ import LockupMark from '../components/LockupMark.astro';
     text-align: center;
   }
   /* envoltura al tamaño exacto de la imagen (inline-block se ajusta al
-     contenido) — el canvas del revelado pixel por pixel se posiciona
-     dentro de esta caja, nunca de .plate-scene (que ocupa todo el ancho
-     del grid, no el tamaño real de la imagen). */
+     contenido). */
   .plate-img-wrap { position: relative; display: inline-block; }
+  /* pedido explícito: sin animación (se quitó el import de
+     plate-pixel-reveal.js más abajo) y el mismo tamaño de fuente que el
+     h1 del hero (.hero-h1: clamp(17px, 2.3vw, 32px)) — mismo multiplicador
+     (11.5053) que ya traducía --text-plate al ancho real de la imagen
+     horneada, solo que ahora aplicado sobre el clamp() del hero en vez
+     del de la placa, para que escale proporcional igual que antes.
+     Sigue centrada por .plate-scene (text-align:center), sin tocar. */
   .plate-img {
     display: block;
-    width: calc(var(--text-plate) * 11.5053);
+    width: calc(clamp(17px, 2.3vw, 32px) * 11.5053);
     max-width: 100%;
     height: auto;
   }
-  /* el canvas .plate-cover (cuadrícula que cubre la imagen y se borra
-     celda a celda) lo crea plate-pixel-reveal.js en runtime — un
-     elemento creado por un script importado no recibe el atributo de
-     scope de Astro, así que su posicionamiento se fija por JS
-     (canvas.style.position/inset), no aquí; esta regla no aplicaría. */
 
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
