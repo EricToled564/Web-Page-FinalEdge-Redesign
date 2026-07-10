@@ -813,8 +813,15 @@ class EngineWheel {
     const BUFFER = 26;
     const compact = routeState().mode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
-    const refW = compact ? 620 : 820;
-    const refH = compact ? 560 : 820;
+    /* 820→900 en modo full: pedido explícito de +30% de tamaño de rueda
+       ("intento 20", visibilidad). Este techo por sí solo no la hace más
+       grande — solo deja de ser el freno; el layout real (wheel-card en
+       index.astro, ahora 920×920) es lo que le da el espacio real para
+       llegar a los ~868px de canvas (668px anterior +30%). Modo compacto
+       (mini-rueda de /engine/[fase]/) no se tocó — no es a lo que se
+       refería este pedido. */
+    const refW = compact ? 620 : 900;
+    const refH = compact ? 560 : 900;
     const parent = this.root.parentElement;
     const availW = (parent?.clientWidth || refW) - BUFFER * 2;
     let w = Math.max(1, Math.min(availW, refW));

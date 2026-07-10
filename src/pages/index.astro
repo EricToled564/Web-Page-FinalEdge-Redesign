@@ -268,7 +268,13 @@ import LockupMark from '../components/LockupMark.astro';
      fila — así siempre cabe entera en una sola pantalla. */
   .engine-split {
     display: grid;
-    grid-template-columns: minmax(280px, 420px) 1fr;
+    /* columna de texto 280→360 (antes 420): la rueda pidió +30% de
+       tamaño explícito y a partir de ~900px de ancho de viewport ya no
+       hay espacio de sobra — se le quita a la columna de texto (sigue
+       siendo perfectamente legible a 360px, 2 líneas cortas) para
+       dárselo a la rueda, que es la prioridad ("el objetivo es
+       visibilidad"). */
+    grid-template-columns: minmax(260px, 360px) 1fr;
     align-items: center;
     gap: 24px;
     /* un poco más de aire arriba que abajo — empuja el contenido
@@ -276,19 +282,19 @@ import LockupMark from '../components/LockupMark.astro';
        pegado justo debajo del nav. */
     padding-top: 104px;
     padding-bottom: 72px;
-    /* SIN max-width + margin:auto propio: eso centraba el bloque en su
-       PROPIA caja de 1800px, una referencia distinta a la que usa
-       .presion-inner (max-width:1180 dentro del padding de 72px de
-       .presion-band) — el texto arrancaba en una columna distinta Y la
-       rueda (sin tope a la derecha) se salía del ancho de esa misma
-       cuadrícula. padding-left y padding-right usan la MISMA fórmula
-       que el centrado de .presion-inner (72px de piso, o el margen que
-       le tocaría a una caja de 1180px centrada) — el área de contenido
-       resultante mide exactamente 1180px, igual que "la presión", así
-       que el borde derecho de la rueda (flex-end dentro de su columna)
-       coincide con el borde derecho real de esa cuadrícula. */
-    padding-left: max(72px, calc(50vw - 590px));
-    padding-right: max(72px, calc(50vw - 590px));
+    /* Antes esta sección alineaba su ancho de contenido (1180px) con
+       .presion-inner, para que el borde derecho de la rueda coincidiera
+       con el de esa cuadrícula. Se rompe esa alineación a propósito: la
+       rueda +30% (ver wheel-card/refW en engine-wheel.js) necesita más
+       ancho de contenido (1320px) del que esa cuadrícula compartida
+       permite — el piso de 72px por lado (pensado para 1180px) dejaba
+       la rueda comprimida de vuelta a su tamaño viejo en viewports
+       típicos de escritorio (1400px). Piso bajado a 40px y la resta a
+       660px (mitad de 1320) para que el ancho de contenido de ESTA
+       sección específicamente llegue a 1320px ya desde 1400px de
+       viewport, no solo en pantallas muy anchas. */
+    padding-left: max(40px, calc(50vw - 660px));
+    padding-right: max(40px, calc(50vw - 660px));
   }
   .engine-col-text { padding-right: 24px; }
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
@@ -309,11 +315,18 @@ import LockupMark from '../components/LockupMark.astro';
      alto para limitar el tamaño de la rueda — un valor fijo la mantiene
      legible (nombres de servicio a tamaño normal) sin depender de la
      altura de la ventana ni desbordar la sección. */
+  /* 920px = 668px (tamaño anterior) + 30% + el margen BUFFER que
+     engine-wheel.js resta (26px por lado, 52 total) para el carril de
+     las etiquetas de fase — así el CANVAS mismo (lo que de verdad se ve
+     más grande) sale en 868px, +30% exacto sobre 668px. Ancho Y alto
+     iguales (antes 900×720, no cuadrado — por eso el alto, no el ancho,
+     terminaba mandando en el cálculo de engine-wheel.js) para que
+     ninguno de los dos limite al otro por separado. */
   .engine-col-wheel .wheel-card {
     display: flex;
     width: 100%;
-    max-width: 900px;
-    height: 720px;
+    max-width: 920px;
+    height: 920px;
     align-items: center;
     justify-content: flex-end;
     border: none;
