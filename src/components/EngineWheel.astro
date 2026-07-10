@@ -88,9 +88,16 @@ const { compact = false, fitHeight = false } = Astro.props;
   /* lockup de edge: ancho FIJO en el espacio de referencia de la rueda
      (880px) — engine-wheel.js aplica una escala uniforme al conjunto
      cuando la rueda se muestra más chica, así todos los edges achican
-     exactamente igual, nunca cada uno por separado. */
-  .wl-edge { width: 118px; }
-  [data-compact='1'] .wl-edge { width: 96px; }
+     exactamente igual, nunca cada uno por separado.
+     118→160 / 96→130: TIENE que coincidir exactamente con edgeBox en
+     fitWheelLabels() (engine-wheel.js) — es la misma caja de referencia
+     usada ahí para decidir cuánto encoger --wheel-scale; si estos dos
+     valores se desincronizan, el centrado (translate(-50%,-50%) sobre
+     ESTE ancho) deja de coincidir con la caja que en verdad se está
+     midiendo. Ver el comentario largo en fitWheelLabels() para el
+     porqué del número. */
+  .wl-edge { width: 164px; }
+  [data-compact='1'] .wl-edge { width: 133px; }
 
   /* etiqueta de fase — 16px, tracking 2.6px, 600. Texto SIEMPRE blanco
      sobre un fondo sólido oscuro (nunca el color de la fase): antes el

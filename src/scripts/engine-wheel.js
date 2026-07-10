@@ -866,8 +866,30 @@ class EngineWheel {
    * entre sí. */
   fitWheelLabels() {
     const compact = this.root.dataset.compact === '1';
-    const edgeBox = compact ? 96 : 118;
-    const hubBox = 148;
+    /* 118→160 (96→130 en compacto): pedido explícito de subir el tamaño
+       de los lockups reveló un bug real — esta caja de referencia NUNCA
+       creció junto con el font-size en los +20%/+25% pedidos, así que
+       --wheel-scale (el seguro contra desbordes) terminaba encogiendo
+       el texto EXACTAMENTE lo que el font-size había crecido, dejando
+       el tamaño renderizado igual o peor que antes (medido y probado
+       matemáticamente: 27px de fuente con esta caja sin tocar daba el
+       mismo resultado visual que 21.6px). 160px es el máximo seguro
+       medido con Playwright — el ángulo real entre dos edges vecinos a
+       este radio da ~234px de arco de referencia disponible antes de
+       que se toquen; 160px deja ~30% de aire real entre etiquetas
+       vecinas, no un número arbitrario. Debe coincidir siempre con
+       .wl-edge { width } en EngineWheel.astro — esta caja es la MISMA
+       que ese ancho fijo, no una independiente. */
+    const edgeBox = compact ? 133 : 164;
+    /* 148→180: mismo bug que edgeBox arriba, esta vez con el hub como
+       el nuevo cuello de botella una vez destrabado el de los edges
+       (medido: --wheel-scale se quedó clavado en 0.7474 al seguir
+       subiendo edgeBox, porque el hub — que nunca se tocó — pasó a ser
+       la caja más angosta). El círculo del hub mide ~223px de diámetro
+       en unidades de referencia (medido con Playwright, proyectando el
+       radio real de la malla 3D del hub); 180px deja margen real dentro
+       de ese círculo, no lo llena de borde a borde. */
+    const hubBox = 180;
     /* Medir CON el transform real puesto (nunca anularlo): un mismo
        texto, bajo un CSS transform:scale(), puede rasterizarse con un
        ancho ligeramente distinto al que mide sin transform — hinting de

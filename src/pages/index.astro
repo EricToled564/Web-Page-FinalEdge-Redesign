@@ -315,18 +315,17 @@ import LockupMark from '../components/LockupMark.astro';
      alto para limitar el tamaño de la rueda — un valor fijo la mantiene
      legible (nombres de servicio a tamaño normal) sin depender de la
      altura de la ventana ni desbordar la sección. */
-  /* 920px = 668px (tamaño anterior) + 30% + el margen BUFFER que
-     engine-wheel.js resta (26px por lado, 52 total) para el carril de
-     las etiquetas de fase — así el CANVAS mismo (lo que de verdad se ve
-     más grande) sale en 868px, +30% exacto sobre 668px. Ancho Y alto
-     iguales (antes 900×720, no cuadrado — por eso el alto, no el ancho,
-     terminaba mandando en el cálculo de engine-wheel.js) para que
-     ninguno de los dos limite al otro por separado. */
+  /* 833px = 868px (canvas del intento anterior) × 0.9 (pedido explícito:
+     -10%) + el margen BUFFER que engine-wheel.js resta (26px por lado,
+     52 total) para el carril de las etiquetas de fase → canvas real de
+     781px = 868×0.9 exacto. Ancho y alto iguales (cuadrado) para que
+     ninguno de los dos limite al otro por separado en el cálculo de
+     engine-wheel.js. */
   .engine-col-wheel .wheel-card {
     display: flex;
     width: 100%;
-    max-width: 920px;
-    height: 920px;
+    max-width: 833px;
+    height: 833px;
     align-items: center;
     justify-content: flex-end;
     border: none;

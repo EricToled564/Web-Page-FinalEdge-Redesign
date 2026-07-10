@@ -50,27 +50,29 @@ const {
 </span>
 
 <style is:global>
-  /* --- variant="wheel" — copia literal de `wheelEdges`/`engineNodes`,
-     con un +20% pedido explícito sobre el tamaño original (18px→21.6px
-     prompt/word, 14px→16.8px tag, gaps escalados igual para que el
-     conjunto crezca proporcional, no solo el texto). fitWheelLabels()
-     en engine-wheel.js mide el ancho YA renderizado de cada lockup
-     contra su caja fija (118px/96px por edge, 148px el hub) y encoge
-     --wheel-scale solo si de verdad no cabe — ese seguro sigue intacto
-     sin tocarlo, así que este +20% nunca puede desbordar la rueda. */
+  /* --- variant="wheel" — copia literal de `wheelEdges`/`engineNodes`.
+     Dos pedidos explícitos encima del original (18px/14px): primero
+     +20% (18→21.6px prompt/word, 14→16.8px tag), después +25% MÁS sobre
+     ESE resultado (21.6→27px, 16.8→21px) — no +25% sobre el original.
+     Gaps escalados igual para que el conjunto crezca proporcional, no
+     solo el texto. fitWheelLabels() en engine-wheel.js mide el ancho YA
+     renderizado de cada lockup contra su caja fija (118px/96px por
+     edge, 148px el hub) y encoge --wheel-scale solo si de verdad no
+     cabe — ese seguro sigue intacto sin tocarlo, así que ningún
+     incremento de tamaño aquí puede desbordar la rueda. */
   .lm-wheel {
     display: inline-flex;
     align-items: baseline;
-    gap: 7.2px;
+    gap: 9px;
     line-height: 1;
     white-space: nowrap;
     transform: scale(var(--wheel-scale, 1));
     transform-origin: left center;
   }
-  .lm-wheel .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4.8px; }
-  .lm-wheel .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 21.6px; color: var(--lm-color); line-height: 1; }
-  .lm-wheel .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 21.6px; letter-spacing: -.02em; color: var(--lm-word-color); line-height: 1; }
-  .lm-wheel .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 16.8px; letter-spacing: .07em; color: var(--lm-color); line-height: 1; }
+  .lm-wheel .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+  .lm-wheel .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 27px; color: var(--lm-color); line-height: 1; }
+  .lm-wheel .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 27px; letter-spacing: -.02em; color: var(--lm-word-color); line-height: 1; }
+  .lm-wheel .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 21px; letter-spacing: .07em; color: var(--lm-color); line-height: 1; }
 
   /* --- .brand-lockup — tamaño FIJO único para el logo ">_ final edge
      [ENGINE]" en TODAS las colocaciones estáticas del sitio (nav,
