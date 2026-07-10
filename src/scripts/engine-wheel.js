@@ -222,7 +222,20 @@ class EngineWheel {
     this.renderer = renderer;
 
     this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(34, 1, 10, 4000);
+    /* FOV 34→39: el BUFFER del DOM (ver resize()) le da aire a las
+       ETIQUETAS, pero nunca puede evitar que la MALLA 3D (el gajo real)
+       se corte contra el borde del canvas — eso lo decide solo el
+       encuadre de la cámara, nada en el DOM. Medido con Playwright
+       proyectando los 8 vértices del bounding box de cada sector a NDC
+       durante el hover máximo: con FOV 34 los 6 edges se salían del
+       canvas (hasta 9.8% del cuadro). Este margen de cámara (no un
+       canvas más chico) es el "encuentra la forma de expandir el
+       espacio... sin que la rueda desborde" que pidió el cliente — el
+       canvas sigue siendo del mismo tamaño en el DOM (BUFFER=26 intacto),
+       la rueda en reposo se ve marginalmente más chica (~14%) para
+       dejarle aire real al hover, en vez de reducir el movimiento hasta
+       hacerlo casi imperceptible. */
+    this.camera = new THREE.PerspectiveCamera(39, 1, 10, 4000);
     this.camera.position.set(0, 90, 980);
     this.camera.lookAt(0, 0, 0);
 
