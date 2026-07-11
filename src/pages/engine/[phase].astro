@@ -9,12 +9,18 @@ export function getStaticPaths() {
 }
 const { phase } = Astro.props;
 const edges = EDGES.filter((e) => e.phase === phase.id);
+/* Muestra aprobada 2026-07-11 (ver registro en brand/RULES.md): el landing
+   del hub lleva el color de la fase como fondo con la estática de glifos
+   encima. Se estrena SOLO en Evaluación; las otras dos fases se suman
+   cuando el cliente apruebe la muestra. */
+const staticHero = phase.id === 'evaluacion';
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
 >
-  <section class="hub-hero" style={`--pc:${phase.color}`}>
+  <section class:list={['hub-hero', { 'hub-hero--static': staticHero }]} style={`--pc:${phase.color}`}>
+    {staticHero && <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>}
     <div class="hub-grid">
       <!-- la fase que giró e iluminó se queda como menú vivo del hub -->
       <div class="hub-wheel">
@@ -85,4 +91,51 @@ const edges = EDGES.filter((e) => e.phase === phase.id);
     .hub-hero { padding: 120px 24px 88px; }
     .hub-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
   }
+
+  /* ── Variante "landing con estática" (muestra: Evaluación) ─────────────
+     Fondo = color de la fase (excepción a R1.3 aprobada por el cliente,
+     registrada en brand/RULES.md R7.3) + canvas de estática de glifos
+     detrás del contenido (src/scripts/phase-static.js). Todo el texto que
+     antes era claro-sobre-void pasa a void-sobre-ámbar: #08080A sobre
+     #F4920C rinde ~8.5:1, arriba del 4.5:1 exigido. Los colores solo via
+     tokens/color-mix — ningún hex nuevo (R1.1). */
+  .hub-hero--static {
+    position: relative;
+    background: var(--pc);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+  }
+  .hub-static { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .hub-hero--static .hub-grid { position: relative; z-index: 1; width: 100%; }
+  .hub-hero--static .hub-tag,
+  .hub-hero--static .hub-name { color: var(--void-deep); }
+  .hub-hero--static .hub-tagline { color: color-mix(in srgb, var(--void-deep) 88%, transparent); }
+  .hub-hero--static .lead,
+  .hub-hero--static .hub-hint { color: color-mix(in srgb, var(--void-deep) 78%, transparent); }
+  /* los botones azul-accent no contrastan sobre ámbar: en esta variante
+     toman el rol "tinta sobre fase" — borde y texto void, hover invertido */
+  .hub-hero--static .btn {
+    color: var(--void-deep);
+    border-color: var(--void-deep);
+  }
+  .hub-hero--static .btn:hover,
+  .hub-hero--static .btn:active {
+    background: var(--void-deep);
+    color: var(--pc);
+  }
+  .hub-hero--static .btn--ghost {
+    border-color: color-mix(in srgb, var(--void-deep) 45%, transparent);
+    color: color-mix(in srgb, var(--void-deep) 82%, transparent);
+  }
+  .hub-hero--static .btn--ghost:hover {
+    border-color: var(--void-deep);
+    background: transparent;
+    color: var(--void-deep);
+  }
 </style>
+
+<!-- Astro empaqueta los <script> procesados por página, no por condicional —
+     las 3 páginas de fase comparten esta plantilla, así que el módulo llega a
+     las 3; en las fases sin canvas [data-phase-static] boot() no hace nada. -->
+<script>import '../../scripts/phase-static.js';</script>

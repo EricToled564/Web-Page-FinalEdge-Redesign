@@ -84,3 +84,4 @@ revisión humana.
 | 2026-07-08 | Lockups de edge + subtítulo en español en rueda y tarjetas. |
 | 2026-07-08 | Hero del Inicio: «La IA ejecuta. La experiencia decide.» / «Haz más. Sin contratar más.». |
 | 2026-07-08 | Clientes nombrados públicamente en la página principal (Sports World, Tiendas Chedraui, Kanguru Beverages, hoteles VLU, Growth Hub). |
+| 2026-07-11 | Excepción a R1.3 (pedido explícito del cliente, R7.3): el landing de los hubs de fase usa el color de la fase como fondo del hero, con textura de "estática de glifos" (canvas decorativo, `phase-static.js`) y texto en void para contraste ≥4.5:1. Muestra inicial: Evaluación; Capacidades/Ejecución esperan aprobación de la muestra. |
