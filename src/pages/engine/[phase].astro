@@ -2,141 +2,161 @@
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
 import LockupMark from '../../components/LockupMark.astro';
-import { PHASES, EDGES } from '../../data/engine.js';
+import { PHASES } from '../../data/engine.js';
 
 export function getStaticPaths() {
   return PHASES.map((p) => ({ params: { phase: p.id }, props: { phase: p } }));
 }
 const { phase } = Astro.props;
-const edges = EDGES.filter((e) => e.phase === phase.id);
 /* Landing con estática aprobado 2026-07-11 (ver registro en brand/RULES.md):
-   el hub lleva el color de la fase como fondo con la estática de glifos
-   encima. El cliente aprobó la muestra de Evaluación y pidió extenderla a
-   las tres fases, cada una en su color (ámbar / cian / magenta). */
-const staticHero = true;
+   fondo en el color de la fase + estática de glifos, y desde el rediseño
+   del mismo día: título centrado SIN numeración, statement corto aprobado
+   debajo, la rueda como único menú de servicios (con "Conoce más:" en vez
+   de repetir el nombre de la fase — ver apply() en engine-wheel.js) y dos
+   botones: volver al Engine (azul edge) y explorar la siguiente fase (en
+   el color de ESA fase — el color anticipa a dónde te lleva el click). */
+const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
 >
-  <section class:list={['hub-hero', { 'hub-hero--static': staticHero }]} style={`--pc:${phase.color}`}>
-    {staticHero && <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>}
-    <div class="hub-grid">
-      <!-- la fase que giró e iluminó se queda como menú vivo del hub -->
-      <div class="hub-wheel">
-        <EngineWheel compact />
-        <p class="hub-hint eyebrow"><span class="prompt">&gt;_</span>toca un edge para entrar al servicio</p>
+  <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --next-c:${nextPhase.color}`}>
+    <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>
+    <div class="hub-stack">
+      <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}</h1>
+      <p class="hub-statement reveal">
+        {phase.statement[0]}<br />{phase.statement[1]}
+      </p>
+      <!-- la fase que giró e iluminó se queda como menú vivo del hub:
+           los dos servicios se abren tocando los edges de la rueda.
+           fitHeight OBLIGATORIO aquí: el home también lo usa, y como la
+           isla persiste entre páginas (transition:persist), el atributo
+           que trae puesto debe coincidir con el que esta página declara —
+           si difirieran, la carga directa del hub y la navegación desde
+           el home dimensionarían la rueda distinto y la animación de la
+           fase NO terminaría en la misma posición en ambos caminos. -->
+      <div class="hub-wheel reveal">
+        <EngineWheel compact fitHeight />
       </div>
-      <div class="hub-copy">
-        <p class="hub-tag reveal">FASE {phase.num} / 03</p>
-        <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}</h1>
-        <p class="hub-tagline reveal">{phase.tagline}</p>
-        <p class="lead reveal">{phase.lead}</p>
-        <nav class="hub-menu reveal" aria-label={`Servicios de ${phase.name}`}>
-          {edges.map((e) => (
-            <a class="hub-item" href={e.slug}>
-              <img src={e.icon} alt="" width="44" height="44" loading="lazy" />
-              <span class="hub-item-txt">
-                <span class="hub-item-mark"><LockupMark word={e.id} tag="[AI]" color={phase.color} variant="section" transition:name={`edge-${e.id}`} /></span>
-                <span class="hub-item-service">{e.service}</span>
-                <span class="hub-item-hook">{e.hook}</span>
-              </span>
-            </a>
-          ))}
-        </nav>
-        <div class="hub-actions reveal">
-          <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
-          <a class="btn btn--ghost" href={phase.next.slug}>Siguiente fase: {phase.next.name}</a>
-        </div>
+      <div class="hub-actions reveal">
+        <a class="btn hub-btn-engine" href="/#engine">
+          Regresar al<LockupMark word="final edge" tag="[ENGINE]" color="var(--on-accent)" wordColor="var(--on-accent)" variant="wheel" class="brand-lockup" />
+        </a>
+        <a class="btn hub-btn-next" href={phase.next.slug}>Explorar {phase.next.name}</a>
       </div>
     </div>
   </section>
 </Base>
 
 <style>
-  .hub-hero { padding: 150px 72px 120px; }
-  .hub-grid {
-    max-width: 1180px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 64px;
-    align-items: center;
-  }
-  .hub-hint { margin-top: 16px; text-align: center; }
-  .hub-tag { font-size: 14px; letter-spacing: .24em; color: var(--pc); }
-  .hub-name {
-    margin-top: 16px;
-    font-size: var(--text-opener);
-    font-weight: 600;
-    letter-spacing: -.06em;
-    line-height: .95;
-    color: var(--fg);
-  }
-  .hub-tagline { margin: 20px 0 16px; font-size: var(--text-subtitle); color: var(--fg-2); }
-  .hub-menu { margin-top: 40px; display: grid; gap: 1px; background: var(--hairline); border: 1px solid var(--hairline); }
-  .hub-item {
-    display: flex; gap: 20px; align-items: center;
-    background: var(--bg); padding: 24px;
-    transition: background var(--t-hover) var(--ease);
-  }
-  .hub-item:hover { background: var(--panel); }
-  .hub-item img { width: 44px; height: 44px; }
-  .hub-item-txt { display: grid; gap: 4px; }
-  .hub-item-mark { display: block; width: 128px; }
-  .hub-item-service { color: var(--fg); font-size: var(--text-body); font-weight: 500; }
-  .hub-item-hook { color: var(--fg-muted); font-size: 14px; }
-  .hub-actions { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; }
-  @media (max-width: 980px) {
-    .hub-hero { padding: 120px 24px 88px; }
-    .hub-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-  }
-
-  /* ── Landing con estática (las 3 fases, cada una en su color) ──────────
+  /* ── Landing del hub (las 3 fases, cada una en su color) ────────────────
      Fondo = color de la fase (excepción a R1.3 aprobada por el cliente,
      registrada en brand/RULES.md R7.3) + canvas de estática de glifos
-     detrás del contenido (src/scripts/phase-static.js). Todo el texto que
-     antes era claro-sobre-void pasa a tinta void sobre el color de fase:
-     #08080A rinde ~8.5:1 sobre ámbar, ~11:1 sobre cian y ~6.2:1 sobre
-     magenta — todas arriba del 4.5:1 exigido. Los colores solo via
-     tokens/color-mix — ningún hex nuevo (R1.1). */
+     detrás del contenido (src/scripts/phase-static.js). Tinta void sobre
+     el color de fase: #08080A rinde ~8.5:1 sobre ámbar, ~11:1 sobre cian
+     y ~6.2:1 sobre magenta — todas arriba del 4.5:1 exigido. Colores solo
+     via tokens/color-mix — ningún hex nuevo (R1.1). */
   .hub-hero--static {
     position: relative;
     background: var(--pc);
     min-height: 100vh;
     display: flex;
     align-items: center;
+    justify-content: center;
+    padding: 108px 24px 36px;
   }
   .hub-static { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .hub-hero--static .hub-grid { position: relative; z-index: 1; width: 100%; }
-  .hub-hero--static .hub-tag,
-  .hub-hero--static .hub-name { color: var(--void-deep); }
-  .hub-hero--static .hub-tagline { color: color-mix(in srgb, var(--void-deep) 88%, transparent); }
-  .hub-hero--static .lead,
-  .hub-hero--static .hub-hint { color: color-mix(in srgb, var(--void-deep) 78%, transparent); }
-  /* los botones azul-accent no contrastan sobre ámbar: en esta variante
-     toman el rol "tinta sobre fase" — borde y texto void, hover invertido */
-  .hub-hero--static .btn {
-    color: var(--void-deep);
-    border-color: var(--void-deep);
+
+  /* pila centrada: título → statement → rueda-menú → acciones */
+  .hub-stack {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1180px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
-  .hub-hero--static .btn:hover,
-  .hub-hero--static .btn:active {
+  .hub-name {
+    font-size: var(--text-opener);
+    font-weight: 600;
+    letter-spacing: -.06em;
+    line-height: .95;
+    color: var(--void-deep);
+  }
+  .hub-statement {
+    margin-top: 20px;
+    font-size: var(--text-subtitle);
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--void-deep) 88%, transparent);
+    max-width: 60ch;
+  }
+  .hub-wheel {
+    margin-top: 4px;
+    width: min(100%, 660px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  /* Alto del carril de la rueda: CSS puro, función SOLO del viewport —
+     nunca flex:1 ni nada que dependa de los hermanos. resize() de la
+     rueda (fitHeight) mide este contenedor en momentos distintos según
+     el camino (carga directa vs navegación SPA con la isla persistente);
+     con flex el alto aún no estaba asentado al medir y la rueda quedaba
+     de tamaños DISTINTOS por camino — con esto la animación de la fase
+     termina exactamente en la misma posición llegues como llegues
+     (pedido explícito). 568px = paddings de la lámina + título +
+     statement + botones (el del Engine mide ~90px de alto por el lockup
+     de dos líneas) a 1400px de ancho, medido con Playwright hasta que
+     los botones quedan DENTRO del primer viewport; el clamp mantiene la
+     rueda usable en pantallas bajas y la limita a su referencia
+     (560+2·26) en pantallas muy altas. Solo en escritorio: <901px
+     fitHeight se apaga solo (engine-wheel.js) y la rueda se dimensiona
+     por ancho. */
+  @media (min-width: 901px) {
+    .hub-wheel { height: clamp(280px, calc(100vh - 568px), 612px); }
+  }
+  .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
+
+  /* botón Engine: azul edge sólido (pedido explícito) — el lockup dentro
+     va completo en --on-accent para no perder el símbolo ni el [ENGINE]
+     sobre el relleno azul. Mismo patrón de lockup-en-botón que el nav. */
+  .hub-btn-engine {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    text-transform: none;
+    letter-spacing: normal;
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--on-accent);
+  }
+  .hub-btn-engine:hover,
+  .hub-btn-engine:active { background: var(--accent-active); border-color: var(--accent-active); color: var(--on-accent); }
+
+  /* botón de siguiente fase: relleno en el color de LA FASE A LA QUE VA —
+     el color anticipa el destino y siempre contrasta contra el fondo de
+     la fase actual (los 3 colores de fase se distinguen entre sí). */
+  .hub-btn-next {
+    background: var(--next-c);
+    border-color: var(--void-deep);
+    color: var(--void-deep);
+    font-weight: 600;
+  }
+  .hub-btn-next:hover,
+  .hub-btn-next:active {
     background: var(--void-deep);
-    color: var(--pc);
-  }
-  .hub-hero--static .btn--ghost {
-    border-color: color-mix(in srgb, var(--void-deep) 45%, transparent);
-    color: color-mix(in srgb, var(--void-deep) 82%, transparent);
-  }
-  .hub-hero--static .btn--ghost:hover {
     border-color: var(--void-deep);
-    background: transparent;
-    color: var(--void-deep);
+    color: var(--next-c);
+  }
+
+  @media (max-width: 980px) {
+    .hub-hero--static { padding: 120px 16px 72px; }
   }
 </style>
 
-<!-- Astro empaqueta los <script> procesados por página, no por condicional —
-     las 3 páginas de fase comparten esta plantilla, así que el módulo llega a
-     las 3; en las fases sin canvas [data-phase-static] boot() no hace nada. -->
+<!-- Astro empaqueta los <script> procesados por página; las 3 páginas de
+     fase comparten esta plantilla y las 3 llevan la estática. -->
 <script>import '../../scripts/phase-static.js';</script>

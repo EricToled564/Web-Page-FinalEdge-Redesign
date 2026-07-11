@@ -16,6 +16,9 @@ export const PHASES = [
     tagline: 'Decidir dónde la IA mueve tu margen, antes de tocar una herramienta.',
     lead: 'Inteligencia de mercado, análisis competitivo y planeación estratégica, potenciados integralmente por inteligencia artificial.',
     next: { name: 'Capacidades', slug: '/engine/capacidades/' },
+    /* statement del hub — copy aprobado por el cliente 2026-07-11:
+       dos golpes cortos y memorables, anclados en el posicionamiento */
+    statement: ['Primero el margen. Después la herramienta.', '30 años del lado del cliente deciden dónde.'],
     edges: ['intelligence', 'strategy'],
     startAngle: 300, // banda: strategy 330° + intelligence 30°
   },
@@ -30,6 +33,7 @@ export const PHASES = [
     tagline: 'Preparar a tu gente y a tus procesos para que la IA aterrice.',
     lead: 'Diagnóstico organizacional, entrenamiento ejecutivo y mapeo de procesos realizados con inteligencia artificial para acelerar la automatización.',
     next: { name: 'Ejecución', slug: '/engine/ejecucion/' },
+    statement: ['La IA no falla por la herramienta.', 'Falla por la gente y los procesos. Preparamos ambos.'],
     edges: ['readiness', 'flow'],
     startAngle: 60,
   },
@@ -44,6 +48,7 @@ export const PHASES = [
     tagline: 'Construir, desplegar y producir para que la IA empiece a trabajar.',
     lead: 'Despliegue de aplicaciones, agentes y soluciones a la medida mediante desarrollo acelerado con IA, junto con contenido de estándar de calidad global. Implementación ultrarrápida y eficiente, a escala empresarial.',
     next: { name: 'Evaluación', slug: '/engine/evaluacion/' },
+    statement: ['Productividad las 24 horas.', 'Haz más. Sin contratar más.'],
     edges: ['systems', 'creative'],
     startAngle: 180,
   },

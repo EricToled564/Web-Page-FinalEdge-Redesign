@@ -691,6 +691,19 @@ class EngineWheel {
         if (g.userData.glowSprite) g.userData.glowSprite.material.opacity = 0;
       }
     }
+    /* En el hub de fase el nombre de la fase ya es el título H1 de la
+       página — repetirlo en la banda de la rueda era redundante (pedido
+       explícito 2026-07-11). En modo 'phase' la banda visible pasa a
+       decir "Conoce más:" (invitación a tocar los edges: la rueda es el
+       menú de servicios del hub); en cualquier otro modo recupera su
+       nombre real desde el markup original. Solo cambia el TEXTO del
+       label DOM — geometría, posición y movimiento quedan intactos. */
+    for (const p of PHASES) {
+      const label = this.anchors.get('phase-' + p.id)?.el;
+      if (!label) continue;
+      if (!label.dataset.phaseLabel) label.dataset.phaseLabel = label.textContent;
+      label.textContent = state.mode === 'phase' ? 'Conoce más:' : label.dataset.phaseLabel;
+    }
     this.root.dataset.mode = state.mode;
     this.root.dataset.focus = state.mode === 'phase' ? state.phase.id : state.mode === 'service' ? state.edge.id : '';
     const t = this.targetsFor(state);
