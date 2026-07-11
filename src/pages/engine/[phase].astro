@@ -13,15 +13,24 @@ const { phase } = Astro.props;
    del mismo día: título centrado SIN numeración, statement corto aprobado
    debajo, la rueda como único menú de servicios (con "Conoce más:" en vez
    de repetir el nombre de la fase — ver apply() en engine-wheel.js) y dos
-   botones: volver al Engine (azul edge) y explorar la siguiente fase (en
-   el color de ESA fase — el color anticipa a dónde te lleva el click). */
+   botones en tinta (contraste elegante, sin rellenos de color). */
 const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
+/* La rueda-menú debe medir lo que mide la PALABRA del título (pedido
+   explícito). Geist Mono es monoespaciada: el ancho de la palabra es una
+   función cerrada del font-size — avance por carácter (0.594em, medido
+   en runtime contra la fuente real: 529.2px de palabra / 98px de fs) por número de caracteres, menos el
+   tracking de -.06em entre caracteres. Así el ancho del carril queda en
+   CSS puro (función del viewport vía --text-opener), idéntico en carga
+   directa y en navegación SPA — la misma garantía determinista que
+   mantiene la animación de la fase terminando exactamente en su
+   posición final en ambos caminos. */
+const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
 >
-  <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --next-c:${nextPhase.color}`}>
+  <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
     <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>
     <div class="hub-stack">
       <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}</h1>
@@ -30,18 +39,17 @@ const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
       </p>
       <!-- la fase que giró e iluminó se queda como menú vivo del hub:
            los dos servicios se abren tocando los edges de la rueda.
-           fitHeight OBLIGATORIO aquí: el home también lo usa, y como la
-           isla persiste entre páginas (transition:persist), el atributo
-           que trae puesto debe coincidir con el que esta página declara —
-           si difirieran, la carga directa del hub y la navegación desde
-           el home dimensionarían la rueda distinto y la animación de la
-           fase NO terminaría en la misma posición en ambos caminos. -->
+           SIN fitHeight: ese es un contrato del split del home (y la
+           isla persistente lo trae pegado al navegar, pero resize() lo
+           ignora en rutas compactas — ver engine-wheel.js); aquí la
+           rueda se dimensiona SOLO por el ancho del carril, que es
+           función pura del viewport. -->
       <div class="hub-wheel reveal">
-        <EngineWheel compact fitHeight />
+        <EngineWheel compact />
       </div>
       <div class="hub-actions reveal">
         <a class="btn hub-btn-engine" href="/#engine">
-          Regresar al<LockupMark word="final edge" tag="[ENGINE]" color="var(--on-accent)" wordColor="var(--on-accent)" variant="wheel" class="brand-lockup" />
+          Regresar al<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
         </a>
         <a class="btn hub-btn-next" href={phase.next.slug}>Explorar {phase.next.name}</a>
       </div>
@@ -93,55 +101,42 @@ const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
     color: color-mix(in srgb, var(--void-deep) 88%, transparent);
     max-width: 60ch;
   }
+  /* Ancho del carril = ancho de la palabra del título (--title-em, ver
+     frontmatter) + los 2×26px de BUFFER que la rueda reserva alrededor
+     del canvas (engine-wheel.js resize(): canvas = carril − 52). La
+     rueda crece/encoge exactamente con la palabra a cualquier viewport.
+     min(100%…) protege pantallas angostas. */
   .hub-wheel {
     margin-top: 4px;
-    width: min(100%, 660px);
+    width: min(100%, calc(var(--text-opener) * var(--title-em) + 52px));
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  /* Alto del carril de la rueda: CSS puro, función SOLO del viewport —
-     nunca flex:1 ni nada que dependa de los hermanos. resize() de la
-     rueda (fitHeight) mide este contenedor en momentos distintos según
-     el camino (carga directa vs navegación SPA con la isla persistente);
-     con flex el alto aún no estaba asentado al medir y la rueda quedaba
-     de tamaños DISTINTOS por camino — con esto la animación de la fase
-     termina exactamente en la misma posición llegues como llegues
-     (pedido explícito). 568px = paddings de la lámina + título +
-     statement + botones (el del Engine mide ~90px de alto por el lockup
-     de dos líneas) a 1400px de ancho, medido con Playwright hasta que
-     los botones quedan DENTRO del primer viewport; el clamp mantiene la
-     rueda usable en pantallas bajas y la limita a su referencia
-     (560+2·26) en pantallas muy altas. Solo en escritorio: <901px
-     fitHeight se apaga solo (engine-wheel.js) y la rueda se dimensiona
-     por ancho. */
-  @media (min-width: 901px) {
-    .hub-wheel { height: clamp(280px, calc(100vh - 568px), 612px); }
-  }
   .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
 
-  /* botón Engine: azul edge sólido (pedido explícito) — el lockup dentro
-     va completo en --on-accent para no perder el símbolo ni el [ENGINE]
-     sobre el relleno azul. Mismo patrón de lockup-en-botón que el nav. */
+  /* Botones en tinta — el cliente descartó los rellenos de color (azul /
+     color de fase): contraste sí, pero elegante y que combine con la
+     lámina. El principal (Engine) es el mismo "chip void" que ya usan la
+     banda "Conoce más:" y el asistente — tinta sólida oscura con el
+     lockup en sus colores reales de marca; el secundario es fantasma en
+     tinta void. Jerarquía por peso, no por color. */
   .hub-btn-engine {
     display: flex;
     align-items: baseline;
     gap: 10px;
     text-transform: none;
     letter-spacing: normal;
-    background: var(--accent);
-    border-color: var(--accent);
-    color: var(--on-accent);
+    background: var(--void-deep);
+    border-color: var(--void-deep);
+    color: var(--fg);
   }
   .hub-btn-engine:hover,
-  .hub-btn-engine:active { background: var(--accent-active); border-color: var(--accent-active); color: var(--on-accent); }
+  .hub-btn-engine:active { background: var(--void-deep); border-color: var(--accent); color: var(--fg); }
 
-  /* botón de siguiente fase: relleno en el color de LA FASE A LA QUE VA —
-     el color anticipa el destino y siempre contrasta contra el fondo de
-     la fase actual (los 3 colores de fase se distinguen entre sí). */
   .hub-btn-next {
-    background: var(--next-c);
-    border-color: var(--void-deep);
+    background: transparent;
+    border-color: color-mix(in srgb, var(--void-deep) 55%, transparent);
     color: var(--void-deep);
     font-weight: 600;
   }
@@ -149,7 +144,7 @@ const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
   .hub-btn-next:active {
     background: var(--void-deep);
     border-color: var(--void-deep);
-    color: var(--next-c);
+    color: var(--pc);
   }
 
   @media (max-width: 980px) {

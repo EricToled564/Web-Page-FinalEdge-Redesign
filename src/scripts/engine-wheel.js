@@ -313,6 +313,25 @@ class EngineWheel {
       this.wheel.add(hit);
       g.userData.hit = hit;
       this.addAnchor('edge-' + edge.id, posAt(edge.angle, 168).setZ(DEPTH / 2 + 2), g);
+      /* mismo trato que los nombres de fase (ver el bloque de bandas):
+         el lockup del servicio es un <a> que CUBRE el centro del gajo y
+         se queda con el pointer — el canvas deja de recibir pointermove
+         ahí y el raycast de pick() nunca ve el punto más natural para
+         tocar. Sin esto, el gajo solo reaccionaba al tocar su "carne"
+         alrededor del nombre — en el hub (rediseño 2026-07-11, la rueda
+         como único menú de servicios) eso dejaba el hover 3D
+         prácticamente inalcanzable. */
+      const edgeLabelEl = this.anchors.get('edge-' + edge.id)?.el;
+      if (edgeLabelEl) {
+        edgeLabelEl.addEventListener('pointerenter', () => {
+          this._labelHover = g;
+          this.activateHover(g);
+        });
+        edgeLabelEl.addEventListener('pointerleave', () => {
+          this._labelHover = null;
+          this.activateHover(null);
+        });
+      }
     }
 
     for (const phase of PHASES) {
@@ -843,8 +862,16 @@ class EngineWheel {
        apilada de móvil, .engine-col-wheel pasa a height:auto — un % de
        alto contra un ancestro auto no resuelve a nada usable (colapsa al
        tamaño por defecto del <canvas>, ~300×150), así que ahí la rueda
-       vuelve a dimensionarse solo por ancho, como siempre lo hizo. */
-    if (this.root.dataset.fitHeight === '1' && matchMedia('(min-width: 901px)').matches) {
+       vuelve a dimensionarse solo por ancho, como siempre lo hizo.
+       `!compact` porque fitHeight es un contrato del split del HOME
+       (modo full): data-fit-height viaja pegado a la isla persistente
+       (transition:persist no re-renderiza atributos), así que en los
+       hubs de fase llegaría encendido y mediría un contenedor sin alto
+       fijo — alto distinto según el camino de llegada, que es
+       exactamente el bug de "la animación no termina donde debe". En
+       rutas compactas la rueda se dimensiona SOLO por ancho, que en el
+       hub es una función pura del viewport (ver .hub-wheel). */
+    if (this.root.dataset.fitHeight === '1' && !compact && matchMedia('(min-width: 901px)').matches) {
       const availH = (parent?.clientHeight || refH) - BUFFER * 2;
       if (availH > 0) w = Math.max(1, Math.min(w, availH * (refW / refH)));
     }
@@ -1104,7 +1131,15 @@ class EngineWheel {
         this.wheel.rotation.z += (target - this.wheel.rotation.z) * 0.08;
       }
     }
-    if (!this.tweens.length && this.state?.mode === 'full') {
+    /* hover en 'full' (home) Y en 'phase' (hub): en el hub la rueda es el
+       ÚNICO menú de servicios (rediseño 2026-07-11) y el cliente pidió
+       explícitamente que los segmentos conserven su movimiento 3D ahí.
+       'service' queda fuera: esa página encuadra UNA pieza en close-up y
+       nunca pidió reacción. Sin riesgo de piezas fantasma: pick() ya
+       filtra los hits por group.visible, así que los 4 sectores ocultos
+       del hub (volados fuera con op 0) no reciben hover aunque sus
+       mallas de raycast sigan en su lugar. */
+    if (!this.tweens.length && (this.state?.mode === 'full' || this.state?.mode === 'phase')) {
       this.pick(now);
       this.hoverLift(now);
     }
