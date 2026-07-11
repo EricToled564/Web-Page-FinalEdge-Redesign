@@ -843,7 +843,8 @@ class EngineWheel {
        este margen original — medido con Playwright en los 6 edges, cero
        píxeles de excedente contra el borde de recorte. */
     const BUFFER = 26;
-    const compact = routeState().mode !== 'full';
+    const routeMode = routeState().mode;
+    const compact = routeMode !== 'full';
     this.root.dataset.compact = compact ? '1' : '0';
     /* 820→900 en modo full: pedido explícito de +30% de tamaño de rueda
        ("intento 20", visibilidad). Este techo por sí solo no la hace más
@@ -856,7 +857,18 @@ class EngineWheel {
     const refH = compact ? 560 : 900;
     const parent = this.root.parentElement;
     const availW = (parent?.clientWidth || refW) - BUFFER * 2;
-    let w = Math.max(1, Math.min(availW, refW));
+    /* refW sigue siendo la REFERENCIA de proporciones (fitScale = w/refW
+       reescala las etiquetas), pero como TOPE solo aplica fuera de los
+       hubs de fase: ahí el cliente pidió la rueda-menú un 59% más grande
+       que la palabra del título, muy por encima de los 620 de referencia
+       compacta, y el tamaño lo fija el carril .hub-wheel (CSS puro).
+       Decidirlo por RUTA (routeState) y no por atributo es deliberado:
+       los data-attrs viajan pegados a la isla persistente entre páginas
+       y producirían tamaños distintos según el camino de llegada — el
+       bug de aterrizaje ya corregido. En /servicios/ (mode 'service') y
+       en el home el tope queda exactamente como estaba. */
+    const capW = routeMode === 'phase' ? 1400 : refW;
+    let w = Math.max(1, Math.min(availW, capW));
     /* el límite por alto SOLO aplica en el layout de dos columnas (>900px,
        mismo corte que el media query de .engine-split): en la columna
        apilada de móvil, .engine-col-wheel pasa a height:auto — un % de

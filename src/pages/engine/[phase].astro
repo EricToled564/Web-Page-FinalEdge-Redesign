@@ -95,20 +95,37 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
     color: var(--void-deep);
   }
   .hub-statement {
-    margin-top: 20px;
+    margin-top: 16px;
     font-size: var(--text-subtitle);
     line-height: 1.45;
     color: color-mix(in srgb, var(--void-deep) 88%, transparent);
     max-width: 60ch;
   }
   /* Ancho del carril = ancho de la palabra del título (--title-em, ver
-     frontmatter) + los 2×26px de BUFFER que la rueda reserva alrededor
-     del canvas (engine-wheel.js resize(): canvas = carril − 52). La
-     rueda crece/encoge exactamente con la palabra a cualquier viewport.
-     min(100%…) protege pantallas angostas. */
+     frontmatter) × 1.59 (pedido explícito: la sección de la fase un 59%
+     más grande que la palabra) + los 2×26px de BUFFER que la rueda
+     reserva alrededor del canvas (engine-wheel.js resize(): canvas =
+     carril − 52). Crece/encoge con la palabra a cualquier viewport;
+     min(100%…) protege pantallas angostas.
+
+     Los márgenes NEGATIVOS recortan el aire interno del canvas, no la
+     rueda: el encuadre de fase deja vacía la parte del círculo donde
+     viven las piezas ocultas (arriba del chip "Conoce más:" y todo el
+     semicírculo inferior), y ese vacío transparente empujaba el
+     statement y los botones lejos del abanico (quejas explícitas:
+     "no veo los botones", "no dejes tanto espacio entre el texto y la
+     sección"). Los factores son proporciones del alto del stage
+     (mismas a cualquier tamaño: el encuadre de cámara es fijo), NO
+     píxeles sueltos — medidos con Playwright contra el chip y la base
+     real del abanico. El canvas transparente se encima sobre statement
+     y botones sin taparlos: los botones vienen DESPUÉS en el DOM (se
+     pintan y clickean encima) y el statement no es interactivo. */
   .hub-wheel {
-    margin-top: 4px;
-    width: min(100%, calc(var(--text-opener) * var(--title-em) + 52px));
+    --rail-w: min(100%, calc(var(--text-opener) * var(--title-em) * 1.59 + 52px));
+    --stage-h: calc((var(--text-opener) * var(--title-em) * 1.59) * 0.9032 + 52px);
+    width: var(--rail-w);
+    margin-top: calc(var(--stage-h) * -0.215 + 12px);
+    margin-bottom: calc(var(--stage-h) * -0.375 + 16px);
     display: flex;
     align-items: center;
     justify-content: center;
