@@ -9,11 +9,11 @@ export function getStaticPaths() {
 }
 const { phase } = Astro.props;
 const edges = EDGES.filter((e) => e.phase === phase.id);
-/* Muestra aprobada 2026-07-11 (ver registro en brand/RULES.md): el landing
-   del hub lleva el color de la fase como fondo con la estática de glifos
-   encima. Se estrena SOLO en Evaluación; las otras dos fases se suman
-   cuando el cliente apruebe la muestra. */
-const staticHero = phase.id === 'evaluacion';
+/* Landing con estática aprobado 2026-07-11 (ver registro en brand/RULES.md):
+   el hub lleva el color de la fase como fondo con la estática de glifos
+   encima. El cliente aprobó la muestra de Evaluación y pidió extenderla a
+   las tres fases, cada una en su color (ámbar / cian / magenta). */
+const staticHero = true;
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
@@ -92,12 +92,13 @@ const staticHero = phase.id === 'evaluacion';
     .hub-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
   }
 
-  /* ── Variante "landing con estática" (muestra: Evaluación) ─────────────
+  /* ── Landing con estática (las 3 fases, cada una en su color) ──────────
      Fondo = color de la fase (excepción a R1.3 aprobada por el cliente,
      registrada en brand/RULES.md R7.3) + canvas de estática de glifos
      detrás del contenido (src/scripts/phase-static.js). Todo el texto que
-     antes era claro-sobre-void pasa a void-sobre-ámbar: #08080A sobre
-     #F4920C rinde ~8.5:1, arriba del 4.5:1 exigido. Los colores solo via
+     antes era claro-sobre-void pasa a tinta void sobre el color de fase:
+     #08080A rinde ~8.5:1 sobre ámbar, ~11:1 sobre cian y ~6.2:1 sobre
+     magenta — todas arriba del 4.5:1 exigido. Los colores solo via
      tokens/color-mix — ningún hex nuevo (R1.1). */
   .hub-hero--static {
     position: relative;
