@@ -325,14 +325,20 @@ import LockupMark from '../components/LockupMark.astro';
        ancho de contenido (1320px) del que esa cuadrícula compartida
        permite — el piso de 72px por lado (pensado para 1180px) dejaba
        la rueda comprimida de vuelta a su tamaño viejo en viewports
-       típicos de escritorio (1400px). Piso de 40px y resta de 780px
-       (mitad de 1560): la rueda subió otra vez de tamaño (card de
-       1083px, pedido explícito de +30%) y necesita un ancho de contenido
-       de hasta 1560px para llegar a su tamaño completo en pantallas
-       anchas; en las que no alcanzan, el min() del card y fitHeight
-       la ajustan a lo disponible sin cortarla jamás. */
-    padding-left: max(40px, calc(50vw - 780px));
-    padding-right: max(40px, calc(50vw - 780px));
+       típicos de escritorio (1400px).
+       IZQUIERDA: alineada EXACTAMENTE con la cuadrícula de la lámina
+       anterior (pedido explícito 2026-07-12) — .presion-inner es una
+       caja de 1180px centrada dentro de 72px de padding, así que su
+       borde izquierdo vive en max(72px, 50vw − 590px); el lockup
+       ">_ final edge [ENGINE]" arranca en ese mismo borde.
+       DERECHA: lo mínimo que preserva la rueda a tamaño completo
+       (1083px de card) en pantallas anchas — 50vw − 910px sale de
+       despejar: vw − padIzq − 360 de texto − 24 de gap − 16 de padding
+       de columna − padDer ≥ 1083. Asimétrico a propósito: la rueda
+       sangra hacia el borde derecho por diseño (ver .engine-col-wheel),
+       la retícula manda solo del lado del texto. */
+    padding-left: max(72px, calc(50vw - 590px));
+    padding-right: max(40px, calc(50vw - 910px));
   }
   .engine-col-text { padding-right: 24px; }
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
@@ -382,7 +388,10 @@ import LockupMark from '../components/LockupMark.astro';
   @media (max-width: 900px) {
     .engine-split {
       grid-template-columns: 1fr;
-      padding: 56px 24px;
+      /* misma alineación con la cuadrícula de "La Presión" también en la
+         columna apilada: su padding lateral es 72px hasta 760px y 24px
+         de ahí para abajo (ver el media query de .presion-band). */
+      padding: 56px 72px;
       gap: 32px;
     }
     .engine-col-text { padding-right: 0; }
@@ -459,6 +468,8 @@ import LockupMark from '../components/LockupMark.astro';
     .hero { padding: 32px 24px 48px; }
     .plate { padding: 88px 24px; }
     .presion-band { padding: 64px 24px; }
+    /* sigue a .presion-band: la cuadrícula baja a 24px de lateral aquí */
+    .engine-split { padding-left: 24px; padding-right: 24px; }
     .presion-facts { grid-template-columns: 1fr; margin-top: 40px; }
     .presion-fact { min-height: 0; padding: 32px 24px; }
     /* en columna única el divisor es horizontal, no vertical */

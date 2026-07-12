@@ -894,15 +894,16 @@ class EngineWheel {
        alto contra un ancestro auto no resuelve a nada usable (colapsa al
        tamaño por defecto del <canvas>, ~300×150), así que ahí la rueda
        vuelve a dimensionarse solo por ancho, como siempre lo hizo.
-       `!compact` porque fitHeight es un contrato del split del HOME
-       (modo full): data-fit-height viaja pegado a la isla persistente
-       (transition:persist no re-renderiza atributos), así que en los
-       hubs de fase llegaría encendido y mediría un contenedor sin alto
-       fijo — alto distinto según el camino de llegada, que es
-       exactamente el bug de "la animación no termina donde debe". En
-       rutas compactas la rueda se dimensiona SOLO por ancho, que en el
-       hub es una función pura del viewport (ver .hub-wheel). */
-    if (this.root.dataset.fitHeight === '1' && !compact && matchMedia('(min-width: 901px)').matches) {
+       Decidido por RUTA (routeMode === 'full', que solo existe en el
+       home), NUNCA por data-fit-height: ese atributo viaja pegado a la
+       isla persistente (transition:persist no re-renderiza atributos),
+       así que al REGRESAR al home desde un hub de fase llegaba apagado
+       ('0', el valor del hub) y el límite por alto no corría — la rueda
+       volvía más grande que el alto disponible y cortada por abajo
+       (medido: 868px de canvas donde el alto solo permite 732 a 900 de
+       viewport). El mismo bug de "tamaño según el camino de llegada" ya
+       corregido en capW, ahora en el alto. */
+    if (routeMode === 'full' && matchMedia('(min-width: 901px)').matches) {
       const availH = (parent?.clientHeight || refH) - BUFFER * 2;
       if (availH > 0) w = Math.max(1, Math.min(w, availH * (refW / refH)));
     }
@@ -951,7 +952,17 @@ class EngineWheel {
        vecinas, no un número arbitrario. Debe coincidir siempre con
        .wl-edge { width } en EngineWheel.astro — esta caja es la MISMA
        que ese ancho fijo, no una independiente. */
-    const edgeBox = compact ? 133 : 164;
+    /* ×1.2 en modo full (164→197): pedido explícito 2026-07-12 de
+       lockups de servicio 20% mayores. La caja crece EXACTAMENTE en la
+       misma proporción que el font-size (ver .wl-edge y el bloque de
+       fuentes en EngineWheel.astro) — si solo creciera la fuente, este
+       seguro contra desbordes la encogería de vuelta (el bug ya
+       documentado arriba); si solo creciera la caja, no crecería nada.
+       197 sigue bajo los ~234px de arco disponible entre vecinos
+       medidos arriba. El compacto (133) NO crece: en la mini-rueda del
+       hub "intelligence" a +20% se salía de su gajo (verificado en
+       captura) y el pedido exige no exceder el espacio. */
+    const edgeBox = compact ? 133 : 197;
     /* 148→180: mismo bug que edgeBox arriba, esta vez con el hub como
        el nuevo cuello de botella una vez destrabado el de los edges
        (medido: --wheel-scale se quedó clavado en 0.7474 al seguir
@@ -977,6 +988,10 @@ class EngineWheel {
     const fit = this.fitScale || 1;
     const anchors = [...this.overlay.querySelectorAll('.wl-edge'), this.overlay.querySelector('.wl-hub')].filter(Boolean);
     this.root.style.setProperty('--wheel-scale', 1);
+    /* mismo reset para la variable propia del hub: sin él, el hub se
+       mediría con su encogimiento anterior ya aplicado (encogimiento
+       sobre sí mismo — el mismo bug que el reset de arriba evita). */
+    this.root.style.setProperty('--wheel-scale-hub', 1);
 
     let scale = 1;
     for (const a of anchors) {
@@ -1002,6 +1017,18 @@ class EngineWheel {
       this._settleTightest = scale;
     }
     this.root.style.setProperty('--wheel-scale', scale);
+    /* El lockup del HUB central NO es un servicio y el pedido de +20%
+       (2026-07-12) fue SOLO para los 6 lockups de servicio. Pero la
+       escala es una variable compartida: al crecer edgeBox 164→197 la
+       escala global se afloja ×(197/164) y el hub — cuyo tamaño nadie
+       pidió tocar — crecería el mismo 20% de rebote. Su propia variable
+       (--wheel-scale-hub, ver EngineWheel.astro) reproduce EXACTAMENTE
+       la escala que le tocaba con la caja anterior: scale × 164/197
+       deshace el aflojamiento para él solo (en compacto la caja no
+       cambió — factor 1, todo queda como estaba), y el techo de hubBox
+       sigue aplicando igual que siempre. */
+    const hubRatio = compact ? 1 : 164 / 197;
+    this.root.style.setProperty('--wheel-scale-hub', Math.min(scale * hubRatio, 1));
   }
 
   projectLabels() {
@@ -1147,7 +1174,20 @@ class EngineWheel {
 
   loop(now) {
     requestAnimationFrame(this.loop);
-    if (!this.visible || document.hidden) return;
+    if (!this.visible || document.hidden) {
+      /* Las transiciones de estado (apply) TIENEN que completarse aunque
+         la rueda no esté en pantalla: al regresar al home desde un hub de
+         fase se aterriza en el HERO (la rueda queda bajo el pliegue, el
+         IntersectionObserver la marca no-visible) y el tween correctivo
+         de boot() quedaba congelado en k=0 — la rueda seguía con el
+         encuadre de la fase (gajos volados, cámara en close-up) ya en el
+         home, hasta que algo lo re-pisara (bug reportado con captura).
+         Solo se avanza el tween (mutación de escena, barato, ≤900ms);
+         NO se renderiza — el render sigue esperando a que la rueda sea
+         visible, que es lo único caro. */
+      for (const tw of this.tweens) tw.step(now);
+      return;
+    }
     if (this._settleUntil && now < this._settleUntil) this.fitWheelLabels();
     for (const tw of this.tweens) tw.step(now);
     this.stepPulses(now);
@@ -1212,6 +1252,17 @@ function boot() {
     if (!instance) instance = new EngineWheel(root);
     else {
       instance.root = document.getElementById('engine-wheel');
+      /* La ventana de asentamiento (constructor) existe SOLO para la
+         carga de fuentes del primer documento. Si una navegación SPA
+         llega dentro de esos 4s, el candado "nunca aflojar" arrastraba
+         el --wheel-scale más apretado de la PÁGINA ANTERIOR (medido:
+         hub → home vía logo dentro de la ventana dejaba los lockups de
+         servicio diminutos en el home, y nada los recalculaba hasta un
+         resize real de ventana). La fuente ya está cargada aquí — se
+         cierra la ventana y se suelta el mínimo acumulado antes de
+         volver a medir. */
+      instance._settleUntil = 0;
+      instance._settleTightest = null;
       instance.resize();
       const rs = routeState();
       if (!sameState(rs, instance.state)) instance.apply(rs, false);

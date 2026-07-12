@@ -109,7 +109,22 @@ const { compact = false, fitHeight = false } = Astro.props;
      ESTE ancho) deja de coincidir con la caja que en verdad se está
      midiendo. Ver el comentario largo en fitWheelLabels() para el
      porqué del número. */
-  .wl-edge { width: 164px; }
+  /* 164→197 (×1.2): pedido explícito 2026-07-12 de lockups de servicio
+     20% mayores. NO se toca ningún font-size: la etiqueta más larga
+     ("intelligence") siempre excede su caja y fitWheelLabels() encoge
+     --wheel-scale (compartida por los 6) hasta que quepa — es decir, el
+     tamaño RENDERIZADO es caja × (proporción fija de la fuente), la
+     caja es el único mando real. Crecerla ×1.2 agranda los 6 lockups
+     exactamente 20%, en bloque (una sola escala compartida, jamás cada
+     uno por separado). Debe coincidir SIEMPRE con edgeBox en
+     fitWheelLabels() (engine-wheel.js).
+     SOLO la rueda completa del home crece: en la mini-rueda de los hubs
+     de fase (compact, 133) "intelligence" a +20% se salía de su gajo
+     (verificado en captura: las letras sangraban sobre el fondo
+     naranja) y el pedido exige NO exceder el espacio — ahí queda el
+     tamaño anterior, que ya es el máximo que cabe. El lockup del HUB
+     central no es un servicio: su caja (hubBox) no se toca. */
+  .wl-edge { width: 197px; }
   [data-compact='1'] .wl-edge { width: 133px; }
 
   /* etiqueta de fase — 16px, tracking 2.6px, 600. Texto SIEMPRE blanco
@@ -167,6 +182,11 @@ const { compact = false, fitHeight = false } = Astro.props;
      centro: el mismo bug de "no centrado", ahora causado por la escala
      en vez del layout. Solo el hub se recentra; los edges no se tocan. */
   .wl-hub :global(.lm-wheel) { transform-origin: center center; }
+  /* el hub NO acompaña el +20% de los lockups de servicio (pedido
+     2026-07-12, solo servicios): usa su propia escala, calculada en
+     fitWheelLabels() como la que le tocaba con la caja anterior — ver
+     el comentario ahí. Mismo patrón var() que .lm-wheel. */
+  .wl-hub :global(.lm-wheel) { transform: scale(var(--wheel-scale-hub, 1)); }
 
   /* estados: en el hub de fase solo vive la fase enfocada; en servicio, nada */
   [data-mode='service'] .wl,
