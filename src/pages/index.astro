@@ -164,6 +164,21 @@ import LockupMark from '../components/LockupMark.astro';
     }
     initCosmosScroll();
     document.addEventListener('astro:page-load', initCosmosScroll);
+
+    /* El atributo autoplay del <video> del hero solo actúa en la carga
+       de DOCUMENTO: al regresar al home por navegación SPA (p. ej. click
+       al logo del nav), el ClientRouter inserta un <video> nuevo en el
+       swap y el navegador NO lo arranca solo — el hero quedaba congelado
+       en el poster (bug reportado). play() explícito en cada
+       astro:page-load; al ir muted, el navegador lo permite sin gesto.
+       El catch vacío cubre el rechazo benigno de play() cuando el
+       elemento aún no está listo o la pestaña está en fondo. */
+    function playHeroVideo() {
+      const v = document.querySelector('.hero-video');
+      if (v && v.paused) v.play().catch(() => {});
+    }
+    playHeroVideo();
+    document.addEventListener('astro:page-load', playHeroVideo);
   </script>
 </Base>
 
@@ -352,6 +367,20 @@ import LockupMark from '../components/LockupMark.astro';
     border: none;
     background: transparent;
     padding: 0;
+  }
+  /* En pantallas MÁS BAJAS que lo que la rueda necesita (canvas de 781px
+     + nav de 92px + un respiro ≈ 905px), el alto fijo de 833px dejaba la
+     rueda cortada por abajo al centrarla el click de "Conoce el Engine"
+     (bug reportado: a ~800px de viewport se cortaban ~89px del arco
+     inferior — la geometría no da: 781 > 800−92). El card se limita al
+     alto real disponible bajo el nav SOLO en esas pantallas; fitHeight
+     (engine-wheel.js) redimensiona el canvas al nuevo alto y todo el
+     círculo vuelve a caber. En pantallas ≥890px NADA cambia: la rueda
+     conserva exactamente el tamaño aprobado (781 de canvas + 92 de nav
+     + ~8px de respiro por lado = 889 es el viewport mínimo exacto donde
+     cabe entera). */
+  @media (max-height: 889px) and (min-width: 901px) {
+    .engine-col-wheel .wheel-card { height: calc(100vh - 148px); }
   }
   @media (max-width: 900px) {
     .engine-split {
