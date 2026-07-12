@@ -14,13 +14,15 @@
  * abajo-izquierda: recorre la malla lentamente.
  *
  * Implementación: celosía = retícula cuadrada ROTADA 45° — coordenadas
- * (u,v) → pantalla con x=(u+v)·s, y=(u−v)·s — cuyas dos familias de
- * aristas (u→u+1 y v→v+1) son las diagonales visibles del video. La
- * deformación es un pozo con caída gaussiana que jala los puntos hacia su
- * centro (compactación) más un sesgo hacia abajo (hundimiento 3D). El
- * pozo pasea solo (ruido suave 1D por eje) y, si el usuario tiene el
- * puntero sobre el hero, lo persigue con retraso — el video de referencia
- * es precisamente una malla que responde al cursor.
+ * (u,v) → pantalla con x=(u+v)·s, y=(u−v)·s. Revisión del cliente
+ * 2026-07-12: SOLO los puntos de las intersecciones, sin dibujar la red
+ * de líneas, y la tinta no en void (negro) sino en un TONO MÁS OSCURO
+ * DEL PROPIO COLOR DE FONDO (tono-sobre-tono: el fondo queda como
+ * textura y el título/statement quedan como la única tinta plena de la
+ * lámina). La deformación es un pozo con caída derivada-de-gaussiana
+ * que compacta los puntos hacia su centro (embudo suave). El pozo pasea
+ * solo (ruido 1D por eje) y, si el usuario tiene el puntero sobre el
+ * hero, lo persigue con retraso.
  */
 
 const SPACING = 26;   // px CSS entre puntos vecinos de la celosía
@@ -51,8 +53,22 @@ function vnoise1(x, seed) {
 function initMesh(canvas) {
   const ctx = canvas.getContext('2d');
   const host = canvas.parentElement;
-  const inkColor = getComputedStyle(document.documentElement)
-    .getPropertyValue('--void-deep').trim() || '#08080A';
+  /* tinta = el color de fondo REAL de la sección, oscurecido (pedido
+     explícito: no negro — un tono más oscuro del color del fondo). El
+     fondo computado llega como rgb(...) u oklch(...) según el navegador;
+     ambos se oscurecen escalando su componente de luz. Fallback: void. */
+  function darkerInk() {
+    const bg = getComputedStyle(host).backgroundColor || '';
+    let m = bg.match(/oklch\(([\d.]+)/);
+    if (m) return bg.replace(m[1], (parseFloat(m[1]) * 0.52).toFixed(4));
+    m = bg.match(/rgba?\((\d+)[,\s]+(\d+)[,\s]+(\d+)/);
+    if (m) {
+      const [r, g, b] = [m[1], m[2], m[3]].map((n) => Math.round(parseInt(n, 10) * 0.52));
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+    return getComputedStyle(document.documentElement).getPropertyValue('--void-deep').trim() || '#08080A';
+  }
+  const inkColor = darkerInk();
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let W = 0, H = 0, dpr = 1;
@@ -121,29 +137,9 @@ function initMesh(canvas) {
       }
     }
 
-    /* líneas: las dos familias diagonales, UN trazo por familia */
-    ctx.strokeStyle = inkColor;
-    ctx.lineWidth = 1 * dpr;
-    ctx.globalAlpha = 0.26;
-    ctx.beginPath();
-    for (let v = 0; v < nv; v++) {
-      for (let u = 0; u < nu - 1; u++) {
-        const a = (v * nu + u) * 2, b = (v * nu + u + 1) * 2;
-        ctx.moveTo(pos[a], pos[a + 1]);
-        ctx.lineTo(pos[b], pos[b + 1]);
-      }
-    }
-    for (let u = 0; u < nu; u++) {
-      for (let v = 0; v < nv - 1; v++) {
-        const a = (v * nu + u) * 2, b = ((v + 1) * nu + u) * 2;
-        ctx.moveTo(pos[a], pos[a + 1]);
-        ctx.lineTo(pos[b], pos[b + 1]);
-      }
-    }
-    ctx.stroke();
-
-    /* puntos en las intersecciones — protagonistas, como en el video */
-    ctx.globalAlpha = 0.55;
+    /* SOLO puntos (revisión del cliente: sin la red de líneas) — la
+       deformación se lee por el desplazamiento de los propios puntos */
+    ctx.globalAlpha = 0.8;
     ctx.fillStyle = inkColor;
     const rr = DOT_R * dpr;
     ctx.beginPath();
