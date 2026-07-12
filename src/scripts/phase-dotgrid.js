@@ -1,30 +1,33 @@
 /**
- * Experimento 2026-07-12 v2 (Evaluación, hero del hub): campo de guiones
- * orientados ("flow field") — réplica del segundo video de referencia del
- * cliente, que sustituye al experimento anterior de cubos punteados (el
- * propio cliente lo propuso como efecto más fácil de ejecutar bien).
+ * Experimento 2026-07-12 v3 (Evaluación, hero del hub): malla deformable —
+ * réplica del cuarto video de referencia del cliente (confirmado: "este
+ * sí lo puedes implementar"), sustituye al flow field v2.
  * Colores intactos: tinta y fondo son los MISMOS tokens del hub.
  *
- * Lectura del video (164 cuadros extraídos, perfil de brillo por cuadro y
- * cuadros individuales a 2x): retícula regular de trazos CORTOS (guiones)
- * donde cada trazo ROTA suavemente — su ángulo lo gobierna un campo de
- * ruido continuo en espacio y tiempo, así que los vecinos apuntan a
- * ángulos parecidos y el conjunto forma ondas/remolinos que fluyen por el
- * área. El brillo también varía por zonas (campo aparte), con caídas
- * profundas ocasionales donde regiones enteras se apagan casi del todo y
- * vuelven a encender (medido en el perfil: valles de brillo medio ~0.5
- * entre picos de ~27 cada 4-6s).
+ * Lectura del video (73 cuadros): una RED diagonal (celosía de líneas
+ * cruzadas en dos familias diagonales, con un punto en cada intersección)
+ * que se comporta como tela/superficie líquida: una DEPRESIÓN localizada
+ * (como un dedo hundiendo una red) viaja por la superficie doblando la
+ * celosía a su paso — los puntos cercanos al pozo se compactan hacia su
+ * centro y se hunden levemente, y las líneas que los unen se curvan con
+ * ellos. En el frame 0 el pozo está abajo-derecha; en el 60,
+ * abajo-izquierda: recorre la malla lentamente.
  *
- * Render: los guiones se dibujan por lotes de alfa (un solo stroke() por
- * nivel de brillo por cuadro, no uno por guion) — ~7,000 segmentos por
- * cuadro a 14fps sin despeinarse, sin atlas (rotar sprites pediría
- * 32+ orientaciones × niveles; línea directa es más simple y suficiente).
+ * Implementación: celosía = retícula cuadrada ROTADA 45° — coordenadas
+ * (u,v) → pantalla con x=(u+v)·s, y=(u−v)·s — cuyas dos familias de
+ * aristas (u→u+1 y v→v+1) son las diagonales visibles del video. La
+ * deformación es un pozo con caída gaussiana que jala los puntos hacia su
+ * centro (compactación) más un sesgo hacia abajo (hundimiento 3D). El
+ * pozo pasea solo (ruido suave 1D por eje) y, si el usuario tiene el
+ * puntero sobre el hero, lo persigue con retraso — el video de referencia
+ * es precisamente una malla que responde al cursor.
  */
 
-const CELL = 14;    // px CSS de espaciado entre guiones
-const FPS = 14;     // cadencia — el video fluye suave pero discreto
-const DASH_LEN = 7; // largo del guion en px CSS
-const ALPHA_STEPS = 8; // lotes de brillo por cuadro
+const SPACING = 26;   // px CSS entre puntos vecinos de la celosía
+const DOT_R = 1.6;    // radio del punto
+const WELL_R = 200;   // radio de influencia del pozo (px CSS)
+const WELL_PULL = 34; // compactación máxima (px CSS)
+const FPS = 30;       // este efecto lee mejor fluido (el video es suave)
 
 function hash(x) {
   x = (x ^ 61) ^ (x >>> 16);
@@ -37,95 +40,121 @@ function hash(x) {
 const h3 = (a, b, c) => hash((a * 73856093) ^ (b * 19349663) ^ (c * 83492791));
 const fade = (t) => t * t * (3 - 2 * t);
 
-function vnoise(x, y, z) {
-  const xi = Math.floor(x), yi = Math.floor(y), zi = Math.floor(z);
-  const u = fade(x - xi), v = fade(y - yi), w = fade(z - zi);
-  const c = (dx, dy, dz) => h3(xi + dx, yi + dy, zi + dz);
-  const l1 = c(0, 0, 0) + (c(1, 0, 0) - c(0, 0, 0)) * u;
-  const l2 = c(0, 1, 0) + (c(1, 1, 0) - c(0, 1, 0)) * u;
-  const l3 = c(0, 0, 1) + (c(1, 0, 1) - c(0, 0, 1)) * u;
-  const l4 = c(0, 1, 1) + (c(1, 1, 1) - c(0, 1, 1)) * u;
-  return (l1 + (l2 - l1) * v) * (1 - w) + (l3 + (l4 - l3) * v) * w;
+/* ruido 1D suave — el paseo autónomo del pozo */
+function vnoise1(x, seed) {
+  const xi = Math.floor(x);
+  const u = fade(x - xi);
+  const a = h3(xi, seed, 11), b = h3(xi + 1, seed, 11);
+  return a + (b - a) * u;
 }
 
-function initFlowField(canvas) {
+function initMesh(canvas) {
   const ctx = canvas.getContext('2d');
   const host = canvas.parentElement;
   const inkColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--void-deep').trim() || '#08080A';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let cols, rows, dpr;
+  let W = 0, H = 0, dpr = 1;
+  let nu = 0, nv = 0;
 
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
     const r = host.getBoundingClientRect();
-    canvas.width = Math.round(r.width * dpr);
-    canvas.height = Math.round(r.height * dpr);
-    cols = Math.ceil(r.width / CELL);
-    rows = Math.ceil(r.height / CELL);
+    W = r.width; H = r.height;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    /* en coords rotadas, x=(u+v)·s recorre 0..W y y=(u−v)·s recorre
+       −H/2..+H/2 alrededor del centro: dimensionar con margen para que
+       las cuatro esquinas queden cubiertas */
+    const s = SPACING * 0.7071;
+    nu = Math.ceil((W + H) / (2 * s)) + 3;
+    nv = nu;
   }
 
-  /* posterizar a N niveles: convierte el ruido suave en mesetas planas con
-     saltos duros — la clave del carácter del video (revisión con el
-     cliente): las zonas de brillo/apagado NO son manchas suaves, son
-     BLOQUES con bordes rectos que tapan y destapan regiones enteras. */
-  const posterize = (v, n) => Math.floor(v * n) / (n - 1);
+  /* el pozo sigue al puntero cuando está sobre el hero; si no, pasea solo */
+  let pointer = null;
+  host.addEventListener('pointermove', (ev) => {
+    const r = host.getBoundingClientRect();
+    pointer = { x: ev.clientX - r.left, y: ev.clientY - r.top };
+  });
+  host.addEventListener('pointerleave', () => { pointer = null; });
+
+  let wellX = 0, wellY = 0, wellInit = false;
 
   function paint(t) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const tx = pointer ? pointer.x : (0.1 + 0.8 * vnoise1(t * 0.11, 3)) * W;
+    const ty = pointer ? pointer.y : (0.1 + 0.8 * vnoise1(t * 0.13, 7)) * H;
+    if (!wellInit) { wellX = tx; wellY = ty; wellInit = true; }
+    /* persigue el objetivo con retraso — la tela "reacciona", no salta */
+    wellX += (tx - wellX) * 0.07;
+    wellY += (ty - wellY) * 0.07;
+
+    const invR2 = 1 / (WELL_R * WELL_R);
+    const s = SPACING * 0.7071;
+
+    /* posiciones deformadas de todos los nodos de la celosía */
+    const pos = new Float32Array(nu * nv * 2);
+    for (let v = 0; v < nv; v++) {
+      for (let u = 0; u < nu; u++) {
+        let x = (u + v) * s - H * 0.5;      // corrido para cubrir esquinas
+        let y = (u - v) * s + H * 0.5;
+        const dx = x - wellX, dy = y - wellY;
+        const r2 = (dx * dx + dy * dy) * invR2;
+        if (r2 < 9) {
+          /* caída tipo derivada-de-gaussiana: CERO en el centro (los
+             puntos del fondo del pozo casi no se mueven), máxima a medio
+             radio, cero lejos — embudo suave como el del video, no una
+             singularidad que colapsa los puntos en un solo lugar (así se
+             veía el primer intento: telaraña recogida en un punto). */
+          const q = Math.sqrt(r2);
+          const pull = WELL_PULL * (q * Math.exp(-q * q * 0.5)) / 0.6066;
+          const r = Math.sqrt(dx * dx + dy * dy) || 1;
+          x -= (dx / r) * pull;
+          y -= (dy / r) * pull - pull * 0.3;
+        }
+        const idx = (v * nu + u) * 2;
+        pos[idx] = x * dpr;
+        pos[idx + 1] = y * dpr;
+      }
+    }
+
+    /* líneas: las dos familias diagonales, UN trazo por familia */
     ctx.strokeStyle = inkColor;
-    ctx.lineWidth = 1.4 * dpr;
-    ctx.lineCap = 'round';
-
-    /* FASES alternantes (segunda corrección: el video no es un solo
-       comportamiento continuo — alterna escenas): una onda lenta decide
-       cuánto pesa cada régimen. verticality 0 = ondas fluidas amplias;
-       1 = guiones comprimidos hacia columnas verticales apretadas. */
-    const scene = vnoise(0.7, 0.7, t * 0.07);
-    const verticality = Math.min(1, Math.max(0, (scene - 0.45) * 3.2));
-
-    const sAng = 0.045;
-    const half = (DASH_LEN / 2) * dpr;
-
-    const buckets = [];
-    for (let i = 0; i < ALPHA_STEPS; i++) buckets.push([]);
-
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        /* ángulo: campo fluido, arrastrado hacia la vertical según la fase */
-        const flow = vnoise(x * sAng, y * sAng, t * 0.18) * Math.PI * 2;
-        const jitter = (h3(x, y, 7) - 0.5) * 0.25;
-        const ang = flow * (1 - verticality) + (Math.PI / 2 + jitter) * verticality;
-
-        /* brillo: DOS capas de bloques rectangulares posterizados con
-           bordes duros (no ruido suave) —
-           capa 1: bloques chicos (8×4 celdas) que parpadean por zonas
-           capa 2: franjas grandes que apagan regiones completas de golpe
-                   (los "apagones" medidos en el perfil de brillo del video) */
-        const b1 = posterize(vnoise(Math.floor(x / 8) * 1.7, Math.floor(y / 4) * 1.7, t * 0.32), 4);
-        const b2 = posterize(vnoise(Math.floor(x / 26) * 1.3 + 60, Math.floor(y / 9) * 1.3 + 60, t * 0.2), 3);
-        const b = b1 * (0.25 + 0.75 * b2);
-        if (b < 0.1) continue;
-        const lv = Math.min(ALPHA_STEPS - 1, Math.floor(b * ALPHA_STEPS));
-        const cx = (x + 0.5) * CELL * dpr;
-        const cy = (y + 0.5) * CELL * dpr;
-        const dx = Math.cos(ang) * half;
-        const dy = Math.sin(ang) * half;
-        buckets[lv].push(cx - dx, cy - dy, cx + dx, cy + dy);
+    ctx.lineWidth = 1 * dpr;
+    ctx.globalAlpha = 0.26;
+    ctx.beginPath();
+    for (let v = 0; v < nv; v++) {
+      for (let u = 0; u < nu - 1; u++) {
+        const a = (v * nu + u) * 2, b = (v * nu + u + 1) * 2;
+        ctx.moveTo(pos[a], pos[a + 1]);
+        ctx.lineTo(pos[b], pos[b + 1]);
       }
     }
-    for (let lv = 0; lv < ALPHA_STEPS; lv++) {
-      const seg = buckets[lv];
-      if (!seg.length) continue;
-      ctx.globalAlpha = ((lv + 1) / ALPHA_STEPS) * 0.85;
-      ctx.beginPath();
-      for (let i = 0; i < seg.length; i += 4) {
-        ctx.moveTo(seg[i], seg[i + 1]);
-        ctx.lineTo(seg[i + 2], seg[i + 3]);
+    for (let u = 0; u < nu; u++) {
+      for (let v = 0; v < nv - 1; v++) {
+        const a = (v * nu + u) * 2, b = ((v + 1) * nu + u) * 2;
+        ctx.moveTo(pos[a], pos[a + 1]);
+        ctx.lineTo(pos[b], pos[b + 1]);
       }
-      ctx.stroke();
     }
+    ctx.stroke();
+
+    /* puntos en las intersecciones — protagonistas, como en el video */
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = inkColor;
+    const rr = DOT_R * dpr;
+    ctx.beginPath();
+    const wLimit = canvas.width + 20, hLimit = canvas.height + 20;
+    for (let i = 0; i < nu * nv; i++) {
+      const x = pos[i * 2], y = pos[i * 2 + 1];
+      if (x < -20 || y < -20 || x > wLimit || y > hLimit) continue;
+      ctx.moveTo(x + rr, y);
+      ctx.arc(x, y, rr, 0, Math.PI * 2);
+    }
+    ctx.fill();
     ctx.globalAlpha = 1;
   }
 
@@ -156,7 +185,7 @@ function boot() {
   document.querySelectorAll('canvas[data-phase-dotgrid]').forEach((c) => {
     if (c.dataset.dotgridBooted) return;
     c.dataset.dotgridBooted = '1';
-    initFlowField(c);
+    initMesh(c);
   });
 }
 
