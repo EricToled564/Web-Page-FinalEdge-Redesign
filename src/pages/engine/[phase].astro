@@ -21,15 +21,24 @@ const otherPhases = [
   PHASES.find((p) => p.id !== phase.id && p.slug !== phase.next.slug),
 ];
 /* La rueda-menú debe medir lo que mide la PALABRA del título (pedido
-   explícito). Geist Mono es monoespaciada: el ancho de la palabra es una
+   original). Geist Mono es monoespaciada: el ancho de la palabra es una
    función cerrada del font-size — avance por carácter (0.594em, medido
-   en runtime contra la fuente real: 529.2px de palabra / 98px de fs) por número de caracteres, menos el
-   tracking de -.06em entre caracteres. Así el ancho del carril queda en
+   en runtime contra la fuente real: 529.2px de palabra / 98px de fs) por
+   número de caracteres, menos el tracking de -.06em entre caracteres.
+   Corrección de esta ronda (pedido explícito): calcularlo por FASE (10
+   caracteres "Evaluación" vs 11 "Capacidades" vs 9 "Ejecución") producía
+   3 tamaños de rueda distintos — en Evaluación, la más chica de las 3,
+   el label "intelligence" se salía del gajo (confirmado con captura:
+   el texto cruzaba el borde diagonal del sector hacia el fondo). Se fija
+   el cálculo a la palabra de Capacidades (la más larga → la rueda más
+   grande) para las 3 páginas por igual — mismo tamaño de rueda en las
+   3 fases, título de cada una sigue mostrando su propio nombre. Sigue en
    CSS puro (función del viewport vía --text-opener), idéntico en carga
    directa y en navegación SPA — la misma garantía determinista que
    mantiene la animación de la fase terminando exactamente en su
    posición final en ambos caminos. */
-const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
+const sizeRefName = PHASES.find((p) => p.id === 'capacidades').name;
+const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
 /* Experimento 2026-07-12 (pedido explícito, SOLO Evaluación): fondo tipo
    retícula de puntos con parpadeo (phase-dotgrid.js) en vez de la
    estática de glifos (phase-static.js) — mismos colores/tokens de
