@@ -30,13 +30,21 @@ const otherPhases = [
    mantiene la animación de la fase terminando exactamente en su
    posición final en ambos caminos. */
 const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
+/* Experimento 2026-07-12 (pedido explícito, SOLO Evaluación): fondo tipo
+   retícula de puntos con parpadeo (phase-dotgrid.js) en vez de la
+   estática de glifos (phase-static.js) — mismos colores/tokens de
+   siempre, cambia únicamente el efecto. Capacidades y Ejecución quedan
+   exactamente como estaban hasta que se apruebe el experimento. */
+const dotgridExperiment = phase.id === 'evaluacion';
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
 >
   <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
-    <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>
+    {dotgridExperiment
+      ? <canvas class="hub-static" data-phase-dotgrid aria-hidden="true"></canvas>
+      : <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>}
     <div class="hub-stack">
       <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}<span class="cursor hub-cursor">▌</span></h1>
       <p class="hub-statement reveal">
@@ -142,8 +150,29 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
     color: transparent;            /* el glifo queda de respaldo, invisible */
     background: var(--void-deep);
     width: .09em;
-    height: .755em;
-    vertical-align: 0;
+    /* pedido explícito: alineado exacto con la base Y el techo de la
+       palabra — vertical-align:0 ya clava el borde inferior en la línea
+       base (coincide con la base real de "E"/"n", sin descendentes en
+       "Evaluación"/"Capacidades"/"Ejecución"), así que SOLO falta que el
+       alto sea igual a la distancia real línea-base→techo-de-mayúscula.
+       Medido por escaneo de píxeles del render real (no de metadatos de
+       fuente, que en pruebas anteriores dieron valores contradictorios
+       entre canvas measureText y Range — ninguno coincidía con el
+       render): capturando el título aislado y buscando la primera/última
+       fila con tinta sólida por letra, la "E" va de la fila 11 a la 80
+       de una caja de 93px (fuente 98px, line-height .95) → 69px de
+       techo-a-base = 0.704em. */
+    height: .704em;
+    /* vertical-align:0 (baseline "teórico") NO clavó el borde inferior en
+       la línea base real: verificado con escaneo de píxeles del render
+       (no de metadatos de fuente) que el cursor quedaba 12px arriba de
+       donde de verdad se apoyan "E"/"n" — un inline-block VACÍO (sin
+       contenido de texto propio, solo background) no siempre calcula su
+       baseline igual que un carácter real en todos los motores. Corrección
+       empírica, medida y re-verificada con el mismo escaneo: -12px a
+       98px de fuente = -.1224em; en em para que la corrección escale
+       proporcional con --text-opener (clamp) en cualquier viewport. */
+    vertical-align: -.1224em;
     margin-left: .08em;
   }
   .hub-statement {
@@ -207,5 +236,9 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
 </style>
 
 <!-- Astro empaqueta los <script> procesados por página; las 3 páginas de
-     fase comparten esta plantilla y las 3 llevan la estática. -->
+     fase comparten esta plantilla, así que los dos módulos llegan a las 3
+     — cada uno solo actúa sobre SU propio selector de canvas
+     ([data-phase-static] / [data-phase-dotgrid]), inofensivo si no
+     encuentra ninguno en la página. -->
 <script>import '../../scripts/phase-static.js';</script>
+<script>import '../../scripts/phase-dotgrid.js';</script>
