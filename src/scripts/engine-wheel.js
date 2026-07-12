@@ -327,9 +327,23 @@ class EngineWheel {
           this._labelHover = g;
           this.activateHover(g);
         });
-        edgeLabelEl.addEventListener('pointerleave', () => {
+        /* A DIFERENCIA de los nombres de fase (que no se mueven), este
+           label VIAJA con el gajo cuando el hover lo levanta (+40-70px
+           proyectados) — se sale solo de abajo del cursor quieto. Si el
+           leave soltara el hover directo, el ciclo es un temblor:
+           levanta → el label se va → leave → baja → el label regresa →
+           enter → levanta… Al salir HACIA EL CANVAS no se suelta nada:
+           se actualiza this.pointer con la posición real del evento (el
+           canvas no recibió pointermove mientras el label tuvo el
+           pointer — sin esto pick() raycastearía una posición vieja) y
+           pick() decide en el siguiente cuadro con el raycast de
+           siempre: si el cursor sigue sobre la carne del gajo, el hover
+           ni parpadea. Salidas hacia cualquier otro lado sí sueltan. */
+        edgeLabelEl.addEventListener('pointerleave', (ev) => {
           this._labelHover = null;
-          this.activateHover(null);
+          const r = this.canvas.getBoundingClientRect();
+          this.pointer.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+          if (ev.relatedTarget !== this.canvas) this.activateHover(null);
         });
       }
     }

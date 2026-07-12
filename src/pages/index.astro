@@ -43,6 +43,12 @@ import LockupMark from '../components/LockupMark.astro';
        heading (mismo elemento), así queda exactamente a la altura de
        la "L" de "La", nunca más chico. -->
   <section class="presion-band" id="presion">
+    <!-- misma estática de glifos que los hubs de fase (pedido explícito:
+         "el mismo estilo de background en las barras azules edge") — el
+         canvas es transparente, la barra pone el Edge Blue; los glifos
+         van en --void-deep como en los hubs (phase-static.js los lee de
+         los tokens computados en runtime, es agnóstico al color). -->
+    <canvas class="band-static" data-phase-static aria-hidden="true"></canvas>
     <div class="presion-inner">
       <p class="presion-h2 reveal">
         <img class="presion-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
@@ -99,6 +105,7 @@ import LockupMark from '../components/LockupMark.astro';
        Sin animación (pedido explícito) — estática, tamaño de fuente
        igual al h1 del hero (ver .plate-img). -->
   <section class="plate" aria-label="Tu ventaja definitiva">
+    <canvas class="band-static" data-phase-static aria-hidden="true"></canvas>
     <div class="plate-scene">
       <span class="plate-img-wrap">
         <img
@@ -118,6 +125,10 @@ import LockupMark from '../components/LockupMark.astro';
       </div>
     </div>
   </section>
+
+  <script>
+    import '../scripts/phase-static.js'; // estática de las dos barras Edge Blue
+  </script>
 
   <script>
     /* Transición hero → rueda ligada al scroll (lenguaje cosmos.so):
@@ -213,7 +224,11 @@ import LockupMark from '../components/LockupMark.astro';
   /* franja "la presión" — mismo tratamiento full-bleed que .plate (placa
      final): fondo Edge Blue sólido, contenido acotado y centrado, texto
      en --on-accent (blanco) porque azul sobre azul no se leería. */
-  .presion-band { background: var(--accent); padding: 96px 72px; overflow: hidden; }
+  .presion-band { position: relative; background: var(--accent); padding: 96px 72px; overflow: hidden; }
+  /* la estática vive detrás del contenido de ambas barras azules; los
+     CTA de la placa siguen clickeables porque vienen después en el DOM */
+  .band-static { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .presion-inner { position: relative; }
   .presion-inner { max-width: 1180px; margin: 0 auto; }
   .presion-h2 {
     display: flex;
@@ -348,6 +363,7 @@ import LockupMark from '../components/LockupMark.astro';
   /* placa Edge Blue de cierre — misma cuadrícula de 1180px que
      .presion-inner (arriba), texto centrado dentro de ella. */
   .plate {
+    position: relative;
     background: var(--accent);
     padding: 120px 72px;
     overflow: hidden;
@@ -359,6 +375,7 @@ import LockupMark from '../components/LockupMark.astro';
      logotipo. Escala con --text-plate para conservar el tamaño ya
      aprobado en cualquier ancho de viewport. */
   .plate-scene {
+    position: relative; /* encima del canvas de estática */
     max-width: 1180px;
     margin: 0 auto;
     text-align: center;
