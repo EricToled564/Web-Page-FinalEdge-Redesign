@@ -1,28 +1,30 @@
 /**
- * Experimento 2026-07-12 (Evaluación, hero del hub): variante de fondo tipo
- * "retícula de puntos con parpadeo" — réplica del efecto del video de
- * referencia del cliente, en vez de la estática de glifos de phase-static.js.
- * Colores intactos: la tinta y el fondo son los MISMOS tokens que ya usa el
- * hub (--void-deep sobre el color de fase) — el pedido fue sustituir el
- * EFECTO, no la paleta.
+ * Experimento 2026-07-12 v2 (Evaluación, hero del hub): campo de guiones
+ * orientados ("flow field") — réplica del segundo video de referencia del
+ * cliente, que sustituye al experimento anterior de cubos punteados (el
+ * propio cliente lo propuso como efecto más fácil de ejecutar bien).
+ * Colores intactos: tinta y fondo son los MISMOS tokens del hub.
  *
- * Lectura del video (corregida dos veces por el cliente hasta esta
- * versión): retícula de puntos en posiciones FIJAS cuyo brillo titila
- * por punto, modulado por una nube lenta. Y sobre eso, CUBOS 3D en
- * wireframe formados POR LOS PROPIOS PUNTOS de la retícula — no
- * ilustraciones de línea dibujadas encima: las aristas del cubo
- * "encienden" a brillo máximo los puntos que atraviesan, y el cubo
- * VIAJA por el campo y ROTA mientras avanza, cada uno en su propia
- * dirección (estilo pantalla de LEDs). Consistente con la evidencia
- * medida: puntos fijos + trayectorias diagonales continuas viajando en
- * los cortes espacio-tiempo (el patrón de brillo se mueve, los puntos
- * no).
+ * Lectura del video (164 cuadros extraídos, perfil de brillo por cuadro y
+ * cuadros individuales a 2x): retícula regular de trazos CORTOS (guiones)
+ * donde cada trazo ROTA suavemente — su ángulo lo gobierna un campo de
+ * ruido continuo en espacio y tiempo, así que los vecinos apuntan a
+ * ángulos parecidos y el conjunto forma ondas/remolinos que fluyen por el
+ * área. El brillo también varía por zonas (campo aparte), con caídas
+ * profundas ocasionales donde regiones enteras se apagan casi del todo y
+ * vuelven a encender (medido en el perfil: valles de brillo medio ~0.5
+ * entre picos de ~27 cada 4-6s).
+ *
+ * Render: los guiones se dibujan por lotes de alfa (un solo stroke() por
+ * nivel de brillo por cuadro, no uno por guion) — ~7,000 segmentos por
+ * cuadro a 14fps sin despeinarse, sin atlas (rotar sprites pediría
+ * 32+ orientaciones × niveles; línea directa es más simple y suficiente).
  */
 
-const CELL = 13;   // px CSS de espaciado entre puntos (retícula regular)
-const FPS = 14;     // cadencia del parpadeo — discreta, no suavizada
-const LEVELS = 12;  // niveles de brillo pre-rasterizados en el atlas
-const DOT_R = 1.7;  // radio del punto a su brillo máximo
+const CELL = 14;    // px CSS de espaciado entre guiones
+const FPS = 14;     // cadencia — el video fluye suave pero discreto
+const DASH_LEN = 7; // largo del guion en px CSS
+const ALPHA_STEPS = 8; // lotes de brillo por cuadro
 
 function hash(x) {
   x = (x ^ 61) ^ (x >>> 16);
@@ -46,29 +48,14 @@ function vnoise(x, y, z) {
   return (l1 + (l2 - l1) * v) * (1 - w) + (l3 + (l4 - l3) * v) * w;
 }
 
-function initDotGrid(canvas) {
+function initFlowField(canvas) {
   const ctx = canvas.getContext('2d');
   const host = canvas.parentElement;
   const inkColor = getComputedStyle(document.documentElement)
     .getPropertyValue('--void-deep').trim() || '#08080A';
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let cols, rows, atlas, cell, dpr;
-
-  function buildAtlas() {
-    cell = Math.ceil(CELL * dpr);
-    atlas = document.createElement('canvas');
-    atlas.width = cell;
-    atlas.height = cell * LEVELS;
-    const a = atlas.getContext('2d');
-    for (let lv = 0; lv < LEVELS; lv++) {
-      a.globalAlpha = lv / (LEVELS - 1);
-      a.fillStyle = inkColor;
-      a.beginPath();
-      a.arc(cell / 2, lv * cell + cell / 2, DOT_R * dpr, 0, Math.PI * 2);
-      a.fill();
-    }
-  }
+  let cols, rows, dpr;
 
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
@@ -77,120 +64,52 @@ function initDotGrid(canvas) {
     canvas.height = Math.round(r.height * dpr);
     cols = Math.ceil(r.width / CELL);
     rows = Math.ceil(r.height / CELL);
-    buildAtlas();
   }
 
-  /* Cubos formados POR los puntos de la retícula (corrección del
-     cliente: no son ilustraciones de línea encima — los propios puntos
-     del fondo se iluminan trazando las aristas de cubos 3D que VIAJAN
-     por el campo y ROTAN mientras avanzan, cada uno en su dirección,
-     estilo pantalla de LEDs).
-     Render: las 12 aristas del cubo (rotado en X/Y, proyección
-     ortográfica) se muestrean y cada muestra "enciende" la celda de la
-     retícula más cercana — el cubo se dibuja EXCLUSIVAMENTE con los
-     puntos existentes, ninguna línea. Entra y sale con fundido. */
-  const CUBE_EDGES = [
-    [0,1],[1,3],[3,2],[2,0], // cara trasera
-    [4,5],[5,7],[7,6],[6,4], // cara delantera
-    [0,4],[1,5],[2,6],[3,7], // aristas que las unen
-  ];
-  const cubes = [];
-  function spawnCube(t, wCss, hCss) {
-    const seed = Math.floor(t * 997);
-    const ang = h3(seed, 31, 32) * Math.PI * 2;
-    cubes.push({
-      x: h3(seed, 23, 24) * wCss,
-      y: h3(seed, 25, 26) * hCss,
-      size: 40 + h3(seed, 21, 22) * 44,     // media-arista en px CSS
-      vx: Math.cos(ang) * (16 + h3(seed, 33, 34) * 20), // px CSS/s — cada cubo su dirección
-      vy: Math.sin(ang) * (16 + h3(seed, 35, 36) * 20),
-      rx: h3(seed, 37, 38) * Math.PI,
-      ry: h3(seed, 39, 40) * Math.PI,
-      wrx: 0.25 + h3(seed, 41, 42) * 0.35,  // rad/s
-      wry: 0.2 + h3(seed, 43, 44) * 0.3,
-      born: t,
-      life: 6 + h3(seed, 27, 28) * 4,       // viven varios segundos: se les ve viajar
-    });
-  }
-  /* marca en `out` (Map celda->intensidad 0..1) las celdas que este cubo
-     enciende en el instante t */
-  function litCellsFor(c, t, out) {
-    const age = t - c.born;
-    const p = age / c.life;
-    const k = Math.min(1, Math.sin(Math.PI * p) * 1.6); // fundido entrada/salida
-    if (k <= 0.02) return;
-    const cx = c.x + c.vx * age;
-    const cy = c.y + c.vy * age;
-    const rx = c.rx + c.wrx * age;
-    const ry = c.ry + c.wry * age;
-    const cosX = Math.cos(rx), sinX = Math.sin(rx);
-    const cosY = Math.cos(ry), sinY = Math.sin(ry);
-    const vs = [];
-    for (let i = 0; i < 8; i++) {
-      const x = (i & 1) ? 1 : -1;
-      const y = (i & 2) ? 1 : -1;
-      const z = (i & 4) ? 1 : -1;
-      const y2 = y * cosX - z * sinX;
-      const z2 = y * sinX + z * cosX;
-      const x2 = x * cosY + z2 * sinY;
-      vs.push([cx + x2 * c.size, cy + y2 * c.size]);
-    }
-    for (const [a, b] of CUBE_EDGES) {
-      const [x1, y1] = vs[a], [x2, y2] = vs[b];
-      const len = Math.hypot(x2 - x1, y2 - y1);
-      const steps = Math.max(2, Math.ceil(len / (CELL * 0.45)));
-      for (let i = 0; i <= steps; i++) {
-        const px = x1 + ((x2 - x1) * i) / steps;
-        const py = y1 + ((y2 - y1) * i) / steps;
-        const gx = Math.round(px / CELL);
-        const gy = Math.round(py / CELL);
-        if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) continue;
-        const key = gy * cols + gx;
-        if ((out.get(key) ?? 0) < k) out.set(key, k);
-      }
-    }
-  }
-
-  let frameSeed = 0;
-  let nextCubeAt = 0;
   function paint(t) {
-    frameSeed++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.strokeStyle = inkColor;
+    ctx.lineWidth = 1.4 * dpr;
+    ctx.lineCap = 'round';
 
-    /* administrar el pool de cubos y calcular qué celdas encienden — ANTES
-       del bucle de puntos: el cubo se pinta CON los puntos, no encima */
-    const wCss = canvas.width / dpr, hCss = canvas.height / dpr;
-    if (t >= nextCubeAt && cubes.length < 3) {
-      spawnCube(t, wCss, hCss);
-      nextCubeAt = t + 1.2 + h3(Math.floor(t * 1000), 11, 12) * 1.6;
-    }
-    const lit = new Map();
-    for (let i = cubes.length - 1; i >= 0; i--) {
-      const c = cubes[i];
-      if (t - c.born > c.life) { cubes.splice(i, 1); continue; }
-      litCellsFor(c, t, lit);
-    }
+    /* dos campos independientes:
+       - ángulo: escala espacial amplia (ondas grandes) que deriva despacio
+       - brillo: escala más apretada, con la curva elevada a potencia para
+         abrir valles oscuros amplios (las "caídas" medidas en el video) */
+    const sAng = 0.045;
+    const sBri = 0.11;
+    const half = (DASH_LEN / 2) * dpr;
 
-    const swell = 0.85 + 0.15 * Math.sin(t * 0.45);
-    const s = 0.14;
-    const driftX = t * 0.5;
-    const driftY = t * 0.15;
+    /* lotes por nivel de alfa: un beginPath/stroke por nivel — no por guion */
+    const buckets = [];
+    for (let i = 0; i < ALPHA_STEPS; i++) buckets.push([]);
+
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        let n = vnoise(x * s + driftX, y * s + driftY, t * 0.4);
-        n = Math.pow(n, 1.4);
-        const fl = h3(x, y, frameSeed); // titileo por punto
-        let b = Math.min(1, n * (0.25 + 0.75 * fl) * swell * 1.55);
-        /* si una arista de cubo pasa por esta celda, el punto sube hacia
-           brillo pleno (mezclado con el fundido del cubo) — así la forma
-           emerge de la retícula y viaja con el cubo */
-        const cubeK = lit.get(y * cols + x);
-        if (cubeK) b = Math.max(b, cubeK);
-        if (b < 0.08) continue;
-        const lv = Math.min(LEVELS - 1, Math.round(b * (LEVELS - 1)));
-        ctx.drawImage(atlas, 0, lv * cell, cell, cell, Math.round(x * cell), Math.round(y * cell), cell, cell);
+        const ang = vnoise(x * sAng, y * sAng, t * 0.18) * Math.PI * 2;
+        let b = vnoise(x * sBri + 40, y * sBri + 40, t * 0.28);
+        b = Math.pow(b, 1.9) * 1.5;
+        if (b < 0.06) continue;
+        const lv = Math.min(ALPHA_STEPS - 1, Math.floor(b * ALPHA_STEPS));
+        const cx = (x + 0.5) * CELL * dpr;
+        const cy = (y + 0.5) * CELL * dpr;
+        const dx = Math.cos(ang) * half;
+        const dy = Math.sin(ang) * half;
+        buckets[lv].push(cx - dx, cy - dy, cx + dx, cy + dy);
       }
     }
+    for (let lv = 0; lv < ALPHA_STEPS; lv++) {
+      const seg = buckets[lv];
+      if (!seg.length) continue;
+      ctx.globalAlpha = ((lv + 1) / ALPHA_STEPS) * 0.85;
+      ctx.beginPath();
+      for (let i = 0; i < seg.length; i += 4) {
+        ctx.moveTo(seg[i], seg[i + 1]);
+        ctx.lineTo(seg[i + 2], seg[i + 3]);
+      }
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
   }
 
   resize();
@@ -220,7 +139,7 @@ function boot() {
   document.querySelectorAll('canvas[data-phase-dotgrid]').forEach((c) => {
     if (c.dataset.dotgridBooted) return;
     c.dataset.dotgridBooted = '1';
-    initDotGrid(c);
+    initFlowField(c);
   });
 }
 
