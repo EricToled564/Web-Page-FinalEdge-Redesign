@@ -203,8 +203,21 @@ import LockupMark from '../components/LockupMark.astro';
       v.addEventListener('loadeddata', kick, { once: true });
       clearInterval(heroWatch);
       const t0 = Date.now();
+      let reloaded = false;
       heroWatch = setInterval(() => {
         if (!v.isConnected || v.currentTime > 0.2 || Date.now() - t0 > 10000) { clearInterval(heroWatch); return; }
+        /* último recurso (una sola vez, a los ~3s): si tras varios
+           play() el video sigue clavado en 0, el elemento quedó con la
+           carga atascada tras el swap (estado real observable en Chrome
+           con media elements re-insertados) — load() resetea el
+           pipeline de medios completo y canplay dispara el play()
+           definitivo. */
+        if (!reloaded && Date.now() - t0 > 3000 && v.currentTime === 0) {
+          reloaded = true;
+          v.addEventListener('canplay', kick, { once: true });
+          try { v.load(); } catch {}
+          return;
+        }
         kick();
       }, 500);
       const gesture = () => { kick(); };
