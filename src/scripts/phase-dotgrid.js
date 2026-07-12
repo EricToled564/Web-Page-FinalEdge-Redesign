@@ -66,30 +66,47 @@ function initFlowField(canvas) {
     rows = Math.ceil(r.height / CELL);
   }
 
+  /* posterizar a N niveles: convierte el ruido suave en mesetas planas con
+     saltos duros — la clave del carácter del video (revisión con el
+     cliente): las zonas de brillo/apagado NO son manchas suaves, son
+     BLOQUES con bordes rectos que tapan y destapan regiones enteras. */
+  const posterize = (v, n) => Math.floor(v * n) / (n - 1);
+
   function paint(t) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.strokeStyle = inkColor;
     ctx.lineWidth = 1.4 * dpr;
     ctx.lineCap = 'round';
 
-    /* dos campos independientes:
-       - ángulo: escala espacial amplia (ondas grandes) que deriva despacio
-       - brillo: escala más apretada, con la curva elevada a potencia para
-         abrir valles oscuros amplios (las "caídas" medidas en el video) */
+    /* FASES alternantes (segunda corrección: el video no es un solo
+       comportamiento continuo — alterna escenas): una onda lenta decide
+       cuánto pesa cada régimen. verticality 0 = ondas fluidas amplias;
+       1 = guiones comprimidos hacia columnas verticales apretadas. */
+    const scene = vnoise(0.7, 0.7, t * 0.07);
+    const verticality = Math.min(1, Math.max(0, (scene - 0.45) * 3.2));
+
     const sAng = 0.045;
-    const sBri = 0.11;
     const half = (DASH_LEN / 2) * dpr;
 
-    /* lotes por nivel de alfa: un beginPath/stroke por nivel — no por guion */
     const buckets = [];
     for (let i = 0; i < ALPHA_STEPS; i++) buckets.push([]);
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        const ang = vnoise(x * sAng, y * sAng, t * 0.18) * Math.PI * 2;
-        let b = vnoise(x * sBri + 40, y * sBri + 40, t * 0.28);
-        b = Math.pow(b, 1.9) * 1.5;
-        if (b < 0.06) continue;
+        /* ángulo: campo fluido, arrastrado hacia la vertical según la fase */
+        const flow = vnoise(x * sAng, y * sAng, t * 0.18) * Math.PI * 2;
+        const jitter = (h3(x, y, 7) - 0.5) * 0.25;
+        const ang = flow * (1 - verticality) + (Math.PI / 2 + jitter) * verticality;
+
+        /* brillo: DOS capas de bloques rectangulares posterizados con
+           bordes duros (no ruido suave) —
+           capa 1: bloques chicos (8×4 celdas) que parpadean por zonas
+           capa 2: franjas grandes que apagan regiones completas de golpe
+                   (los "apagones" medidos en el perfil de brillo del video) */
+        const b1 = posterize(vnoise(Math.floor(x / 8) * 1.7, Math.floor(y / 4) * 1.7, t * 0.32), 4);
+        const b2 = posterize(vnoise(Math.floor(x / 26) * 1.3 + 60, Math.floor(y / 9) * 1.3 + 60, t * 0.2), 3);
+        const b = b1 * (0.25 + 0.75 * b2);
+        if (b < 0.1) continue;
         const lv = Math.min(ALPHA_STEPS - 1, Math.floor(b * ALPHA_STEPS));
         const cx = (x + 0.5) * CELL * dpr;
         const cy = (y + 0.5) * CELL * dpr;
