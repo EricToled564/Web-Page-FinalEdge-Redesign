@@ -25,7 +25,10 @@
  * hero, lo persigue con retraso.
  */
 
-const SPACING = 26;   // px CSS entre puntos vecinos de la celosía
+const SPACING = 18;   /* px CSS entre puntos vecinos. 26→18: el doble de
+                         concentración pedida — la densidad (puntos por
+                         área) escala con 1/espaciado², así que ×2 de
+                         densidad = espaciado ÷ √2 (26/1.414 ≈ 18.4). */
 const DOT_R = 1.6;    // radio del punto
 const WELL_R = 200;   // radio de influencia del pozo (px CSS)
 const WELL_PULL = 34; // compactación máxima (px CSS)

@@ -133,11 +133,13 @@ const { compact = false, fitHeight = false } = Astro.props;
      20px×0.65 = 13px viola el piso duro de 14px (R2.1) — se queda en
      14px, el mínimo permitido; el tracking sí baja proporcional. En el
      home (modo 'full') el chip queda exactamente como estaba. */
+  /* +30% pedido explícito 2026-07-12 (14px → 18.2px, tracking
+     proporcional) — sigue arriba del piso duro de 14px (R2.1) */
   [data-mode='phase'] .wl-band {
     background: transparent;
     color: var(--void-deep);
-    font-size: 14px;
-    letter-spacing: 1.7px;
+    font-size: 18.2px;
+    letter-spacing: 2.2px;
     padding: 0;
   }
 

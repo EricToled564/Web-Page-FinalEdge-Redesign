@@ -39,21 +39,17 @@ const otherPhases = [
    posición final en ambos caminos. */
 const sizeRefName = PHASES.find((p) => p.id === 'capacidades').name;
 const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
-/* Experimento 2026-07-12 (pedido explícito, SOLO Evaluación): fondo tipo
-   retícula de puntos con parpadeo (phase-dotgrid.js) en vez de la
-   estática de glifos (phase-static.js) — mismos colores/tokens de
-   siempre, cambia únicamente el efecto. Capacidades y Ejecución quedan
-   exactamente como estaban hasta que se apruebe el experimento. */
-const dotgridExperiment = phase.id === 'evaluacion';
+/* Fondo aprobado 2026-07-12 tras iteración de experimentos: malla de
+   puntos deformable (phase-dotgrid.js) — el cliente pidió aplicar el
+   mismo formato a los TRES hubs de fase (sustituye a la estática de
+   glifos en todos). */
 ---
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
 >
   <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
-    {dotgridExperiment
-      ? <canvas class="hub-static" data-phase-dotgrid aria-hidden="true"></canvas>
-      : <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>}
+    <canvas class="hub-static" data-phase-dotgrid aria-hidden="true"></canvas>
     <div class="hub-stack">
       <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}<span class="cursor hub-cursor">▌</span></h1>
       <p class="hub-statement reveal">
@@ -244,10 +240,4 @@ const dotgridExperiment = phase.id === 'evaluacion';
   }
 </style>
 
-<!-- Astro empaqueta los <script> procesados por página; las 3 páginas de
-     fase comparten esta plantilla, así que los dos módulos llegan a las 3
-     — cada uno solo actúa sobre SU propio selector de canvas
-     ([data-phase-static] / [data-phase-dotgrid]), inofensivo si no
-     encuentra ninguno en la página. -->
-<script>import '../../scripts/phase-static.js';</script>
 <script>import '../../scripts/phase-dotgrid.js';</script>

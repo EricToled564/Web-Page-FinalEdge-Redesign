@@ -48,7 +48,7 @@ import LockupMark from '../components/LockupMark.astro';
          canvas es transparente, la barra pone el Edge Blue; los glifos
          van en --void-deep como en los hubs (phase-static.js los lee de
          los tokens computados en runtime, es agnóstico al color). -->
-    <canvas class="band-static" data-phase-static aria-hidden="true"></canvas>
+    <canvas class="band-static" data-phase-dotgrid aria-hidden="true"></canvas>
     <div class="presion-inner">
       <p class="presion-h2 reveal">
         <img class="presion-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
@@ -105,7 +105,7 @@ import LockupMark from '../components/LockupMark.astro';
        Sin animación (pedido explícito) — estática, tamaño de fuente
        igual al h1 del hero (ver .plate-img). -->
   <section class="plate" aria-label="Tu ventaja definitiva">
-    <canvas class="band-static" data-phase-static aria-hidden="true"></canvas>
+    <canvas class="band-static" data-phase-dotgrid aria-hidden="true"></canvas>
     <div class="plate-scene">
       <span class="plate-img-wrap">
         <img
@@ -127,7 +127,7 @@ import LockupMark from '../components/LockupMark.astro';
   </section>
 
   <script>
-    import '../scripts/phase-static.js'; // estática de las dos barras Edge Blue
+    import '../scripts/phase-dotgrid.js'; // malla de puntos de las dos barras Edge Blue (mismo formato que los hubs, pedido 2026-07-12)
   </script>
 
   <script>
