@@ -17,6 +17,7 @@ import LockupMark from '../components/LockupMark.astro';
       muted
       loop
       playsinline
+      preload="auto"
       aria-hidden="true"
     ></video>
     <div class="hero-scrim" aria-hidden="true"></div>
@@ -180,14 +181,36 @@ import LockupMark from '../components/LockupMark.astro';
        y dos reintentos con margen. Todos los intentos son idempotentes
        (si ya está corriendo, paused es false y no se hace nada), así que
        insistir nunca reinicia ni traba nada. */
+    /* Además de los reintentos con timer: vigilancia de 10s (cada 500ms
+       hasta verlo avanzar de verdad — currentTime, no solo !paused) y un
+       plan C de GESTO. Safari puede bloquear TODO autoplay — incluso
+       muted — por ajuste del usuario ("Never Auto-Play") o Low Power
+       Mode; ahí ningún reintento programático sirve y la única vía es
+       arrancarlo dentro de un gesto real: el primer pointerdown/scroll/
+       tecla del usuario. Los listeners de gesto son once+passive y solo
+       viven mientras el video siga sin correr. */
+    let heroWatch = 0;
     function playHeroVideo() {
       const v = document.querySelector('.hero-video');
       if (!v) return;
-      const kick = () => { if (v.isConnected && v.paused) v.play().catch(() => {}); };
+      /* v.muted por PROPIEDAD antes de cada intento: el atributo muted
+         del markup fija el estado solo al crear el elemento, y hay
+         motores donde un <video> insertado por el swap puede quedar con
+         la propiedad en false — y un play() no-muted sin gesto se
+         rechaza SIEMPRE (NotAllowedError). Reafirmarla es gratis. */
+      const kick = () => { if (v.isConnected && v.paused) { v.muted = true; v.play().catch(() => {}); } };
       kick();
       v.addEventListener('loadeddata', kick, { once: true });
-      setTimeout(kick, 350);
-      setTimeout(kick, 1400);
+      clearInterval(heroWatch);
+      const t0 = Date.now();
+      heroWatch = setInterval(() => {
+        if (!v.isConnected || v.currentTime > 0.2 || Date.now() - t0 > 10000) { clearInterval(heroWatch); return; }
+        kick();
+      }, 500);
+      const gesture = () => { kick(); };
+      for (const ev of ['pointerdown', 'keydown', 'touchstart', 'wheel']) {
+        addEventListener(ev, gesture, { once: true, passive: true });
+      }
     }
     playHeroVideo();
     document.addEventListener('astro:page-load', playHeroVideo);
