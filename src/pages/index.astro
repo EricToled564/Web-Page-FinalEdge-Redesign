@@ -235,6 +235,20 @@ import LockupMark from '../components/LockupMark.astro';
   .hero-eyebrow { color: var(--fg); }
   .hero-eyebrow-prompt { color: var(--silver); }
   .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
+  /* plancha negra DETRÁS del logo para que resalte sobre el video
+     (pedido explícito 2026-07-12, sobre todo el ">_" y el "[AI]"):
+     logo-mono-light-plate.png es el MISMO mapa de alfa del logo con el
+     RGB en negro — mismo lienzo de 1368×370 píxel a píxel — pero solo
+     el cuerpo sólido de los glifos (smoothstep sobre el alfa 0.55→0.90,
+     generado con PIL): el halo suave y el anti-alias del borde quedan
+     SIN negro detrás, así el contorno se sigue fundiendo con el video y
+     no se ve ningún borde negro alrededor (verificado: 0 píxeles de
+     plancha fuera del cuerpo sólido, bbox contenida). Como background
+     del MISMO <img> estirado a 100% 100%, la alineación es exacta por
+     construcción: comparten caja y malla de píxeles, no hay dos
+     elementos que puedan desfasarse ni redondeos distintos. No es una
+     sombra (R3.2): es un asset horneado, como manda R5.4. */
+  .hero-logo { background: url('/assets/logos/logo-mono-light-plate.png') center / 100% 100% no-repeat; }
   .hero-h1 {
     font-size: clamp(17px, 2.3vw, 32px);
     font-weight: 600;
