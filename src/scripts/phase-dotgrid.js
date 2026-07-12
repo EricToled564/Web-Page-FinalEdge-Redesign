@@ -6,16 +6,19 @@
  * hub (--void-deep sobre el color de fase) — el pedido fue sustituir el
  * EFECTO, no la paleta.
  *
- * Lectura del video (frames extraídos y analizados uno por uno, con zoom a
- * la microestructura y diff entre frames): NO es ruido orgánico difuminado
- * como los glifos — es una retícula de puntos en posiciones FIJAS y
- * perfectamente regulares (los puntos nunca se mueven de su celda) cuyo
- * brillo titila independientemente por punto, como un cielo estrellado.
- * Una nube lenta de fondo modula qué región de la retícula titila más
- * fuerte (las mismas manchas oscuras orgánicas que en la estática de
- * glifos, aquí gobernando probabilidad de brillo en vez de densidad de
- * caracteres). Además, ocasionalmente cruzan destellos diagonales cortos
- * (rasguños/glitch), un acento secundario, breve e infrecuente.
+ * Lectura del video: retícula de puntos en posiciones FIJAS (nunca se
+ * mueven de su celda) cuyo brillo titila independientemente por punto,
+ * modulado por una nube lenta de fondo que gobierna qué región titila
+ * más fuerte. Sobre eso, el cliente identificó por observación directa
+ * del video (mi primer análisis cuadro-a-cuadro no lo confirmó con
+ * certeza estadística, pero la percepción de forma por movimiento
+ * coordinado —efecto de profundidad cinética— es real y mis medidas
+ * sobre cuadros sueltos no están hechas para captarla) que se forman y
+ * disuelven CUBOS en wireframe isométrico sobre la retícula: el
+ * hexágono de silueta de un cubo + las 3 aristas internas que dividen
+ * sus 3 caras visibles, apareciendo y desvaneciéndose en posiciones
+ * aleatorias — reemplaza los destellos diagonales sueltos de la
+ * versión anterior.
  */
 
 const CELL = 13;   // px CSS de espaciado entre puntos (retícula regular)
@@ -79,25 +82,41 @@ function initDotGrid(canvas) {
     buildAtlas();
   }
 
-  /* destellos diagonales cortos (acento secundario del video de
-     referencia): un pool pequeño de segmentos que nacen, viven ~180-320ms
-     y mueren — nunca más de unos pocos a la vez, para que sigan siendo
-     un acento y no compitan con el parpadeo de la retícula. */
-  const glitches = [];
-  function spawnGlitch(t, w, h) {
-    const len = 30 + h3(t * 1000, 1, 2) * 70;
-    const ang = (h3(t * 1000, 3, 4) * 0.5 + 0.15) * Math.PI; // diagonal, nunca horizontal/vertical puro
-    const x = h3(t * 1000, 5, 6) * w;
-    const y = h3(t * 1000, 7, 8) * h;
-    glitches.push({
-      x, y, ang, len,
+  /* Cubos en wireframe isométrico: hexágono de silueta (6 aristas) + 3
+     aristas internas del centro a vértices alternos (cada 120°) — el
+     glifo clásico de "cubo aplanado" que divide la silueta en sus 3
+     caras visibles (arriba, izquierda, derecha). Un pool pequeño nace,
+     se dibuja con fundido de entrada/salida y se disuelve — nunca más
+     de 2 a la vez, para que sigan siendo un acento sobre la retícula y
+     no la dominen. */
+  const HEX_ANGLES = [-90, -30, 30, 90, 150, 210].map((d) => (d * Math.PI) / 180);
+  const cubes = [];
+  function spawnCube(t, w, h) {
+    const r = (22 + h3(t * 1000, 21, 22) * 30) * dpr;
+    cubes.push({
+      x: h3(t * 1000, 23, 24) * w,
+      y: h3(t * 1000, 25, 26) * h,
+      r,
       born: t,
-      life: 0.18 + h3(t * 1000, 9, 10) * 0.14,
+      life: 1.1 + h3(t * 1000, 27, 28) * 0.9,
     });
+  }
+  function drawCube(c, k) {
+    const pts = HEX_ANGLES.map((a) => [c.x + Math.cos(a) * c.r, c.y + Math.sin(a) * c.r]);
+    ctx.globalAlpha = k * 0.6;
+    ctx.beginPath();
+    pts.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
+    ctx.closePath();
+    // aristas internas: centro -> vértices alternos (0, 2, 4 = cada 120°)
+    for (const i of [0, 2, 4]) {
+      ctx.moveTo(c.x, c.y);
+      ctx.lineTo(pts[i][0], pts[i][1]);
+    }
+    ctx.stroke();
   }
 
   let frameSeed = 0;
-  let nextGlitchAt = 0;
+  let nextCubeAt = 0;
   function paint(t) {
     frameSeed++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -117,27 +136,22 @@ function initDotGrid(canvas) {
       }
     }
 
-    // destellos: nacer/vivir/morir, dibujados sobre la retícula
+    // cubos: nacen, se dibujan con fundido de entrada/salida y se disuelven
     const w = canvas.width, h = canvas.height;
-    if (t >= nextGlitchAt) {
-      spawnGlitch(t, w, h);
-      nextGlitchAt = t + 0.4 + h3(Math.floor(t * 1000), 11, 12) * 0.9;
+    if (t >= nextCubeAt && cubes.length < 2) {
+      spawnCube(t, w, h);
+      nextCubeAt = t + 0.9 + h3(Math.floor(t * 1000), 11, 12) * 1.3;
     }
     ctx.strokeStyle = inkColor;
     ctx.lineCap = 'round';
-    for (let i = glitches.length - 1; i >= 0; i--) {
-      const g = glitches[i];
-      const age = t - g.born;
-      if (age > g.life) { glitches.splice(i, 1); continue; }
-      const k = 1 - age / g.life; // se apaga hacia el final de su vida
-      ctx.globalAlpha = k * 0.55;
-      ctx.lineWidth = 1.4 * dpr;
-      const dx = Math.cos(g.ang) * g.len * dpr;
-      const dy = Math.sin(g.ang) * g.len * dpr;
-      ctx.beginPath();
-      ctx.moveTo(g.x - dx / 2, g.y - dy / 2);
-      ctx.lineTo(g.x + dx / 2, g.y + dy / 2);
-      ctx.stroke();
+    ctx.lineWidth = 1.3 * dpr;
+    for (let i = cubes.length - 1; i >= 0; i--) {
+      const c = cubes[i];
+      const age = t - c.born;
+      if (age > c.life) { cubes.splice(i, 1); continue; }
+      const p = age / c.life;
+      const k = Math.sin(Math.PI * p); // 0 al nacer -> 1 a la mitad -> 0 al disolverse
+      drawCube(c, k);
     }
     ctx.globalAlpha = 1;
   }
