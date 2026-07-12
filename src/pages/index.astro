@@ -325,12 +325,14 @@ import LockupMark from '../components/LockupMark.astro';
        ancho de contenido (1320px) del que esa cuadrícula compartida
        permite — el piso de 72px por lado (pensado para 1180px) dejaba
        la rueda comprimida de vuelta a su tamaño viejo en viewports
-       típicos de escritorio (1400px). Piso bajado a 40px y la resta a
-       660px (mitad de 1320) para que el ancho de contenido de ESTA
-       sección específicamente llegue a 1320px ya desde 1400px de
-       viewport, no solo en pantallas muy anchas. */
-    padding-left: max(40px, calc(50vw - 660px));
-    padding-right: max(40px, calc(50vw - 660px));
+       típicos de escritorio (1400px). Piso de 40px y resta de 780px
+       (mitad de 1560): la rueda subió otra vez de tamaño (card de
+       1083px, pedido explícito de +30%) y necesita un ancho de contenido
+       de hasta 1560px para llegar a su tamaño completo en pantallas
+       anchas; en las que no alcanzan, el min() del card y fitHeight
+       la ajustan a lo disponible sin cortarla jamás. */
+    padding-left: max(40px, calc(50vw - 780px));
+    padding-right: max(40px, calc(50vw - 780px));
   }
   .engine-col-text { padding-right: 24px; }
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
@@ -351,36 +353,31 @@ import LockupMark from '../components/LockupMark.astro';
      alto para limitar el tamaño de la rueda — un valor fijo la mantiene
      legible (nombres de servicio a tamaño normal) sin depender de la
      altura de la ventana ni desbordar la sección. */
-  /* 833px = 868px (canvas del intento anterior) × 0.9 (pedido explícito:
-     -10%) + el margen BUFFER que engine-wheel.js resta (26px por lado,
-     52 total) para el carril de las etiquetas de fase → canvas real de
-     781px = 868×0.9 exacto. Ancho y alto iguales (cuadrado) para que
-     ninguno de los dos limite al otro por separado en el cálculo de
-     engine-wheel.js. */
+  /* 1083px = 833px × 1.3 (pedido explícito: rueda 30% más grande).
+     El alto NO es fijo: min(1083px, 100vh − 116px) es la garantía dura
+     de que la rueda NUNCA se corta — en pantallas altas gana el tamaño
+     completo (canvas de 1031px = 1083 − 52 de BUFFER), y en pantallas
+     bajas gana el alto real disponible bajo el nav, donde fitHeight
+     (engine-wheel.js) redimensiona el canvas al alto del card y el
+     círculo entero cabe siempre. 116 = 92 de nav + 24 de respiro
+     visible repartido arriba/abajo — a propósito lo MÍNIMO: cada píxel
+     de reserva extra es un píxel menos de rueda justo en las pantallas
+     bajas donde más cuesta el tamaño (el card ya trae 26px de aire
+     interno por lado, el BUFFER del carril de etiquetas). Un solo min()
+     en vez de un media query aparte: no hay punto de corte que mantener
+     sincronizado con el tamaño de la rueda.
+     Ancho y alto con el mismo techo (cuadrado) para que ninguno de los
+     dos limite al otro por separado en el cálculo de engine-wheel.js. */
   .engine-col-wheel .wheel-card {
     display: flex;
     width: 100%;
-    max-width: 833px;
-    height: 833px;
+    max-width: 1083px;
+    height: min(1083px, calc(100vh - 116px));
     align-items: center;
     justify-content: flex-end;
     border: none;
     background: transparent;
     padding: 0;
-  }
-  /* En pantallas MÁS BAJAS que lo que la rueda necesita (canvas de 781px
-     + nav de 92px + un respiro ≈ 905px), el alto fijo de 833px dejaba la
-     rueda cortada por abajo al centrarla el click de "Conoce el Engine"
-     (bug reportado: a ~800px de viewport se cortaban ~89px del arco
-     inferior — la geometría no da: 781 > 800−92). El card se limita al
-     alto real disponible bajo el nav SOLO en esas pantallas; fitHeight
-     (engine-wheel.js) redimensiona el canvas al nuevo alto y todo el
-     círculo vuelve a caber. En pantallas ≥890px NADA cambia: la rueda
-     conserva exactamente el tamaño aprobado (781 de canvas + 92 de nav
-     + ~8px de respiro por lado = 889 es el viewport mínimo exacto donde
-     cabe entera). */
-  @media (max-height: 889px) and (min-width: 901px) {
-    .engine-col-wheel .wheel-card { height: calc(100vh - 148px); }
   }
   @media (max-width: 900px) {
     .engine-split {

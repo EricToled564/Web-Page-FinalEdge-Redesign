@@ -881,7 +881,12 @@ class EngineWheel {
        y producirían tamaños distintos según el camino de llegada — el
        bug de aterrizaje ya corregido. En /servicios/ (mode 'service') y
        en el home el tope queda exactamente como estaba. */
-    const capW = routeMode === 'phase' ? 1400 : refW;
+    /* En el home (modo 'full') el tope sube a 1170 (900 × 1.3): pedido
+       explícito de una rueda 30% más grande. refW se queda en 900 como
+       referencia de proporciones a propósito — fitScale = w/refW > 1
+       agranda las etiquetas en la MISMA proporción que el anillo, en vez
+       de dejar los nombres al tamaño viejo sobre una rueda más grande. */
+    const capW = routeMode === 'phase' ? 1400 : routeMode === 'full' ? 1170 : refW;
     let w = Math.max(1, Math.min(availW, capW));
     /* el límite por alto SOLO aplica en el layout de dos columnas (>900px,
        mismo corte que el media query de .engine-split): en la columna
