@@ -59,6 +59,19 @@ import LockupMark from './LockupMark.astro';
      vea igual que en cualquier otro lugar del sitio, nunca distorsionado
      por el estilo del botón. */
   .nav-cta--lockup { display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
+  /* pedido explícito: el lockup ENGINE del nav al MISMO tamaño que el
+     logo [AI] de la izquierda. La equivalencia se midió contra el PNG
+     real (logo-finaledge.png segmentado por alfa): la palabra "final
+     edge" del logo mide 129.5px de ancho a la escala del nav (180px),
+     y la del lockup a 28px de fuente medía ~161px → factor 0.803:
+     22.5px de palabra / 17.5px de tag (ambos sobre el piso de 14px,
+     R2.1). SOLO esta colocación: .brand-lockup global (footer, /engine/,
+     sección Engine del home) conserva su tamaño fijo de siempre.
+     :global() porque .lm-* se renderiza dentro de LockupMark (otro
+     componente) y el scope de Astro no lo alcanza desde aquí. */
+  .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-prompt),
+  .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-word) { font-size: 22.5px; }
+  .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-tag) { font-size: 17.5px; }
   @media (max-width: 1100px) {
     .nav { padding: 0 24px; }
     .nav-cta { padding: 8px 14px; }
