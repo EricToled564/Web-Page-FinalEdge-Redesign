@@ -1,7 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
 import EngineWheel from '../../components/EngineWheel.astro';
-import LockupMark from '../../components/LockupMark.astro';
 import { PHASES } from '../../data/engine.js';
 
 export function getStaticPaths() {
@@ -14,7 +13,13 @@ const { phase } = Astro.props;
    debajo, la rueda como único menú de servicios (con "Conoce más:" en vez
    de repetir el nombre de la fase — ver apply() en engine-wheel.js) y dos
    botones en tinta (contraste elegante, sin rellenos de color). */
-const nextPhase = PHASES.find((p) => p.slug === phase.next.slug);
+/* Los CTA del hub llevan a las DOS fases que no son la actual (pedido
+   2026-07-11, sustituye al botón "Regresar al Engine"): la siguiente en
+   el ciclo primero, la restante después. */
+const otherPhases = [
+  PHASES.find((p) => p.slug === phase.next.slug),
+  PHASES.find((p) => p.id !== phase.id && p.slug !== phase.next.slug),
+];
 /* La rueda-menú debe medir lo que mide la PALABRA del título (pedido
    explícito). Geist Mono es monoespaciada: el ancho de la palabra es una
    función cerrada del font-size — avance por carácter (0.594em, medido
@@ -48,10 +53,9 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
         <EngineWheel compact />
       </div>
       <div class="hub-actions reveal">
-        <a class="btn hub-btn-engine" href="/#engine">
-          Regresar al<LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
-        </a>
-        <a class="btn hub-btn-next" href={phase.next.slug}>Explorar {phase.next.name}</a>
+        {otherPhases.map((p) => (
+          <a class="btn hub-btn-next" href={p.slug}>Explorar {p.name}</a>
+        ))}
       </div>
     </div>
   </section>
@@ -67,10 +71,22 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
      via tokens/color-mix — ningún hex nuevo (R1.1). */
   .hub-hero--static {
     position: relative;
-    background: var(--pc);
+    background: var(--pc); /* fallback si el navegador no soporta color relativo */
+    /* −15% de saturación (pedido explícito): se reduce el chroma del
+       token de fase en oklch manteniendo luz y matiz exactos — color
+       DERIVADO del token, no un hex nuevo (R1.1). El arco 3D de la
+       rueda conserva el color pleno: el contraste sutil entre arco y
+       fondo es parte del efecto. */
+    background: oklch(from var(--pc) l calc(c * 0.85) h);
     min-height: 100vh;
     display: flex;
-    align-items: center;
+    /* flex-start, no center: el centrado vertical metía ~220px de aire
+       muerto entre el nav y el título y hundía los botones al fondo del
+       viewport (se cortaban en pantallas más bajas que la de prueba —
+       queja explícita). Anclado arriba, el título queda a un paso del
+       nav y los botones suben ~200px: visibles incluso en laptops de
+       ~790px de alto útil. El fondo de estática sigue llenando el 100vh. */
+    align-items: flex-start;
     justify-content: center;
     padding: 108px 24px 36px;
   }
@@ -102,8 +118,8 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
     max-width: 60ch;
   }
   /* Ancho del carril = ancho de la palabra del título (--title-em, ver
-     frontmatter) × 1.59 (pedido explícito: la sección de la fase un 59%
-     más grande que la palabra) + los 2×26px de BUFFER que la rueda
+     frontmatter) × 1.0335 (el ×1.59 original reducido un 35% — pedido
+     explícito de esta ronda) + los 2×26px de BUFFER que la rueda
      reserva alrededor del canvas (engine-wheel.js resize(): canvas =
      carril − 52). Crece/encoge con la palabra a cualquier viewport;
      min(100%…) protege pantallas angostas.
@@ -121,8 +137,8 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
      y botones sin taparlos: los botones vienen DESPUÉS en el DOM (se
      pintan y clickean encima) y el statement no es interactivo. */
   .hub-wheel {
-    --rail-w: min(100%, calc(var(--text-opener) * var(--title-em) * 1.59 + 52px));
-    --stage-h: calc((var(--text-opener) * var(--title-em) * 1.59) * 0.9032 + 52px);
+    --rail-w: min(100%, calc(var(--text-opener) * var(--title-em) * 1.0335 + 52px));
+    --stage-h: calc((var(--text-opener) * var(--title-em) * 1.0335) * 0.9032 + 52px);
     width: var(--rail-w);
     margin-top: calc(var(--stage-h) * -0.215 + 12px);
     margin-bottom: calc(var(--stage-h) * -0.375 + 16px);
@@ -132,25 +148,10 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
   }
   .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
 
-  /* Botones en tinta — el cliente descartó los rellenos de color (azul /
-     color de fase): contraste sí, pero elegante y que combine con la
-     lámina. El principal (Engine) es el mismo "chip void" que ya usan la
-     banda "Conoce más:" y el asistente — tinta sólida oscura con el
-     lockup en sus colores reales de marca; el secundario es fantasma en
-     tinta void. Jerarquía por peso, no por color. */
-  .hub-btn-engine {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-    text-transform: none;
-    letter-spacing: normal;
-    background: var(--void-deep);
-    border-color: var(--void-deep);
-    color: var(--fg);
-  }
-  .hub-btn-engine:hover,
-  .hub-btn-engine:active { background: var(--void-deep); border-color: var(--accent); color: var(--fg); }
-
+  /* Botones en tinta fantasma (el cliente descartó los rellenos de
+     color): borde y texto void sobre el color de fase, hover invertido
+     que revela el color. Ambos CTA son pares — las dos fases que no
+     están representadas en esta lámina. */
   .hub-btn-next {
     background: transparent;
     border-color: color-mix(in srgb, var(--void-deep) 55%, transparent);

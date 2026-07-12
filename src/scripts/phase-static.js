@@ -92,9 +92,18 @@ function initStatic(canvas) {
     ctx.clearRect(0, 0, canvas.width, canvas.height); // el ámbar lo pone la sección
     const swell = 0.85 + 0.15 * Math.sin(t * 0.45); // pulso global lento
     const s = 0.16; // escala espacial de las nubes
+    /* deriva direccional (pedido explícito: el efecto se sentía estático):
+       las nubes ya no solo mutan en su lugar (la coordenada z del ruido) —
+       el campo entero se TRASLADA en diagonal por el área, ~3.5 celdas/s
+       en x y ~1 en y, lo bastante para percibir el viaje sin volverse
+       mareador. La estática por celda (h3 con frameSeed) no se mueve con
+       él: el grano parpadea quieto mientras las nubes pasan por encima —
+       igual que el video de referencia. */
+    const driftX = t * 0.55;
+    const driftY = t * 0.17;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        let n = vnoise(x * s, y * s, t * 0.35);
+        let n = vnoise(x * s + driftX, y * s + driftY, t * 0.45);
         n = Math.pow(n, 1.5); // abre huecos oscuros grandes, como el original
         const fl = h3(x, y, frameSeed); // estática por celda
         const b = Math.min(1, n * (0.2 + 0.8 * fl) * swell * 1.6);

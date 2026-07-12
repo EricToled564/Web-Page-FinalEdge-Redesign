@@ -112,6 +112,21 @@ const { compact = false, fitHeight = false } = Astro.props;
      engine-wheel.js), así que agrandarlo no mueve ni un solo punto de
      la geometría 3D de la rueda. */
   .wl-band { font-size: 20px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
+  /* En el hub de fase (modo 'phase') la banda dice "Conoce más:" sobre el
+     fondo de color de la fase (landing 2026-07-11) y el cliente pidió
+     quitarle el rectángulo negro y reducirla en la misma proporción que
+     la sección (−35%). Sin el chip oscuro el texto blanco no contrasta
+     sobre ámbar/cian/magenta: pasa a tinta void, igual que el título.
+     20px×0.65 = 13px viola el piso duro de 14px (R2.1) — se queda en
+     14px, el mínimo permitido; el tracking sí baja proporcional. En el
+     home (modo 'full') el chip queda exactamente como estaba. */
+  [data-mode='phase'] .wl-band {
+    background: transparent;
+    color: var(--void-deep);
+    font-size: 14px;
+    letter-spacing: 1.7px;
+    padding: 0;
+  }
 
   /* el ancla (.wl-hub) SÍ queda centrada en la rueda vía translate(-50%,-50%)
      en projectLabels() (engine-wheel.js) — eso nunca fue el problema. El
