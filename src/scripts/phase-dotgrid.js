@@ -6,19 +6,17 @@
  * hub (--void-deep sobre el color de fase) — el pedido fue sustituir el
  * EFECTO, no la paleta.
  *
- * Lectura del video: retícula de puntos en posiciones FIJAS (nunca se
- * mueven de su celda) cuyo brillo titila independientemente por punto,
- * modulado por una nube lenta de fondo que gobierna qué región titila
- * más fuerte. Sobre eso, el cliente identificó por observación directa
- * del video (mi primer análisis cuadro-a-cuadro no lo confirmó con
- * certeza estadística, pero la percepción de forma por movimiento
- * coordinado —efecto de profundidad cinética— es real y mis medidas
- * sobre cuadros sueltos no están hechas para captarla) que se forman y
- * disuelven CUBOS en wireframe isométrico sobre la retícula: el
- * hexágono de silueta de un cubo + las 3 aristas internas que dividen
- * sus 3 caras visibles, apareciendo y desvaneciéndose en posiciones
- * aleatorias — reemplaza los destellos diagonales sueltos de la
- * versión anterior.
+ * Lectura del video (corregida dos veces por el cliente hasta esta
+ * versión): retícula de puntos en posiciones FIJAS cuyo brillo titila
+ * por punto, modulado por una nube lenta. Y sobre eso, CUBOS 3D en
+ * wireframe formados POR LOS PROPIOS PUNTOS de la retícula — no
+ * ilustraciones de línea dibujadas encima: las aristas del cubo
+ * "encienden" a brillo máximo los puntos que atraviesan, y el cubo
+ * VIAJA por el campo y ROTA mientras avanza, cada uno en su propia
+ * dirección (estilo pantalla de LEDs). Consistente con la evidencia
+ * medida: puntos fijos + trayectorias diagonales continuas viajando en
+ * los cortes espacio-tiempo (el patrón de brillo se mueve, los puntos
+ * no).
  */
 
 const CELL = 13;   // px CSS de espaciado entre puntos (retícula regular)
@@ -82,37 +80,75 @@ function initDotGrid(canvas) {
     buildAtlas();
   }
 
-  /* Cubos en wireframe isométrico: hexágono de silueta (6 aristas) + 3
-     aristas internas del centro a vértices alternos (cada 120°) — el
-     glifo clásico de "cubo aplanado" que divide la silueta en sus 3
-     caras visibles (arriba, izquierda, derecha). Un pool pequeño nace,
-     se dibuja con fundido de entrada/salida y se disuelve — nunca más
-     de 2 a la vez, para que sigan siendo un acento sobre la retícula y
-     no la dominen. */
-  const HEX_ANGLES = [-90, -30, 30, 90, 150, 210].map((d) => (d * Math.PI) / 180);
+  /* Cubos formados POR los puntos de la retícula (corrección del
+     cliente: no son ilustraciones de línea encima — los propios puntos
+     del fondo se iluminan trazando las aristas de cubos 3D que VIAJAN
+     por el campo y ROTAN mientras avanzan, cada uno en su dirección,
+     estilo pantalla de LEDs).
+     Render: las 12 aristas del cubo (rotado en X/Y, proyección
+     ortográfica) se muestrean y cada muestra "enciende" la celda de la
+     retícula más cercana — el cubo se dibuja EXCLUSIVAMENTE con los
+     puntos existentes, ninguna línea. Entra y sale con fundido. */
+  const CUBE_EDGES = [
+    [0,1],[1,3],[3,2],[2,0], // cara trasera
+    [4,5],[5,7],[7,6],[6,4], // cara delantera
+    [0,4],[1,5],[2,6],[3,7], // aristas que las unen
+  ];
   const cubes = [];
-  function spawnCube(t, w, h) {
-    const r = (22 + h3(t * 1000, 21, 22) * 30) * dpr;
+  function spawnCube(t, wCss, hCss) {
+    const seed = Math.floor(t * 997);
+    const ang = h3(seed, 31, 32) * Math.PI * 2;
     cubes.push({
-      x: h3(t * 1000, 23, 24) * w,
-      y: h3(t * 1000, 25, 26) * h,
-      r,
+      x: h3(seed, 23, 24) * wCss,
+      y: h3(seed, 25, 26) * hCss,
+      size: 40 + h3(seed, 21, 22) * 44,     // media-arista en px CSS
+      vx: Math.cos(ang) * (16 + h3(seed, 33, 34) * 20), // px CSS/s — cada cubo su dirección
+      vy: Math.sin(ang) * (16 + h3(seed, 35, 36) * 20),
+      rx: h3(seed, 37, 38) * Math.PI,
+      ry: h3(seed, 39, 40) * Math.PI,
+      wrx: 0.25 + h3(seed, 41, 42) * 0.35,  // rad/s
+      wry: 0.2 + h3(seed, 43, 44) * 0.3,
       born: t,
-      life: 1.1 + h3(t * 1000, 27, 28) * 0.9,
+      life: 6 + h3(seed, 27, 28) * 4,       // viven varios segundos: se les ve viajar
     });
   }
-  function drawCube(c, k) {
-    const pts = HEX_ANGLES.map((a) => [c.x + Math.cos(a) * c.r, c.y + Math.sin(a) * c.r]);
-    ctx.globalAlpha = k * 0.6;
-    ctx.beginPath();
-    pts.forEach(([px, py], i) => (i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py)));
-    ctx.closePath();
-    // aristas internas: centro -> vértices alternos (0, 2, 4 = cada 120°)
-    for (const i of [0, 2, 4]) {
-      ctx.moveTo(c.x, c.y);
-      ctx.lineTo(pts[i][0], pts[i][1]);
+  /* marca en `out` (Map celda->intensidad 0..1) las celdas que este cubo
+     enciende en el instante t */
+  function litCellsFor(c, t, out) {
+    const age = t - c.born;
+    const p = age / c.life;
+    const k = Math.min(1, Math.sin(Math.PI * p) * 1.6); // fundido entrada/salida
+    if (k <= 0.02) return;
+    const cx = c.x + c.vx * age;
+    const cy = c.y + c.vy * age;
+    const rx = c.rx + c.wrx * age;
+    const ry = c.ry + c.wry * age;
+    const cosX = Math.cos(rx), sinX = Math.sin(rx);
+    const cosY = Math.cos(ry), sinY = Math.sin(ry);
+    const vs = [];
+    for (let i = 0; i < 8; i++) {
+      const x = (i & 1) ? 1 : -1;
+      const y = (i & 2) ? 1 : -1;
+      const z = (i & 4) ? 1 : -1;
+      const y2 = y * cosX - z * sinX;
+      const z2 = y * sinX + z * cosX;
+      const x2 = x * cosY + z2 * sinY;
+      vs.push([cx + x2 * c.size, cy + y2 * c.size]);
     }
-    ctx.stroke();
+    for (const [a, b] of CUBE_EDGES) {
+      const [x1, y1] = vs[a], [x2, y2] = vs[b];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      const steps = Math.max(2, Math.ceil(len / (CELL * 0.45)));
+      for (let i = 0; i <= steps; i++) {
+        const px = x1 + ((x2 - x1) * i) / steps;
+        const py = y1 + ((y2 - y1) * i) / steps;
+        const gx = Math.round(px / CELL);
+        const gy = Math.round(py / CELL);
+        if (gx < 0 || gy < 0 || gx >= cols || gy >= rows) continue;
+        const key = gy * cols + gx;
+        if ((out.get(key) ?? 0) < k) out.set(key, k);
+      }
+    }
   }
 
   let frameSeed = 0;
@@ -120,6 +156,21 @@ function initDotGrid(canvas) {
   function paint(t) {
     frameSeed++;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    /* administrar el pool de cubos y calcular qué celdas encienden — ANTES
+       del bucle de puntos: el cubo se pinta CON los puntos, no encima */
+    const wCss = canvas.width / dpr, hCss = canvas.height / dpr;
+    if (t >= nextCubeAt && cubes.length < 3) {
+      spawnCube(t, wCss, hCss);
+      nextCubeAt = t + 1.2 + h3(Math.floor(t * 1000), 11, 12) * 1.6;
+    }
+    const lit = new Map();
+    for (let i = cubes.length - 1; i >= 0; i--) {
+      const c = cubes[i];
+      if (t - c.born > c.life) { cubes.splice(i, 1); continue; }
+      litCellsFor(c, t, lit);
+    }
+
     const swell = 0.85 + 0.15 * Math.sin(t * 0.45);
     const s = 0.14;
     const driftX = t * 0.5;
@@ -129,31 +180,17 @@ function initDotGrid(canvas) {
         let n = vnoise(x * s + driftX, y * s + driftY, t * 0.4);
         n = Math.pow(n, 1.4);
         const fl = h3(x, y, frameSeed); // titileo por punto
-        const b = Math.min(1, n * (0.25 + 0.75 * fl) * swell * 1.55);
+        let b = Math.min(1, n * (0.25 + 0.75 * fl) * swell * 1.55);
+        /* si una arista de cubo pasa por esta celda, el punto sube hacia
+           brillo pleno (mezclado con el fundido del cubo) — así la forma
+           emerge de la retícula y viaja con el cubo */
+        const cubeK = lit.get(y * cols + x);
+        if (cubeK) b = Math.max(b, cubeK);
         if (b < 0.08) continue;
         const lv = Math.min(LEVELS - 1, Math.round(b * (LEVELS - 1)));
         ctx.drawImage(atlas, 0, lv * cell, cell, cell, Math.round(x * cell), Math.round(y * cell), cell, cell);
       }
     }
-
-    // cubos: nacen, se dibujan con fundido de entrada/salida y se disuelven
-    const w = canvas.width, h = canvas.height;
-    if (t >= nextCubeAt && cubes.length < 2) {
-      spawnCube(t, w, h);
-      nextCubeAt = t + 0.9 + h3(Math.floor(t * 1000), 11, 12) * 1.3;
-    }
-    ctx.strokeStyle = inkColor;
-    ctx.lineCap = 'round';
-    ctx.lineWidth = 1.3 * dpr;
-    for (let i = cubes.length - 1; i >= 0; i--) {
-      const c = cubes[i];
-      const age = t - c.born;
-      if (age > c.life) { cubes.splice(i, 1); continue; }
-      const p = age / c.life;
-      const k = Math.sin(Math.PI * p); // 0 al nacer -> 1 a la mitad -> 0 al disolverse
-      drawCube(c, k);
-    }
-    ctx.globalAlpha = 1;
   }
 
   resize();
