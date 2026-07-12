@@ -38,7 +38,7 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
   <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
     <canvas class="hub-static" data-phase-static aria-hidden="true"></canvas>
     <div class="hub-stack">
-      <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}</h1>
+      <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}<span class="cursor hub-cursor">▌</span></h1>
       <p class="hub-statement reveal">
         {phase.statement[0]}<br />{phase.statement[1]}
       </p>
@@ -109,6 +109,21 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
     letter-spacing: -.06em;
     line-height: .95;
     color: var(--void-deep);
+  }
+  /* mismo cursor parpadeante del hero ("Tu ventaja definitiva▌") tras el
+     nombre de la fase (pedido explícito, las 3). .cursor global ya trae
+     el parpadeo (blink 1.2s steps); aquí la barra se PINTA por CSS
+     (background) en vez de confiar en el glifo ▌: a este tamaño de
+     título (98px) cualquier sistema sin ese carácter en su fuente
+     mostraría un hueco parpadeante invisible. El color es la tinta void
+     del propio título (el azul accent del hero se pierde sobre cian). */
+  .hub-cursor {
+    color: transparent;            /* el glifo queda de respaldo, invisible */
+    background: var(--void-deep);
+    width: .34em;                  /* ▌ es medio bloque: barra, no cuadrado */
+    height: .74em;
+    vertical-align: 0;
+    margin-left: .08em;
   }
   .hub-statement {
     margin-top: 16px;
