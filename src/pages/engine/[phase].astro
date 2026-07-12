@@ -71,6 +71,18 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
      via tokens/color-mix — ningún hex nuevo (R1.1). */
   .hub-hero--static {
     position: relative;
+    /* red de contención final: las etiquetas ocultas de fase/edge que no
+       están enfocadas (opacity:0) siguen ocupando su caja real, proyectada
+       por el radio de la rueda 3D — puede caer fuera de .wheel-stage, que
+       ya las recorta visualmente, y de .wheel-overlay (mismo recorte
+       reforzado); ninguno de los dos evitaba que esa caja empujara el
+       scrollWidth del documento 2px más allá del viewport a 360px (medido
+       con Playwright: scroll horizontal real y forzable, aunque invisible).
+       Cortar aquí, en el contenedor de sección más alto de la lámina,
+       es la garantía definitiva de que ninguna etiqueta produce scroll de
+       página — mismo principio que .wheel-stage ya declara, un nivel más
+       arriba en la cadena. */
+    overflow-x: hidden;
     background: var(--pc); /* fallback si el navegador no soporta color relativo */
     /* −15% de saturación (pedido explícito): se reduce el chroma del
        token de fase en oklch manteniendo luz y matiz exactos — color
@@ -117,11 +129,20 @@ const titleEm = phase.name.length * 0.594 - (phase.name.length - 1) * 0.06;
      título (98px) cualquier sistema sin ese carácter en su fuente
      mostraría un hueco parpadeante invisible. El color es la tinta void
      del propio título (el azul accent del hero se pierde sobre cian). */
+  /* pedido explícito: línea delgada (no bloque), que arranque a la misma
+     altura que la palabra y mida lo mismo que ella. Medido con
+     ctx.measureText() contra la fuente/peso/tamaño real del título
+     ("Evaluación", sin descendentes): el trazo visible va de 0.745em
+     sobre la línea base hasta ~la propia línea base — 0.755em de alto
+     total. vertical-align:0 ancla el borde inferior del cursor a la
+     línea base (igual que el pie de la palabra); height:0.755em hace
+     que el borde superior quede a la misma altura que el techo de la
+     palabra — sin eso, ambos extremos quedarían desalineados. */
   .hub-cursor {
     color: transparent;            /* el glifo queda de respaldo, invisible */
     background: var(--void-deep);
-    width: .34em;                  /* ▌ es medio bloque: barra, no cuadrado */
-    height: .74em;
+    width: .09em;
+    height: .755em;
     vertical-align: 0;
     margin-left: .08em;
   }

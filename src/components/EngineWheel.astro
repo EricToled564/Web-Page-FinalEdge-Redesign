@@ -76,7 +76,20 @@ const { compact = false, fitHeight = false } = Astro.props;
     transform: translate(-50%, -50%);
   }
   .wheel-canvas { display: block; }
-  .wheel-overlay { pointer-events: none; }
+  /* refuerzo del mismo contrato de .wheel-stage ("una etiqueta JAMÁS
+     puede producir scroll a nivel de página", ver arriba): las etiquetas
+     ocultas de la fase/edge que no están enfocadas (opacity:0 vía
+     [data-mode='phase'] .wl) siguen ocupando su caja normal —
+     projectLabels() las posiciona en el radio real de la rueda 3D, que
+     puede caer fuera de .wheel-stage. .wheel-stage ya las recorta
+     visualmente (sus píxeles nunca se ven), pero detectado con
+     Playwright: en el hub de fase a 360px, una etiqueta oculta
+     empujaba document.documentElement.scrollWidth 2px más allá del
+     viewport (scroll horizontal real, aunque invisible, forzable por
+     JS/gesto) — .wheel-overlay (el padre directo de las etiquetas)
+     nunca clipaba por sí mismo, solo heredaba el clip visual de
+     .wheel-stage. overflow:hidden aquí también cierra esa fuga. */
+  .wheel-overlay { pointer-events: none; overflow: hidden; }
 
   .wl {
     position: absolute;
