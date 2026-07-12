@@ -171,11 +171,23 @@ import LockupMark from '../components/LockupMark.astro';
        swap y el navegador NO lo arranca solo — el hero quedaba congelado
        en el poster (bug reportado). play() explícito en cada
        astro:page-load; al ir muted, el navegador lo permite sin gesto.
-       El catch vacío cubre el rechazo benigno de play() cuando el
-       elemento aún no está listo o la pestaña está en fondo. */
+       UN SOLO intento no basta (bug reportado por segunda vez ya con el
+       play() puesto): en el swap el <video> recién insertado apenas está
+       arrancando su carga, y un play() puede morir en la carrera con esa
+       carga (AbortError "interrupted by a new load request") — el catch
+       se lo tragaba en silencio y nada volvía a intentar. Por eso se
+       insiste: al instante, cuando el video ya tiene datos (loadeddata)
+       y dos reintentos con margen. Todos los intentos son idempotentes
+       (si ya está corriendo, paused es false y no se hace nada), así que
+       insistir nunca reinicia ni traba nada. */
     function playHeroVideo() {
       const v = document.querySelector('.hero-video');
-      if (v && v.paused) v.play().catch(() => {});
+      if (!v) return;
+      const kick = () => { if (v.isConnected && v.paused) v.play().catch(() => {}); };
+      kick();
+      v.addEventListener('loadeddata', kick, { once: true });
+      setTimeout(kick, 350);
+      setTimeout(kick, 1400);
     }
     playHeroVideo();
     document.addEventListener('astro:page-load', playHeroVideo);
