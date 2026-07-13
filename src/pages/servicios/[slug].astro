@@ -48,6 +48,26 @@ const videoHero = VIDEO_HEROES[edge.id]
       plate: `/assets/logos/logo-${edge.id}-plate.png`,
     }
   : null;
+/* Sección de video con animación disparada por scroll (pedido
+   2026-07-13, técnica de referencia descrita por el cliente): el video
+   empieza chico, centrado y semitransparente, flotando sobre miniaturas
+   decorativas que se desvanecen; conforme se baja crece (scale) y se
+   aclara (opacity) hasta ocupar el ancho completo, y arranca solo al
+   hacerse visible (autoplay muted). Hoy solo creative la tiene. Las
+   miniaturas son los pósters reales de los otros servicios — material
+   propio, ninguna imagen inventada. */
+const FEATURE_VIDEOS = {
+  creative: {
+    src: '/assets/video/svc-creative-feature.mp4',
+    poster: '/assets/video/svc-creative-feature-poster.jpg',
+  },
+};
+const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
+const featureTiles = featureVideo
+  ? ['strategy', 'intelligence', 'readiness', 'flow', 'systems'].map(
+      (id) => `/assets/video/svc-${id}-hero-poster.jpg`
+    ).concat(['/assets/video/hero-bg-poster.jpg'])
+  : [];
 ---
 <Base
   title={`${edge.service} — Final Edge`}
@@ -97,6 +117,29 @@ const videoHero = VIDEO_HEROES[edge.id]
       </div>
     </div>
   </section>
+  )}
+
+  {featureVideo && (
+    <section class="svc-feature" data-svc-feature style={`--pc:${phase.color}`}>
+      <div class="svc-feature-sticky">
+        <div class="svc-feature-tiles" data-svc-feature-tiles aria-hidden="true">
+          {featureTiles.map((t) => (
+            <span class="svc-tile" style={`background-image:url('${t}')`}></span>
+          ))}
+        </div>
+        <video
+          class="svc-feature-video"
+          data-svc-feature-video
+          src={featureVideo.src}
+          poster={featureVideo.poster}
+          muted
+          loop
+          playsinline
+          preload="metadata"
+          aria-hidden="true"
+        ></video>
+      </div>
+    </section>
   )}
 
   <section class="section" style={`--pc:${phase.color}`}>
@@ -177,10 +220,68 @@ const videoHero = VIDEO_HEROES[edge.id]
        factor va FUERA del min() a propósito — así en pantallas chicas
        los 6 se encogen por el mismo múltiplo y siguen viéndose del
        mismo tamaño entre sí, en vez de que el min() recorte antes a
-       los factores grandes. */
-    width: calc(var(--logo-f, 1) * min(560px, 70vw));
+       los factores grandes.
+       × 0.41 = reducción del 59% pedida explícitamente 2026-07-13
+       ("reduzcas todos los logos de los heros de los servicios en un
+       59%") — multiplica a los 6 por igual, así la igualación visual
+       recién calibrada se conserva intacta. */
+    width: calc(var(--logo-f, 1) * min(560px, 70vw) * 0.41);
     height: auto;
     background: var(--plate) center / 100% 100% no-repeat;
+  }
+
+  /* Animación disparada por scroll (técnica de referencia del cliente):
+     la sección mide 260vh — el visor (sticky) se queda clavado bajo el
+     nav mientras el usuario "recorre" esos 260vh, y ese progreso de
+     scroll ES la línea de tiempo (mapeo posicional directo, sin easing
+     — mismo principio que initCosmosScroll en el home): el video pasa
+     de scale .35 / opacity .35 a 1 / 1, y las miniaturas del fondo se
+     desvanecen y abren paso. El script solo escribe transform/opacity
+     (nunca layout) vía requestAnimationFrame. */
+  .svc-feature { height: 260vh; position: relative; }
+  .svc-feature-sticky {
+    position: sticky;
+    top: 92px;
+    height: calc(100vh - 92px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .svc-feature-video {
+    display: block;
+    width: min(1180px, 94vw);
+    transform: scale(0.35);
+    opacity: 0.35;
+    will-change: transform, opacity;
+  }
+  /* miniaturas decorativas: los pósters reales de los otros heroes,
+     dispersos alrededor del centro (detrás del video), que se
+     desvanecen conforme el video emerge. pointer-events none: son
+     decoración pura. */
+  .svc-feature-tiles { position: absolute; inset: 0; pointer-events: none; will-change: transform, opacity; }
+  .svc-tile {
+    position: absolute;
+    width: 11vw;
+    aspect-ratio: 16 / 9;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid var(--hairline);
+    opacity: 0.55;
+  }
+  .svc-tile:nth-child(1) { left: 7%; top: 14%; }
+  .svc-tile:nth-child(2) { right: 9%; top: 11%; width: 13vw; }
+  .svc-tile:nth-child(3) { left: 4%; top: 58%; width: 9vw; }
+  .svc-tile:nth-child(4) { right: 5%; top: 52%; }
+  .svc-tile:nth-child(5) { left: 22%; bottom: 8%; width: 9vw; }
+  .svc-tile:nth-child(6) { right: 24%; bottom: 6%; width: 12vw; }
+  /* con movimiento reducido no hay animación de scroll: el video se
+     muestra completo y nítido de entrada y las miniaturas no estorban. */
+  @media (prefers-reduced-motion: reduce) {
+    .svc-feature { height: auto; }
+    .svc-feature-sticky { position: static; height: auto; padding: 96px 24px; }
+    .svc-feature-video { transform: none; opacity: 1; }
+    .svc-feature-tiles { display: none; }
   }
 
   .svc-hero { padding: 150px 72px 88px; }
@@ -262,4 +363,52 @@ const videoHero = VIDEO_HEROES[edge.id]
   }
   playSvcHeroVideo();
   document.addEventListener('astro:page-load', playSvcHeroVideo);
+
+  /* Animación de la sección de video ligada al scroll (ver el CSS de
+     .svc-feature): p = progreso 0→1 del recorrido de la sección; el
+     scroll ES la línea de tiempo (sin easing, mapeo directo — R3.4 no
+     aplica a mapeos posicionales, mismo criterio que initCosmosScroll).
+     El autoplay lo gobierna un IntersectionObserver: play() al entrar
+     al viewport (muted, permitido sin gesto), pause() al salir — nunca
+     espera un click. Bajo prefers-reduced-motion el CSS ya dejó todo
+     fijo y aquí solo se gestiona el play/pause. */
+  function initSvcFeature() {
+    const sec = document.querySelector('[data-svc-feature]');
+    if (!sec) return;
+    const vid = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
+    const tiles = sec.querySelector('[data-svc-feature-tiles]') as HTMLElement | null;
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!reduced) {
+      let ticking = false;
+      const update = () => {
+        ticking = false;
+        if (!sec.isConnected) return;
+        const vh = innerHeight || 800;
+        const r = sec.getBoundingClientRect();
+        const total = Math.max(1, r.height - vh);
+        const p = Math.min(1, Math.max(0, -r.top / total));
+        vid.style.transform = `scale(${(0.35 + p * 0.65).toFixed(4)})`;
+        vid.style.opacity = (0.35 + p * 0.65).toFixed(4);
+        if (tiles) {
+          tiles.style.opacity = Math.max(0, 1 - p * 1.6).toFixed(4);
+          tiles.style.transform = `scale(${(1 + p * 0.18).toFixed(4)})`;
+        }
+      };
+      addEventListener('scroll', () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(update);
+      }, { passive: true });
+      update();
+    }
+
+    const io = new IntersectionObserver(([en]) => {
+      if (en.isIntersecting) { vid.muted = true; vid.play().catch(() => {}); }
+      else vid.pause();
+    }, { threshold: 0.15 });
+    io.observe(vid);
+  }
+  initSvcFeature();
+  document.addEventListener('astro:page-load', initSvcFeature);
 </script>
