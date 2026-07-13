@@ -39,7 +39,7 @@ const GRADOS = 4;
    texto"): los 4 peldaños conservan su proporción pero el más intenso
    se queda en 60% — el patrón sigue leyéndose como escalera y el copy
    encima nunca pierde su contraste. */
-const TOPE = 0.6;
+const TOPE = 0.5;
 
 function hash(x) {
   x = (x ^ 61) ^ (x >>> 16);

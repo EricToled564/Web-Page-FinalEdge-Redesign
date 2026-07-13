@@ -230,6 +230,11 @@ const { compact = false, fitHeight = false } = Astro.props;
   [data-mode='phase'][data-focus='evaluacion'] .wl-phase-evaluacion,
   [data-mode='phase'][data-focus='capacidades'] .wl-phase-capacidades,
   [data-mode='phase'][data-focus='ejecucion'] .wl-phase-ejecucion { opacity: 1; pointer-events: auto; }
+  /* el rótulo "Conoce más:" ya vive en la PÁGINA del hub
+     (.hub-cta-label en [phase].astro), fuera de la isla — el de adentro
+     se apaga para no duplicarse ni viajar con el hover. DESPUÉS de las
+     reglas de foco (misma especificidad: gana por orden). */
+  [data-mode='phase'][data-focus] .wl-band { opacity: 0; pointer-events: none; }
 
   /* fallback sin WebGL: retícula de lockups */
   .wheel-stage.is-fallback { aspect-ratio: auto; }

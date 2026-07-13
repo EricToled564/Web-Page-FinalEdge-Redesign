@@ -63,6 +63,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
            rueda se dimensiona SOLO por el ancho del carril, que es
            función pura del viewport. -->
       <div class="hub-wheel reveal">
+        <p class="hub-cta-label" aria-hidden="true">Conoce más:</p>
         <EngineWheel compact />
       </div>
       <div class="hub-actions reveal">
@@ -120,7 +121,33 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
      orden implícito de pintado, que varía con posicionamientos y es
      frágil entre motores — y jamás intercepta el puntero (el hover 3D
      de la rueda no puede perder eventos contra la decoración). */
-  .hub-static { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .hub-static { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;
+    /* reducción SIGNIFICATIVA del efecto (pedido 2026-07-13, "no
+       reducciones degradativas"): opacidad del canvas COMPLETO a nivel
+       de página — recorta a la mitad hasta el peldaño más intenso,
+       venga del script que venga. */
+    opacity: 0.55; }
+  /* "Conoce más:" es TEXTO DE LA PÁGINA, ya no el rótulo interno de la
+     rueda (reporte repetido 2026-07-13 de la frase tapada): fuera de la
+     isla persistente — se renueva con cada deploy — y por encima de
+     TODO el carril por z-index declarado: ni el efecto ni los segmentos
+     expandidos pueden tocarla, y ya no viaja con el hover. Mismos 18.2px
+     Geist Mono del rótulo que sustituye (R2.1 ok). */
+  .hub-cta-label {
+    position: absolute;
+    top: 23.5%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 3;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 18.2px;
+    font-weight: 600;
+    letter-spacing: 2.2px;
+    color: var(--void-deep);
+    background: oklch(from var(--pc, var(--accent)) l calc(c * 0.85) h);
+    padding: 4px 12px;
+    white-space: nowrap;
+  }
 
   /* pila centrada: título → statement → rueda-menú → acciones */
   .hub-stack {
