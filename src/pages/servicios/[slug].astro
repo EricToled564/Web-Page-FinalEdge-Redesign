@@ -13,19 +13,29 @@ export function getStaticPaths() {
 const { edge } = Astro.props;
 const phase = phaseOfEdge(edge);
 /* Muestra del rediseño del landing de servicios (pedido 2026-07-13),
-   empezando por el hero y SOLO en creative: video de fondo + el lockup
-   horneado centrado encima, con su plancha negra exacta debajo (mismo
-   patrón que el logo del hero del home: la plancha se genera del propio
-   mapa de alfa del PNG — cuerpo sólido de los glifos en negro, halo y
-   anti-alias sin tocar — y va como background del MISMO <img>, así la
-   alineación es exacta por construcción). Los otros 5 servicios
-   conservan el hero anterior hasta que la muestra se apruebe. */
-const videoHero = edge.id === 'creative'
+   empezando por el hero: video de fondo + el lockup horneado centrado
+   encima, con su plancha negra exacta debajo (mismo patrón que el logo
+   del hero del home: la plancha se genera del propio mapa de alfa del
+   PNG — cuerpo sólido de los glifos en negro, halo y anti-alias sin
+   tocar — y va como background del MISMO <img>, así la alineación es
+   exacta por construcción). Un servicio entra al mapa cuando el cliente
+   entrega su video (w/h = tamaño real de su PNG horneado); los que aún
+   no lo tienen conservan el hero anterior. */
+const VIDEO_HEROES = {
+  creative: { w: 1284, h: 465 },
+  intelligence: { w: 1302, h: 482 },
+  readiness: { w: 1323, h: 449 },
+  systems: { w: 1182, h: 438 },
+  flow: { w: 1279, h: 634 },
+  strategy: { w: 1416, h: 566 },
+};
+const videoHero = VIDEO_HEROES[edge.id]
   ? {
-      src: '/assets/video/svc-creative-hero.mp4',
-      poster: '/assets/video/svc-creative-hero-poster.jpg',
-      logo: '/assets/logos/logo-creative.png',
-      plate: '/assets/logos/logo-creative-plate.png',
+      ...VIDEO_HEROES[edge.id],
+      src: `/assets/video/svc-${edge.id}-hero.mp4`,
+      poster: `/assets/video/svc-${edge.id}-hero-poster.jpg`,
+      logo: `/assets/logos/logo-${edge.id}.png`,
+      plate: `/assets/logos/logo-${edge.id}-plate.png`,
     }
   : null;
 ---
@@ -51,8 +61,8 @@ const videoHero = edge.id === 'creative'
         class="svc-vhero-logo"
         src={videoHero.logo}
         alt={`${edge.id} [AI]`}
-        width="1284"
-        height="465"
+        width={videoHero.w}
+        height={videoHero.h}
       />
     </section>
   ) : (
