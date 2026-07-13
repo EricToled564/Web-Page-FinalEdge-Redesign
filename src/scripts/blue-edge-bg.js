@@ -13,6 +13,12 @@
  *    data-blue-edge, re-boot en astro:page-load, pausa real fuera de
  *    pantalla (IntersectionObserver, última entrada del lote) y muerte
  *    del bucle cuando la página navega (canvas.isConnected).
+ *  - Movimiento (pedido explícito 2026-07-13, "más rápido y más random,
+ *    diferencia claramente perceptible"): velocidad global 0.48 → 1.05
+ *    (~2.2×), deriva del ruido ×3 (el campo se desplaza en vez de casi
+ *    flotar), shimmer al doble de amplitud (0.15 → 0.30) y semilla
+ *    aleatoria por carga en vez del 9301 fijo del demo — cada visita y
+ *    cada canvas generan un patrón distinto.
  * El texto encima va en blanco (pedido explícito) — la base oscura del
  * efecto le da contraste pleno.
  *
@@ -39,7 +45,7 @@ const CONFIG = {
   gridSize: 10,
   maxDpr: 1.5,
   fps: 24,
-  speed: 0.48,
+  speed: 1.05, // original 0.48 — subido a pedido ("más rápido, claramente perceptible")
   threshold: 0.49,
   fontFamily: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
 };
@@ -51,7 +57,15 @@ function initBlueEdge(canvas) {
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
   let width = 0, height = 0, dpr = 1, cols = 0, rows = 0, lastFrame = 0;
-  const seed = 9301;
+  /* semilla aleatoria por canvas ("más random"): el demo usaba 9301 fijo
+     — mismo patrón en cada visita; ahora cada carga y cada canvas
+     arrancan con un campo distinto. */
+  const seed = 1000 + Math.random() * 9000;
+  /* deriva del ruido ×3 sobre el original (0.021 / 0.014): es lo que
+     hace que las nubes se DESPLACEN visiblemente y no solo respiren.
+     Una sola constante para el campo y la retícula precomputada — si
+     divergieran, smoothNoiseAt leería fuera de rango. */
+  const DRIFT_X = 0.063, DRIFT_Y = 0.042;
   const palette = [];
   let baseColor = 'black'; // se recalcula del token en rebuildPalette()
 
@@ -116,7 +130,7 @@ function initBlueEdge(canvas) {
   const lattice = FREQS.map(() => ({ x0: 0, y0: 0, w: 0, h: 0, v: new Float64Array(0) }));
 
   function buildLattice(time) {
-    const bx = time * 0.021, by = -time * 0.014;
+    const bx = time * DRIFT_X, by = -time * DRIFT_Y;
     for (let o = 0; o < 4; o += 1) {
       const f = FREQS[o];
       const xmin = Math.floor(Math.min(bx, 5.3 + bx) * f);
@@ -192,8 +206,8 @@ function initBlueEdge(canvas) {
 
     const centerX = 0.50 + Math.sin(time * 0.18) * 0.17;
     const centerY = 0.48 + Math.cos(time * 0.14) * 0.14;
-    const driftX = time * 0.021;
-    const driftY = time * 0.014;
+    const driftX = time * DRIFT_X;
+    const driftY = time * DRIFT_Y;
     const shimmerK = Math.floor(time * 3);
 
     for (let row = 0; row < rows; row += 1) {
@@ -232,7 +246,9 @@ function initBlueEdge(canvas) {
         if (value < CONFIG.threshold) continue;
         const normalized = (value - CONFIG.threshold) / (1 - CONFIG.threshold);
         const paletteIndex = Math.min(palette.length - 1, Math.floor(normalized * palette.length));
-        const shimmer = pseudoRandom(column + shimmerK, row) * 0.15;
+        /* 0.30 (original 0.15): chispeo al doble, y con speed 1.05 su
+           cadencia de refresco también sube ~2.2× */
+        const shimmer = pseudoRandom(column + shimmerK, row) * 0.30;
         buckets[paletteIndex].push(
           Math.min(1, 0.23 + normalized * 0.84 + shimmer),
           -spacing + column * spacing + swayX,
