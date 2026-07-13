@@ -42,6 +42,7 @@ const jsonLd = {
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_MX" />
+    <meta name="x-build" content={BUILD} />
     <link rel="icon" href="/assets/logos/logo-finaledge.png" type="image/png" />
     <link rel="preload" href="/fonts/v6-or3nQ6H-1_WfwkMZI_qYFrcdmg.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="stylesheet" href="/fonts/fonts.css" />
@@ -86,6 +87,24 @@ const jsonLd = {
       }
       initReveal();
       document.addEventListener('astro:page-load', initReveal);
+    </script>
+    <script>
+      /* Detector de deploy en plena sesión: la rueda es una isla
+         persistente cuyos estilos van sellados por build (scope de
+         Astro). Una pestaña abierta a través de un deploy queda MIXTA:
+         páginas nuevas + isla vieja cuyos estilos nuevos ya no le
+         aplican — los cambios dentro de la rueda "no se implementan"
+         para esa pestaña aunque el deploy esté perfecto (reporte
+         2026-07-13: todo el día se actualizó, solo lo de la rueda no).
+         Si el build de la página recién navegada difiere del build con
+         el que abrió la pestaña, UNA recarga completa realinea todo:
+         isla nueva, estilos nuevos, scripts nuevos. Nunca puede ciclar:
+         tras recargar, el build inicial ES el nuevo. */
+      const initialBuild = document.querySelector('meta[name="x-build"]')?.getAttribute('content');
+      document.addEventListener('astro:page-load', () => {
+        const now = document.querySelector('meta[name="x-build"]')?.getAttribute('content');
+        if (initialBuild && now && now !== initialBuild) location.reload();
+      });
     </script>
     <script>
       import '../scripts/fit-lockups.js';
