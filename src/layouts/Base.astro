@@ -10,6 +10,11 @@ const {
   description = 'Firma mexicana potenciada por inteligencia artificial y dirigida por visión de negocio. Haz más. Sin contratar más.',
 } = Astro.props;
 
+/* marca de build visible en el DOM (<html data-build>): permite saber
+   sin ambigüedad qué versión está sirviendo un deploy — se estampa en
+   cada build con la fecha-hora UTC. */
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+
 const jsonLd = {
   '@context': 'https://schema.org',
   '@type': 'ProfessionalService',
@@ -27,7 +32,7 @@ const jsonLd = {
   ].map((name) => ({ '@type': 'Offer', itemOffered: { '@type': 'Service', name } })),
 };
 ---
-<html lang="es-MX">
+<html lang="es-MX" data-build={BUILD}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />

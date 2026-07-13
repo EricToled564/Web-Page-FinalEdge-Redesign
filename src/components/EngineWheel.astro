@@ -175,6 +175,12 @@ const { compact = false, fitHeight = false } = Astro.props;
      siempre queden visualmente DETRÁS de la frase. Misma fórmula que el
      fondo del hero del hub: --pc desaturado 15%. */
   [data-mode='phase'] .wl-band {
+    /* fallback primero: si el navegador no soporta la sintaxis de color
+       relativo (Safari < 16.4), el chip queda en el color pleno de la
+       fase en vez de quedar TRANSPARENTE (que era perder el respaldo y
+       volver a "la frase se cubre"). El override de abajo lo afina al
+       tono exacto del fondo donde sí hay soporte. */
+    background: var(--pc, var(--accent));
     background: oklch(from var(--pc, var(--accent)) l calc(c * 0.85) h);
     color: var(--void-deep);
     font-size: 18.2px;
