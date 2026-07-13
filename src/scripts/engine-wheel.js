@@ -1173,6 +1173,12 @@ class EngineWheel {
   }
 
   loop(now) {
+    /* dead: la isla fue destruida y recreada (ver boot()) y ESTA
+       instancia quedó huérfana — cortar aquí, ANTES de re-agendar el
+       rAF, es lo que de verdad la detiene para siempre; sin esto, el
+       bucle viejo seguiría corriendo pick/paint sobre un canvas
+       desconectado en paralelo con la instancia nueva (doble CPU). */
+    if (this.dead) return;
     requestAnimationFrame(this.loop);
     if (!this.visible || document.hidden) {
       /* Las transiciones de estado (apply) TIENEN que completarse aunque
@@ -1249,6 +1255,23 @@ function boot() {
   const root = document.getElementById('engine-wheel');
   if (!root) return;
   try {
+    /* transition:persist solo conserva la isla si AMBAS páginas la
+       tienen. Los landings de servicio ya no llevan rueda (hero de
+       video, 2026-07-13): al pasar por uno, la isla se destruye y al
+       volver se recrea con DOM NUEVO — pero este singleton seguía
+       apuntando al canvas viejo huérfano: renderizaba ahí (a la nada) y
+       el canvas recién montado quedaba en blanco y sin dimensionar (bug
+       reportado: "la zona de la rueda vacía" al regresar con Conoce el
+       Engine desde un servicio). Si el canvas del DOM no es el nuestro,
+       la instancia es irrecuperable por referencias: se mata (dead corta
+       su rAF, dispose libera el contexto WebGL) y se reconstruye desde
+       cero sobre el DOM nuevo — el tamaño es función de ruta/CSS, así
+       que la reconstrucción aterriza idéntica. */
+    if (instance && instance.canvas !== root.querySelector('canvas')) {
+      instance.dead = true;
+      instance.renderer?.dispose();
+      instance = null;
+    }
     if (!instance) instance = new EngineWheel(root);
     else {
       instance.root = document.getElementById('engine-wheel');
