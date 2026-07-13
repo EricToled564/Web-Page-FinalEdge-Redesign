@@ -142,7 +142,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     font-weight: 600;
     letter-spacing: 2.2px;
     color: var(--fg);
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent);
     background: var(--void-deep);
     background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
     padding: 4px 12px;
@@ -169,7 +169,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     /* sombra LIGERA para que el blanco resalte sobre el campo animado —
        pedido explícito 2026-07-13; excepción a R3.2 registrada en
        brand/RULES.md. Tinta derivada de void, nunca un hex nuevo. */
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
   }
   /* mismo cursor parpadeante del hero ("Tu ventaja definitiva▌") tras el
@@ -226,7 +226,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     font-size: var(--text-subtitle);
     line-height: 1.45;
     color: color-mix(in srgb, var(--fg) 90%, transparent);
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
     max-width: 60ch;
   }

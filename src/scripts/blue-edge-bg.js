@@ -36,7 +36,7 @@ function initBlueEdge(canvas) {
   let width = 0, height = 0, dpr = 1, cols = 0, rows = 0, lastFrame = 0;
   const seed = 9301;
   const palette = [];
-  let baseColor = '#000';
+  let baseColor = 'black'; // se recalcula del token en rebuildPalette()
 
   /* color ancla desde el token vivo del host (--pc en hubs, --accent en
      bandas): el truco fillStyle normaliza CUALQUIER sintaxis CSS de
@@ -44,8 +44,10 @@ function initBlueEdge(canvas) {
   function anchorRgb() {
     const raw = (getComputedStyle(host).getPropertyValue('--pc')
       || getComputedStyle(document.documentElement).getPropertyValue('--accent')).trim();
-    ctx.fillStyle = '#000';
-    ctx.fillStyle = raw || '#1673FF';
+    /* sin hex de respaldo (R1.1): los tokens siempre existen; si raw
+       fuera inválido, fillStyle conserva su valor anterior (negro
+       inicial del contexto) — jamás un color inventado aquí. */
+    ctx.fillStyle = raw;
     const hex = ctx.fillStyle;
     const v = Number.parseInt(hex.slice(1), 16);
     return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };

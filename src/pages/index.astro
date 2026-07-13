@@ -334,7 +334,7 @@ import LockupMark from '../components/LockupMark.astro';
   .presion-inner { position: relative; z-index: 1;
     /* sombra ligera al texto blanco sobre el campo animado (pedido
        explícito 2026-07-13; excepción a R3.2 en brand/RULES.md) */
-    text-shadow: 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent); }
   .presion-inner { max-width: 1180px; margin: 0 auto; }
   .presion-h2 {

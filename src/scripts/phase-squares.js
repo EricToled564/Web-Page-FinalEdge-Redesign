@@ -79,7 +79,7 @@ function lighterTone(host) {
     const up = (v) => Math.min(255, Math.round(+v + (255 - v) * (LUZ - 1)));
     return `rgb(${up(m[1])}, ${up(m[2])}, ${up(m[3])})`;
   }
-  return getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#F5F6F8';
+  return getComputedStyle(document.documentElement).getPropertyValue('--fg').trim(); // token siempre presente (R1.1: sin hex de respaldo)
 }
 
 function initSquares(canvas) {

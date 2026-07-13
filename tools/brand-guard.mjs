@@ -57,6 +57,11 @@ function checkFile(path) {
     const loc = `${rel}:${i + 1}`;
     const trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed.startsWith('*') || trimmed.startsWith('/*')) return;
+    /* Excepciones formales: una línea puede eximirse de UNA regla con la
+       anotación `brand-ok:RX.Y` — solo vale si la excepción está
+       registrada y fechada en brand/RULES.md (R7.3). Auditable con
+       `grep -rn brand-ok src/`. */
+    const allow = new Set([...line.matchAll(/brand-ok:(R\d+\.\d+)/g)].map((m) => m[1]));
 
     /* R1.1 colores fuera de tokens */
     for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
@@ -83,7 +88,10 @@ function checkFile(path) {
     }
 
     /* R3.2 sombras */
-    if (/box-shadow\s*:\s*(?!none)/i.test(line) || /text-shadow\s*:\s*(?!none)/i.test(line) || /drop-shadow\(/i.test(line)) {
+    /* (?!\s*none) y no (?!none): con (?!none) el \s* retrocede un espacio
+       y el lookahead ve " none" — "text-shadow: none" (que APAGA una
+       sombra) quedaba marcado como si fuera una sombra. */
+    if (!allow.has('R3.2') && (/box-shadow\s*:\s*(?!\s*none)/i.test(line) || /text-shadow\s*:\s*(?!\s*none)/i.test(line) || /drop-shadow\(/i.test(line))) {
       errors.push(`${loc} · R3.2 sombra prohibida`);
     }
 
