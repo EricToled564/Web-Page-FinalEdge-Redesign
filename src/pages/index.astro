@@ -181,6 +181,27 @@ import LockupMark from '../components/LockupMark.astro';
        y dos reintentos con margen. Todos los intentos son idempotentes
        (si ya está corriendo, paused es false y no se hace nada), así que
        insistir nunca reinicia ni traba nada. */
+    /* RECONSTRUCCIÓN en cada regreso SPA (astro:after-swap, que solo
+       dispara en navegaciones internas, nunca en la carga inicial): en
+       vez de intentar resucitar el <video> que insertó el swap — que en
+       Chrome real puede llegar con el pipeline de medios en un estado
+       del que ningún play() lo despega — se reemplaza por un clon
+       superficial: mismos atributos (incluida la clase scoped de Astro,
+       el poster y el src), pero con la máquina de estados de media
+       recién nacida, y con muted fijado por PROPIEDAD antes de tocar el
+       DOM. Video de fondo creado por JS = el patrón más confiable entre
+       navegadores (Chrome y Safari incluidos). El playHeroVideo de abajo
+       corre después (astro:page-load) y ya opera sobre el clon. */
+    document.addEventListener('astro:after-swap', () => {
+      const v = document.querySelector('.hero-video') as HTMLVideoElement | null;
+      if (!v) return;
+      const n = v.cloneNode(false) as HTMLVideoElement;
+      n.muted = true;
+      n.defaultMuted = true;
+      v.replaceWith(n);
+      n.play().catch(() => {});
+    });
+
     /* Además de los reintentos con timer: vigilancia de 10s (cada 500ms
        hasta verlo avanzar de verdad — currentTime, no solo !paused) y un
        plan C de GESTO. Safari puede bloquear TODO autoplay — incluso
