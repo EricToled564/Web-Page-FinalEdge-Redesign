@@ -50,12 +50,11 @@ const videoHero = VIDEO_HEROES[edge.id]
   : null;
 /* Sección de video con animación disparada por scroll (pedido
    2026-07-13, técnica de referencia descrita por el cliente): el video
-   empieza chico, centrado y semitransparente, flotando sobre miniaturas
-   decorativas que se desvanecen; conforme se baja crece (scale) y se
-   aclara (opacity) hasta ocupar el ancho completo, y arranca solo al
-   hacerse visible (autoplay muted). Hoy solo creative la tiene. Las
-   miniaturas son los pósters reales de los otros servicios — material
-   propio, ninguna imagen inventada. */
+   empieza chico, centrado y semitransparente; conforme se baja crece
+   (scale) y se aclara (opacity) hasta ocupar el ancho completo, y
+   arranca solo al hacerse visible (autoplay muted). SOLO el video —
+   el cliente pidió explícitamente quitar cualquier otra imagen o
+   miniatura de esta sección (2026-07-13). Hoy solo creative la tiene. */
 const FEATURE_VIDEOS = {
   creative: {
     src: '/assets/video/svc-creative-feature.mp4',
@@ -63,11 +62,6 @@ const FEATURE_VIDEOS = {
   },
 };
 const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
-const featureTiles = featureVideo
-  ? ['strategy', 'intelligence', 'readiness', 'flow', 'systems'].map(
-      (id) => `/assets/video/svc-${id}-hero-poster.jpg`
-    ).concat(['/assets/video/hero-bg-poster.jpg'])
-  : [];
 ---
 <Base
   title={`${edge.service} — Final Edge`}
@@ -122,11 +116,6 @@ const featureTiles = featureVideo
   {featureVideo && (
     <section class="svc-feature" data-svc-feature style={`--pc:${phase.color}`}>
       <div class="svc-feature-sticky">
-        <div class="svc-feature-tiles" data-svc-feature-tiles aria-hidden="true">
-          {featureTiles.map((t) => (
-            <span class="svc-tile" style={`background-image:url('${t}')`}></span>
-          ))}
-        </div>
         <video
           class="svc-feature-video"
           data-svc-feature-video
@@ -135,7 +124,7 @@ const featureTiles = featureVideo
           muted
           loop
           playsinline
-          preload="metadata"
+          preload="auto"
           aria-hidden="true"
         ></video>
       </div>
@@ -251,37 +240,21 @@ const featureTiles = featureVideo
   .svc-feature-video {
     display: block;
     width: min(1180px, 94vw);
+    /* proporción declarada del clip (16:9): sin ella, el <video> mide
+       150px de alto hasta que llega la metadata y al llegar SALTA a su
+       alto real — ese brinco de layout desplazaba el scroll (anchoring)
+       y descuadraba el progreso de la animación a media lectura. */
+    aspect-ratio: 16 / 9;
     transform: scale(0.35);
     opacity: 0.35;
     will-change: transform, opacity;
   }
-  /* miniaturas decorativas: los pósters reales de los otros heroes,
-     dispersos alrededor del centro (detrás del video), que se
-     desvanecen conforme el video emerge. pointer-events none: son
-     decoración pura. */
-  .svc-feature-tiles { position: absolute; inset: 0; pointer-events: none; will-change: transform, opacity; }
-  .svc-tile {
-    position: absolute;
-    width: 11vw;
-    aspect-ratio: 16 / 9;
-    background-size: cover;
-    background-position: center;
-    border: 1px solid var(--hairline);
-    opacity: 0.55;
-  }
-  .svc-tile:nth-child(1) { left: 7%; top: 14%; }
-  .svc-tile:nth-child(2) { right: 9%; top: 11%; width: 13vw; }
-  .svc-tile:nth-child(3) { left: 4%; top: 58%; width: 9vw; }
-  .svc-tile:nth-child(4) { right: 5%; top: 52%; }
-  .svc-tile:nth-child(5) { left: 22%; bottom: 8%; width: 9vw; }
-  .svc-tile:nth-child(6) { right: 24%; bottom: 6%; width: 12vw; }
   /* con movimiento reducido no hay animación de scroll: el video se
-     muestra completo y nítido de entrada y las miniaturas no estorban. */
+     muestra completo y nítido de entrada. */
   @media (prefers-reduced-motion: reduce) {
     .svc-feature { height: auto; }
     .svc-feature-sticky { position: static; height: auto; padding: 96px 24px; }
     .svc-feature-video { transform: none; opacity: 1; }
-    .svc-feature-tiles { display: none; }
   }
 
   .svc-hero { padding: 150px 72px 88px; }
@@ -376,7 +349,6 @@ const featureTiles = featureVideo
     const sec = document.querySelector('[data-svc-feature]');
     if (!sec) return;
     const vid = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
-    const tiles = sec.querySelector('[data-svc-feature-tiles]') as HTMLElement | null;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (!reduced) {
@@ -390,10 +362,6 @@ const featureTiles = featureVideo
         const p = Math.min(1, Math.max(0, -r.top / total));
         vid.style.transform = `scale(${(0.35 + p * 0.65).toFixed(4)})`;
         vid.style.opacity = (0.35 + p * 0.65).toFixed(4);
-        if (tiles) {
-          tiles.style.opacity = Math.max(0, 1 - p * 1.6).toFixed(4);
-          tiles.style.transform = `scale(${(1 + p * 0.18).toFixed(4)})`;
-        }
       };
       addEventListener('scroll', () => {
         if (ticking) return;
@@ -403,9 +371,17 @@ const featureTiles = featureVideo
       update();
     }
 
+    /* mismo criterio blindado que los heroes: al hacerse visible no se
+       confía en UN solo play() — se insiste (muted reafirmado, intento
+       inmediato + loadeddata) hasta que el clip de verdad corre. */
+    const kick = () => { if (vid.isConnected && vid.paused) { vid.muted = true; vid.play().catch(() => {}); } };
     const io = new IntersectionObserver(([en]) => {
-      if (en.isIntersecting) { vid.muted = true; vid.play().catch(() => {}); }
-      else vid.pause();
+      if (en.isIntersecting) {
+        kick();
+        vid.addEventListener('loadeddata', kick, { once: true });
+        setTimeout(kick, 400);
+        setTimeout(kick, 1500);
+      } else vid.pause();
     }, { threshold: 0.15 });
     io.observe(vid);
   }

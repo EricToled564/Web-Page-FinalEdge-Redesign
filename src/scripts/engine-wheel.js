@@ -986,6 +986,33 @@ class EngineWheel {
        mismo contexto de transform (translate+scale(fitScale) del ancla,
        intacto) que el usuario realmente ve. */
     const fit = this.fitScale || 1;
+    /* CONTEXTO DE MEDICIÓN DETERMINISTA: la medición de abajo asume que
+       el ancla ya tiene su transform de proyección (translate +
+       scale(fitScale)) — ver el comentario anterior. Pero en una isla
+       RECIÉN RECONSTRUIDA (regreso desde un landing de servicio) con la
+       rueda fuera de pantalla, loop() no corre y projectLabels() jamás
+       había puesto ese transform: se medía el lockup SIN escala de
+       ancla, el candado de asentamiento congelaba esa medición
+       inconsistente y las etiquetas quedaban de tamaño equivocado y
+       corridas a la izquierda (transform-origin: left) — bug reportado
+       con captura 2026-07-13. Proyectar SIEMPRE antes de medir hace el
+       contexto idéntico en todos los caminos: visible u oculto, isla
+       persistida o reconstruida. */
+    this.projectLabels();
+    /* FACTOR DE ANCESTRO: initCosmosScroll (index.astro) escala la
+       tarjeta de la rueda entre 0.94 (bajo el pliegue) y 1.0 (a la
+       vista) — y getBoundingClientRect hereda ese zoom. Una medición
+       hecha con la rueda fuera de pantalla salía 6.4% más angosta
+       (1/0.94) que la misma medición a la vista, el candado de
+       asentamiento congelaba ese valor y las etiquetas quedaban de
+       tamaño equivocado según el CAMINO de llegada (bug reportado con
+       captura 2026-07-13 — este mismo 6.4% es el que un comentario
+       anterior atribuía a rasterización de subpíxel). Dividir lo medido
+       entre la escala real del ancestro deja todas las mediciones en el
+       mismo espacio, llegue por donde llegue y esté donde esté. */
+    const anc = this.root.offsetWidth
+      ? this.root.getBoundingClientRect().width / this.root.offsetWidth
+      : 1;
     const anchors = [...this.overlay.querySelectorAll('.wl-edge'), this.overlay.querySelector('.wl-hub')].filter(Boolean);
     this.root.style.setProperty('--wheel-scale', 1);
     /* mismo reset para la variable propia del hub: sin él, el hub se
@@ -998,7 +1025,7 @@ class EngineWheel {
       const lm = a.querySelector('.lm-wheel');
       if (!lm) continue;
       const box = (a.classList.contains('wl-hub') ? hubBox : edgeBox) * fit;
-      const w = lm.getBoundingClientRect().width;
+      const w = lm.getBoundingClientRect().width / (anc || 1);
       if (w > box) scale = Math.min(scale, box / w);
     }
     /* durante la ventana de asentamiento (ver constructor) esta función
