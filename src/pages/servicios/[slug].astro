@@ -461,15 +461,28 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        confía en UN solo play() — se insiste (intento inmediato +
        loadeddata + reintentos) hasta que el clip de verdad corre,
        respetando el estado de sonido elegido. */
+    /* featVisible: los reintentos de kick se ENCOLAN con setTimeout al
+       entrar a vista — sin este candado, los que quedaban pendientes al
+       salir disparaban DESPUÉS del pause() y revivían el video fuera de
+       pantalla (medido: sección a −1412px del viewport y el clip
+       corriendo). Cada intento re-verifica la visibilidad al momento de
+       ejecutarse, no al momento de encolarse. */
+    let featVisible = false;
     const kick = () => {
-      if (!vid.isConnected || !vid.paused) return;
+      if (!featVisible || !vid.isConnected || !vid.paused) return;
       vid.muted = !soundWanted;
       vid.play().then(syncIcon).catch(() => {
         if (soundWanted) { soundWanted = false; vid.muted = true; vid.play().catch(() => {}); }
         syncIcon();
       });
     };
-    const io = new IntersectionObserver(([en]) => {
+    /* SIEMPRE la última entrada del lote (mismo bug corregido en la
+       rueda 2026-07-13): con scroll rápido, "entró a vista" y "salió de
+       vista" llegan agrupadas en un solo callback — leer la primera
+       dejaba el video corriendo fuera de pantalla y atascado al volver. */
+    const io = new IntersectionObserver((entries) => {
+      const en = entries[entries.length - 1];
+      featVisible = en.isIntersecting;
       if (en.isIntersecting) {
         kick();
         vid.addEventListener('loadeddata', kick, { once: true });

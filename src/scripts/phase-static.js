@@ -125,7 +125,8 @@ function initStatic(canvas) {
 
   /* pausa real fuera de pantalla: cero trabajo si el hero no se ve */
   let visible = true;
-  new IntersectionObserver((en) => { visible = en[0].isIntersecting; }).observe(canvas);
+  /* última entrada del lote, no la primera (mismo bug que la rueda) */
+  new IntersectionObserver((en) => { visible = en[en.length - 1].isIntersecting; }).observe(canvas);
 
   let last = 0;
   function loop(now) {
