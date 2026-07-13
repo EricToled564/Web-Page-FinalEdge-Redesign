@@ -126,6 +126,21 @@ const { compact = false, fitHeight = false } = Astro.props;
      central no es un servicio: su caja (hubBox) no se toca. */
   .wl-edge { width: 197px; }
   [data-compact='1'] .wl-edge { width: 133px; }
+  /* El CONTENIDO del lockup se centra dentro de su caja (flex) y escala
+     desde el CENTRO — mismo patrón que el hub, por la misma razón: el
+     ancla se centra en el gajo vía translate(-50%,-50%) sobre la caja
+     fija, pero el .lm-wheel es inline y por defecto se pega al borde
+     IZQUIERDO de esos 197px y encoge desde ahí (transform-origin: left)
+     — cualquier palabra más corta que "intelligence" (la que llena la
+     caja) quedaba corrida a la izquierda de su gajo, y el crecimiento
+     de la caja a 197 lo hizo evidente (medido: "creative" 27.3px a la
+     izquierda de su ancla; bug reportado con captura 2026-07-13). Con
+     flex + origen central, el contenido queda clavado al centro del
+     gajo sin importar su largo ni la escala. La MEDICIÓN de
+     fitWheelLabels() no cambia: mide el ancho del bbox, que es el mismo
+     centrado o no. */
+  .wl-edge { display: flex; justify-content: center; }
+  .wl-edge :global(.lm-wheel) { transform-origin: center center; }
 
   /* etiqueta de fase — 16px, tracking 2.6px, 600. Texto SIEMPRE blanco
      sobre un fondo sólido oscuro (nunca el color de la fase): antes el

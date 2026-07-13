@@ -127,6 +127,16 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
           preload="auto"
           aria-hidden="true"
         ></video>
+        <button
+          class="svc-sound"
+          data-svc-sound
+          data-sound="off"
+          type="button"
+          aria-label="Activar o silenciar el sonido del video"
+        >
+          <svg class="svc-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></svg>
+          <svg class="svc-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><line x1="15" y1="9" x2="21" y2="15"></line><line x1="21" y1="9" x2="15" y2="15"></line></svg>
+        </button>
       </div>
     </section>
   )}
@@ -249,6 +259,35 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     opacity: 0.35;
     will-change: transform, opacity;
   }
+  /* botón de sonido del video (pedido 2026-07-13): mudo por política de
+     navegador hasta que el video se agranda (ahí se INTENTA activar el
+     audio — ver initSvcFeature) o hasta el click del usuario. Anclado a
+     la esquina del visor sticky, no al video (que escala con transform):
+     nunca se mueve ni cambia de tamaño con la animación. Sin sombras
+     (R3.2): chip con hairline como el resto de la UI. */
+  .svc-sound {
+    position: absolute;
+    /* esquina IZQUIERDA: la derecha la ocupa el chip fijo del asistente
+       (verificado con hit-test: tapaba el botón y se robaba el click). */
+    left: 28px;
+    bottom: 28px;
+    z-index: 2;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--fg);
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+    border: 1px solid var(--hairline);
+    cursor: pointer;
+    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+  }
+  .svc-sound:hover { background: var(--fg); color: var(--bg); }
+  .svc-sound svg { width: 22px; height: 22px; }
+  .svc-sound[data-sound='on'] .svc-sound-off { display: none; }
+  .svc-sound[data-sound='off'] .svc-sound-on { display: none; }
+
   /* con movimiento reducido no hay animación de scroll: el video se
      muestra completo y nítido de entrada. */
   @media (prefers-reduced-motion: reduce) {
@@ -346,8 +385,16 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
      espera un click. Bajo prefers-reduced-motion el CSS ya dejó todo
      fijo y aquí solo se gestiona el play/pause. */
   function initSvcFeature() {
-    const sec = document.querySelector('[data-svc-feature]');
+    const sec = document.querySelector('[data-svc-feature]') as HTMLElement | null;
     if (!sec) return;
+    /* guardia de inicialización ÚNICA por sección: astro:page-load
+       dispara también en la carga inicial del documento, así que sin
+       esto TODO se registraba dos veces — y dos manejadores de click en
+       el botón de sonido son dos toggles que se anulan entre sí (el
+       botón "no apagaba"). La marca vive en el DOM de la sección: una
+       navegación nueva trae DOM nuevo y se re-inicializa limpio. */
+    if (sec.dataset.featureInit === '1') return;
+    sec.dataset.featureInit = '1';
     const vid = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -371,10 +418,57 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       update();
     }
 
+    /* SONIDO (pedido 2026-07-13): el video arranca mudo (es lo único que
+       el navegador permite sin gesto), y al AGRANDARSE (p ≥ 0.92, una
+       sola vez) se INTENTA encender el audio. Chrome/Safari pueden
+       bloquear audio sin gesto: si al desmutear el navegador pausa el
+       clip, se revierte a mudo y sigue corriendo — el botón queda listo
+       para encenderlo con un click (eso sí es un gesto y siempre se
+       permite). El icono refleja SIEMPRE el estado real (play/pause/
+       volumechange), nunca una suposición. */
+    const btn = sec.querySelector('[data-svc-sound]') as HTMLElement | null;
+    let soundWanted = false;
+    const syncIcon = () => { if (btn) btn.dataset.sound = !vid.muted && !vid.paused ? 'on' : 'off'; };
+    for (const ev of ['play', 'pause', 'volumechange']) vid.addEventListener(ev, syncIcon);
+
+    const tryUnmute = () => {
+      soundWanted = true;
+      vid.muted = false;
+      if (vid.paused) vid.play().catch(() => {});
+      setTimeout(() => {
+        if (vid.paused || vid.muted) {
+          soundWanted = false;
+          vid.muted = true;
+          vid.play().catch(() => {});
+        }
+        syncIcon();
+      }, 150);
+    };
+
+    btn?.addEventListener('click', () => {
+      if (vid.muted) {
+        soundWanted = true;
+        vid.muted = false;
+        if (vid.paused) vid.play().catch(() => {});
+      } else {
+        soundWanted = false;
+        vid.muted = true;
+      }
+      syncIcon();
+    });
+
     /* mismo criterio blindado que los heroes: al hacerse visible no se
-       confía en UN solo play() — se insiste (muted reafirmado, intento
-       inmediato + loadeddata) hasta que el clip de verdad corre. */
-    const kick = () => { if (vid.isConnected && vid.paused) { vid.muted = true; vid.play().catch(() => {}); } };
+       confía en UN solo play() — se insiste (intento inmediato +
+       loadeddata + reintentos) hasta que el clip de verdad corre,
+       respetando el estado de sonido elegido. */
+    const kick = () => {
+      if (!vid.isConnected || !vid.paused) return;
+      vid.muted = !soundWanted;
+      vid.play().then(syncIcon).catch(() => {
+        if (soundWanted) { soundWanted = false; vid.muted = true; vid.play().catch(() => {}); }
+        syncIcon();
+      });
+    };
     const io = new IntersectionObserver(([en]) => {
       if (en.isIntersecting) {
         kick();
@@ -384,6 +478,20 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       } else vid.pause();
     }, { threshold: 0.15 });
     io.observe(vid);
+
+    /* enganche del intento automático al crecimiento: se dispara UNA vez
+       al cruzar p ≥ 0.92 (el video ya está prácticamente a ancho
+       completo — "al agrandarse debe comenzar con sonido"). */
+    if (!reduced) {
+      let autoTried = false;
+      addEventListener('scroll', () => {
+        if (autoTried || !sec.isConnected) return;
+        const vh = innerHeight || 800;
+        const r = sec.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, -r.top / Math.max(1, r.height - vh)));
+        if (p >= 0.92) { autoTried = true; tryUnmute(); }
+      }, { passive: true });
+    }
   }
   initSvcFeature();
   document.addEventListener('astro:page-load', initSvcFeature);
