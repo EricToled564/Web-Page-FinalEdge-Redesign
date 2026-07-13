@@ -86,3 +86,12 @@ revisión humana.
 | 2026-07-08 | Clientes nombrados públicamente en la página principal (Sports World, Tiendas Chedraui, Kanguru Beverages, hoteles VLU, Growth Hub). |
 | 2026-07-11 | Excepción a R1.3 (pedido explícito del cliente, R7.3): el landing de los hubs de fase usa el color de la fase como fondo del hero, con textura de "estática de glifos" (canvas decorativo, `phase-static.js`) y texto en void para contraste ≥4.5:1. Muestra inicial: Evaluación; Capacidades/Ejecución esperan aprobación de la muestra. |
 | 2026-07-11 | Muestra de Evaluación aprobada («perfecto»); el landing con estática se extiende a Capacidades (cian) y Ejecución (magenta), cada hub en su color de fase. |
+
+- **2026-07-13 — Excepción R3.2 (sombras) para texto sobre el efecto Blue Edge.**
+  Pedido explícito del cliente: "colócale ligeras sombras oscuras al texto
+  para que resalte más en blanco". Aplica SOLO al texto blanco montado
+  sobre el campo animado Blue Edge (títulos/statement/rótulo de los hubs
+  de fase y contenido de las bandas azules del home): `text-shadow` doble
+  (1px nítida + 14px difusa) con tinta derivada de `--void-deep` vía
+  color-mix — nunca un hex nuevo. El resto del sitio conserva la
+  prohibición de sombras intacta.
