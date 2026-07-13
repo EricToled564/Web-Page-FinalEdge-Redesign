@@ -15,6 +15,23 @@
  *    del bucle cuando la página navega (canvas.isConnected).
  * El texto encima va en blanco (pedido explícito) — la base oscura del
  * efecto le da contraste pleno.
+ *
+ * Rendimiento (2026-07-13): la matemática del campo es LA MISMA del
+ * original (verificado bit a bit contra el zip, error máximo 0.0), pero
+ * reorganizada para no recalcular lo que no cambia dentro de un cuadro:
+ * el ruido se evalúa sobre una retícula entera pequeña (~3k puntos por
+ * cuadro) en vez de 16 senos por celda (~340k), los términos que solo
+ * dependen de la fila o de la columna se calculan una vez por fila /
+ * columna, y los glifos se dibujan agrupados por color de paleta (32
+ * cambios de fillStyle por cuadro en vez de uno por glifo; los glifos
+ * no se solapan — retícula de 10px, vaivén ±1.4px — así que el orden no
+ * altera un solo píxel; también verificado: diff de píxeles = 0).
+ * Motivo: en el demo del zip el efecto es lo ÚNICO que corre en la
+ * página; aquí convive con la rueda 3D en el mismo rAF, y cada ms de
+ * pintada se descuenta del presupuesto de cuadro de TODA la página. Con
+ * la pintada al doble de costo el efecto bajaba de ~20 pintadas/s a
+ * menos de la mitad en cuanto la página tenía carga real — eso es lo
+ * que se percibía como "casi no se mueve".
  */
 
 const CONFIG = {
@@ -86,25 +103,46 @@ function initBlueEdge(canvas) {
     return value - Math.floor(value);
   }
 
-  function smoothNoise(x, y) {
+  /* ruido fractal del original, con la retícula entera de pseudoRandom
+     precomputada por cuadro: las 4 octavas solo consultan pseudoRandom
+     en puntos enteros de un rango pequeño (≈ 5.3·frecuencia + 2 por
+     eje), así que se evalúa UNA vez cada punto y las celdas interpolan
+     sobre el arreglo. Mismas frecuencias y amplitudes acumuladas en el
+     mismo orden que el bucle original (amplitude·=0.5, frequency·=2.03)
+     — los dobles resultantes son idénticos, no aproximados. */
+  const FREQS = [1, 2.03, 2.03 * 2.03, 2.03 * 2.03 * 2.03];
+  const AMPS = [0.58, 0.58 * 0.5, 0.58 * 0.5 * 0.5, 0.58 * 0.5 * 0.5 * 0.5];
+  const NORM = AMPS[0] + AMPS[1] + AMPS[2] + AMPS[3];
+  const lattice = FREQS.map(() => ({ x0: 0, y0: 0, w: 0, h: 0, v: new Float64Array(0) }));
+
+  function buildLattice(time) {
+    const bx = time * 0.021, by = -time * 0.014;
+    for (let o = 0; o < 4; o += 1) {
+      const f = FREQS[o];
+      const xmin = Math.floor(Math.min(bx, 5.3 + bx) * f);
+      const xmax = Math.floor(Math.max(bx, 5.3 + bx) * f) + 1;
+      const ymin = Math.floor(Math.min(by, 5.3 + by) * f);
+      const ymax = Math.floor(Math.max(by, 5.3 + by) * f) + 1;
+      const w = xmax - xmin + 1, h = ymax - ymin + 1;
+      const L = lattice[o];
+      if (L.v.length < w * h) L.v = new Float64Array(w * h);
+      L.x0 = xmin; L.y0 = ymin; L.w = w; L.h = h;
+      for (let yi = 0; yi < h; yi += 1) {
+        for (let xi = 0; xi < w; xi += 1) L.v[yi * w + xi] = pseudoRandom(xmin + xi, ymin + yi);
+      }
+    }
+  }
+
+  /* smoothNoise del original leyendo la retícula precomputada */
+  function smoothNoiseAt(L, x, y) {
     const x0 = Math.floor(x), y0 = Math.floor(y);
     const tx = x - x0, ty = y - y0;
     const sx = tx * tx * (3 - 2 * tx), sy = ty * ty * (3 - 2 * ty);
-    const n00 = pseudoRandom(x0, y0), n10 = pseudoRandom(x0 + 1, y0);
-    const n01 = pseudoRandom(x0, y0 + 1), n11 = pseudoRandom(x0 + 1, y0 + 1);
+    const i = (y0 - L.y0) * L.w + (x0 - L.x0);
+    const n00 = L.v[i], n10 = L.v[i + 1];
+    const n01 = L.v[i + L.w], n11 = L.v[i + L.w + 1];
     const nx0 = n00 + (n10 - n00) * sx, nx1 = n01 + (n11 - n01) * sx;
     return nx0 + (nx1 - nx0) * sy;
-  }
-
-  function fractalNoise(x, y) {
-    let total = 0, amplitude = 0.58, frequency = 1, normalization = 0;
-    for (let octave = 0; octave < 4; octave += 1) {
-      total += smoothNoise(x * frequency, y * frequency) * amplitude;
-      normalization += amplitude;
-      amplitude *= 0.5;
-      frequency *= 2.03;
-    }
-    return total / normalization;
   }
 
   function resize() {
@@ -125,23 +163,14 @@ function initBlueEdge(canvas) {
     paint(lastTime); // sin fotograma en blanco tras un resize
   }
 
-  function fieldAt(column, row, time) {
-    const x = column / Math.max(1, cols);
-    const y = row / Math.max(1, rows);
-    const driftX = time * 0.021;
-    const driftY = time * 0.014;
-    const noise = fractalNoise(x * 5.3 + driftX, y * 5.3 - driftY);
-    const waveA = Math.sin(x * 20.0 + Math.sin(y * 9.0 + time * 0.54) * 2.5 + time * 0.62);
-    const waveB = Math.sin(y * 24.0 - Math.cos(x * 8.0 - time * 0.36) * 2.1 - time * 0.43);
-    const centerX = 0.50 + Math.sin(time * 0.18) * 0.17;
-    const centerY = 0.48 + Math.cos(time * 0.14) * 0.14;
-    const dx = (x - centerX) * 1.2;
-    const dy = y - centerY;
-    const radius = Math.sqrt(dx * dx + dy * dy);
-    const radial = Math.sin(radius * 34.0 - time * 1.08);
-    const value = noise * 0.60 + (waveA + 1) * 0.105 + (waveB + 1) * 0.075 + (radial + 1) * 0.055;
-    return Math.max(0, Math.min(1, value));
-  }
+  /* el campo del original celda a celda, con los términos que solo
+     dependen de la fila o de la columna calculados una vez por fila /
+     columna (mismas expresiones, mismos dobles) y los glifos agrupados
+     por color de paleta para dibujar con 32 fillStyle por cuadro. Las
+     cubetas se reutilizan entre cuadros (sin basura por cuadro). */
+  const buckets = [];
+  let rowSinA = new Float64Array(0), rowSwayX = new Float64Array(0), rowDy = new Float64Array(0);
+  let colCosB = new Float64Array(0), colSwayY = new Float64Array(0), colX = new Float64Array(0);
 
   let lastTime = 7.5;
   function paint(time) {
@@ -149,19 +178,76 @@ function initBlueEdge(canvas) {
     ctx.fillStyle = baseColor;
     ctx.fillRect(0, 0, width, height);
     const spacing = CONFIG.gridSize;
+    const nCols = Math.max(1, cols), nRows = Math.max(1, rows);
+
+    buildLattice(time);
+    while (buckets.length < palette.length) buckets.push([]);
+    for (const b of buckets) b.length = 0;
+    if (rowSinA.length < rows) {
+      rowSinA = new Float64Array(rows); rowSwayX = new Float64Array(rows); rowDy = new Float64Array(rows);
+    }
+    if (colCosB.length < cols) {
+      colCosB = new Float64Array(cols); colSwayY = new Float64Array(cols); colX = new Float64Array(cols);
+    }
+
+    const centerX = 0.50 + Math.sin(time * 0.18) * 0.17;
+    const centerY = 0.48 + Math.cos(time * 0.14) * 0.14;
+    const driftX = time * 0.021;
+    const driftY = time * 0.014;
+    const shimmerK = Math.floor(time * 3);
+
     for (let row = 0; row < rows; row += 1) {
+      const y = row / nRows;
+      rowSinA[row] = Math.sin(y * 9.0 + time * 0.54) * 2.5;
+      rowSwayX[row] = Math.sin(row * 0.18 + time * 0.9) * 1.4;
+      rowDy[row] = y - centerY;
+    }
+    for (let column = 0; column < cols; column += 1) {
+      const x = column / nCols;
+      colX[column] = x;
+      colCosB[column] = Math.cos(x * 8.0 - time * 0.36) * 2.1;
+      colSwayY[column] = Math.cos(column * 0.15 - time * 0.75) * 1.3;
+    }
+
+    for (let row = 0; row < rows; row += 1) {
+      const y = row / nRows;
+      const noiseY = y * 5.3 - driftY;
+      const dy = rowDy[row];
+      const sinA = rowSinA[row];
+      const swayX = rowSwayX[row];
       for (let column = 0; column < cols; column += 1) {
-        const value = fieldAt(column, row, time);
+        const x = colX[column];
+        const noiseX = x * 5.3 + driftX;
+        let noise = 0;
+        for (let o = 0; o < 4; o += 1) {
+          noise += smoothNoiseAt(lattice[o], noiseX * FREQS[o], noiseY * FREQS[o]) * AMPS[o];
+        }
+        noise /= NORM;
+        const waveA = Math.sin(x * 20.0 + sinA + time * 0.62);
+        const waveB = Math.sin(y * 24.0 - colCosB[column] - time * 0.43);
+        const dx = (x - centerX) * 1.2;
+        const radial = Math.sin(Math.sqrt(dx * dx + dy * dy) * 34.0 - time * 1.08);
+        const value = Math.max(0, Math.min(1,
+          noise * 0.60 + (waveA + 1) * 0.105 + (waveB + 1) * 0.075 + (radial + 1) * 0.055));
         if (value < CONFIG.threshold) continue;
         const normalized = (value - CONFIG.threshold) / (1 - CONFIG.threshold);
         const paletteIndex = Math.min(palette.length - 1, Math.floor(normalized * palette.length));
-        const shimmer = pseudoRandom(column + Math.floor(time * 3), row) * 0.15;
-        const alpha = Math.min(1, 0.23 + normalized * 0.84 + shimmer);
-        const x = -spacing + column * spacing + Math.sin(row * 0.18 + time * 0.9) * 1.4;
-        const y = -spacing + row * spacing + Math.cos(column * 0.15 - time * 0.75) * 1.3;
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = palette[paletteIndex];
-        ctx.fillText(CONFIG.glyph, x, y);
+        const shimmer = pseudoRandom(column + shimmerK, row) * 0.15;
+        buckets[paletteIndex].push(
+          Math.min(1, 0.23 + normalized * 0.84 + shimmer),
+          -spacing + column * spacing + swayX,
+          -spacing + row * spacing + colSwayY[column],
+        );
+      }
+    }
+
+    for (let pi = 0; pi < buckets.length; pi += 1) {
+      const b = buckets[pi];
+      if (!b.length) continue;
+      ctx.fillStyle = palette[pi];
+      for (let i = 0; i < b.length; i += 3) {
+        ctx.globalAlpha = b[i];
+        ctx.fillText(CONFIG.glyph, b[i + 1], b[i + 2]);
       }
     }
     ctx.globalAlpha = 1;
