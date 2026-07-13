@@ -492,6 +492,41 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     }, { threshold: 0.15 });
     io.observe(vid);
 
+    /* VIGILANTE PERSISTENTE (2026-07-13, reporte "el video de creative
+       no corre de nuevo"): el hero tiene vigilancia continua + rescate +
+       gesto y el cliente lo confirmó funcionando; esta sección solo
+       tenía 3 reintentos en 1.5s al entrar a vista — si CUALQUIER
+       condición del navegador real lo dejaba pausado después de eso
+       (Chrome pausa al desmutear sin gesto y puede hacerlo DESPUÉS de
+       nuestra verificación de 150ms; iOS en ahorro de energía rechaza
+       el primer play; un atasco de buffer en un clip de 32MB), quedaba
+       congelado para siempre. Mientras la sección esté a la vista y el
+       clip pausado, se insiste cada 700ms; kick() re-verifica
+       featVisible en cada tick, así que el pause() deliberado de salida
+       nunca se pelea con esto. */
+    let stuckSince = 0;
+    const watch = setInterval(() => {
+      if (!sec.isConnected) { clearInterval(watch); return; }
+      if (!featVisible || !vid.paused) { stuckSince = 0; return; }
+      kick();
+      const now = Date.now();
+      if (!stuckSince) stuckSince = now;
+      /* rescate (mismo que el hero): visible, pausado y sin UN cuadro
+         decodificado tras 3s → recarga del elemento y reintento */
+      if (now - stuckSince > 3000 && vid.currentTime === 0 && vid.readyState < 2) {
+        stuckSince = now;
+        vid.addEventListener('canplay', kick, { once: true });
+        try { vid.load(); } catch {}
+      }
+    }, 700);
+
+    /* arranque por gesto (Safari/iOS bloquean todo autoplay en ahorro
+       de energía): el primer toque/click/tecla del usuario es una
+       activación real y siempre autoriza el play — igual que el hero. */
+    for (const ev of ['pointerdown', 'keydown', 'touchstart', 'wheel']) {
+      addEventListener(ev, () => { if (featVisible && vid.paused) kick(); }, { once: true, passive: true });
+    }
+
     /* enganche del intento automático al crecimiento: se dispara UNA vez
        al cruzar p ≥ 0.92 (el video ya está prácticamente a ancho
        completo — "al agrandarse debe comenzar con sonido"). */
