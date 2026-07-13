@@ -165,12 +165,21 @@ const { compact = false, fitHeight = false } = Astro.props;
      home (modo 'full') el chip queda exactamente como estaba. */
   /* +30% pedido explícito 2026-07-12 (14px → 18.2px, tracking
      proporcional) — sigue arriba del piso duro de 14px (R2.1) */
+  /* Respaldo del MISMO color del fondo del hub (no negro — el cliente
+     pidió quitar el rectángulo negro, y aquí sigue fuera): en reposo es
+     invisible (se funde con la página), pero cuando el hover 3D expande
+     un segmento y su cara oscura pasa POR DEBAJO de la frase, el texto
+     tinta-void perdía todo contraste y se "cubría" (reporte 2026-07-13:
+     "que esta frase no se cubra al momento de que se expanden los
+     segmentos"). El chip garantiza que el efecto y los segmentos
+     siempre queden visualmente DETRÁS de la frase. Misma fórmula que el
+     fondo del hero del hub: --pc desaturado 15%. */
   [data-mode='phase'] .wl-band {
-    background: transparent;
+    background: oklch(from var(--pc, var(--accent)) l calc(c * 0.85) h);
     color: var(--void-deep);
     font-size: 18.2px;
     letter-spacing: 2.2px;
-    padding: 0;
+    padding: 4px 12px;
   }
 
   /* el ancla (.wl-hub) SÍ queda centrada en la rueda vía translate(-50%,-50%)

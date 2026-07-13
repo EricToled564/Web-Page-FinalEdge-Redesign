@@ -11,20 +11,19 @@
  * pincel: fillRect en vez de glifos (ya ni atlas hace falta — un rect por
  * celda es más barato que rasterizar texto).
  *
- * TONO — MÁS OSCURO, no más claro (criterio pedido al asistente): los
- * fondos donde vive el efecto son claros (ámbar/cian/magenta de fase) o
- * azul Edge con texto blanco. Un tono más claro competiría con el texto
- * (menos contraste texto/fondo justo donde hay copy); el tono más oscuro
- * da el impacto visual del patrón y a la vez AUMENTA el contraste del
- * texto que tiene encima. Mismo criterio tono-sobre-tono ya aprobado para
- * la malla de puntos (2026-07-12). El color se deriva en runtime del
+ * TONO — MÁS CLARO (pedido explícito 2026-07-13: "los tonos de los
+ * efectos tenemos que hacerlos más claros para mejorar la legibilidad";
+ * sustituye el criterio oscuro inicial): un tono más claro del propio
+ * fondo mantiene el patrón visible pero baja su peso visual, y el texto
+ * (oscuro en los hubs, blanco en las bandas azules) conserva su
+ * contraste sin pelear con el grano. El color se deriva en runtime del
  * background computado del host — nunca un hex nuevo (R1.1).
  */
 
 const CELL = 9;      // px CSS por celda (idéntico al efecto original)
 const SQ = 6;        // lado del cuadro dentro de la celda (aire de retícula)
 const FPS = 12;      // cadencia del original: estática discreta, no smooth
-const LUZ = 0.55;    // factor de oscurecimiento del tono (ver nota de TONO)
+const LUZ = 1.22;    // factor de ACLARADO del tono (ver nota de TONO)
 
 function hash(x) {
   x = (x ^ 61) ^ (x >>> 16);
@@ -48,21 +47,23 @@ function vnoise(x, y, z) {
   return (l1 + (l2 - l1) * v) * (1 - w) + (l3 + (l4 - l3) * v) * w;
 }
 
-/* tono más oscuro del fondo REAL del host: lee el backgroundColor computado
-   (oklch o rgb, según resuelva el navegador) y escala su luz por LUZ.
-   Derivado de un token vivo, no un color nuevo (R1.1). */
-function darkerTone(host) {
+/* tono más CLARO del fondo REAL del host: lee el backgroundColor computado
+   (oklch o rgb, según resuelva el navegador) y escala su luz por LUZ
+   (con techo para no llegar a blanco). Derivado de un token vivo, no un
+   color nuevo (R1.1). */
+function lighterTone(host) {
   const bg = getComputedStyle(host).backgroundColor;
   let m = bg.match(/oklch\(([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)/);
   if (m) {
-    const l = parseFloat(m[1]) * (m[2] ? 0.01 : 1) * LUZ;
+    const l = Math.min(0.96, parseFloat(m[1]) * (m[2] ? 0.01 : 1) * LUZ);
     return `oklch(${l} ${m[3]} ${m[4]})`;
   }
   m = bg.match(/rgba?\((\d+),?\s*(\d+),?\s*(\d+)/);
   if (m) {
-    return `rgb(${Math.round(m[1] * LUZ)}, ${Math.round(m[2] * LUZ)}, ${Math.round(m[3] * LUZ)})`;
+    const up = (v) => Math.min(255, Math.round(+v + (255 - v) * (LUZ - 1)));
+    return `rgb(${up(m[1])}, ${up(m[2])}, ${up(m[3])})`;
   }
-  return getComputedStyle(document.documentElement).getPropertyValue('--void-deep').trim() || '#08080A';
+  return getComputedStyle(document.documentElement).getPropertyValue('--fg').trim() || '#F5F6F8';
 }
 
 function initSquares(canvas) {
@@ -81,7 +82,7 @@ function initSquares(canvas) {
     rows = Math.ceil(r.height / CELL);
     cell = CELL * dpr;
     sq = SQ * dpr;
-    ink = darkerTone(host);
+    ink = lighterTone(host);
   }
 
   let frameSeed = 0;
