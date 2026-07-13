@@ -21,13 +21,23 @@ const phase = phaseOfEdge(edge);
    exacta por construcción). Un servicio entra al mapa cuando el cliente
    entrega su video (w/h = tamaño real de su PNG horneado); los que aún
    no lo tienen conservan el hero anterior. */
+/* f = factor de ancho que iguala el TAMAÑO VISUAL de los 6 logos
+   (reporte 2026-07-13: "logos de diferentes tamaños"): a ancho fijo,
+   "flow" (4 letras) renderiza glifos enormes e "intelligence" (12)
+   diminutos, porque cada PNG trae su propia escala interna. El factor
+   se calculó midiendo la altura en píxeles del glifo ">_" de cada PNG
+   (mismo elemento de marca en los 6, proporcional a la escala del
+   lockup: strategy 228px, intelligence 226, readiness 236, flow 322,
+   systems 234, creative 259) y despejando el ancho que deja esa altura
+   RENDERIZADA idéntica a la de creative (la muestra aprobada) a 560px:
+   f = (259 × Wᵢ) / (1284 × promptHᵢ). */
 const VIDEO_HEROES = {
-  creative: { w: 1284, h: 465 },
-  intelligence: { w: 1302, h: 482 },
-  readiness: { w: 1323, h: 449 },
-  systems: { w: 1182, h: 438 },
-  flow: { w: 1279, h: 634 },
-  strategy: { w: 1416, h: 566 },
+  creative: { w: 1284, h: 465, f: 1 },
+  intelligence: { w: 1302, h: 482, f: 1.1621 },
+  readiness: { w: 1323, h: 449, f: 1.1308 },
+  systems: { w: 1182, h: 438, f: 1.0189 },
+  flow: { w: 1279, h: 634, f: 0.8012 },
+  strategy: { w: 1416, h: 566, f: 1.2528 },
 };
 const videoHero = VIDEO_HEROES[edge.id]
   ? {
@@ -44,7 +54,7 @@ const videoHero = VIDEO_HEROES[edge.id]
   description={edge.summary}
 >
   {videoHero ? (
-    <section class="svc-vhero" style={`--pc:${phase.color}; --plate:url('${videoHero.plate}')`}>
+    <section class="svc-vhero" style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
       <video
         class="svc-vhero-video"
         data-svc-hero-video
@@ -162,7 +172,13 @@ const videoHero = VIDEO_HEROES[edge.id]
   }
   .svc-vhero-logo {
     position: relative;
-    width: min(560px, 70vw);
+    /* base común min(560px, 70vw) multiplicada por el factor de
+       igualación visual de cada logo (--logo-f, ver VIDEO_HEROES): el
+       factor va FUERA del min() a propósito — así en pantallas chicas
+       los 6 se encogen por el mismo múltiplo y siguen viéndose del
+       mismo tamaño entre sí, en vez de que el min() recorte antes a
+       los factores grandes. */
+    width: calc(var(--logo-f, 1) * min(560px, 70vw));
     height: auto;
     background: var(--plate) center / 100% 100% no-repeat;
   }

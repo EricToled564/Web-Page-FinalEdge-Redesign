@@ -88,5 +88,44 @@ const jsonLd = {
     <script>
       import '../scripts/scroll-to-engine.js';
     </script>
+    <script>
+      /* Precalienta TODOS los videos de hero en segundo plano (reporte
+         2026-07-13: "los videos tardan varios segundos en comenzar
+         cuando deberían iniciar instantáneamente al llegar al landing").
+         El poster ya pinta el primer fotograma al instante; lo que tarda
+         es la descarga del clip (1.4–4.8 MB). Bajarlos una vez, en fila
+         y con prioridad baja, los deja en la caché HTTP del navegador —
+         al navegar a cualquier landing, el <video> se sirve de caché y
+         el movimiento arranca de inmediato. Solo con cursor fino (en
+         móvil no se queman ~19 MB de datos por adelantado), nunca bajo
+         save-data ni conexiones que no sean 4g, y arrancando 2.5s
+         después de la carga para no competir con la página actual.
+         Corre UNA vez por documento (módulo): las navegaciones SPA
+         conservan el documento y no lo re-disparan. */
+      function prefetchHeroVideos() {
+        if (!matchMedia('(pointer: fine)').matches) return;
+        const c = (navigator as any).connection;
+        if (c && (c.saveData || (c.effectiveType && c.effectiveType !== '4g'))) return;
+        const vids = [
+          '/assets/video/hero-bg.mp4',
+          '/assets/video/svc-strategy-hero.mp4',
+          '/assets/video/svc-intelligence-hero.mp4',
+          '/assets/video/svc-readiness-hero.mp4',
+          '/assets/video/svc-flow-hero.mp4',
+          '/assets/video/svc-systems-hero.mp4',
+          '/assets/video/svc-creative-hero.mp4',
+        ];
+        let i = 0;
+        const next = () => {
+          if (i >= vids.length) return;
+          fetch(vids[i++], { priority: 'low' } as RequestInit)
+            .then((r) => (r.ok ? r.blob() : null))
+            .catch(() => {})
+            .finally(() => setTimeout(next, 250));
+        };
+        setTimeout(next, 2500);
+      }
+      prefetchHeroVideos();
+    </script>
   </body>
 </html>
