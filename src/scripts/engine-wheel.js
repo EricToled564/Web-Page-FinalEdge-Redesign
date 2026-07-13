@@ -589,7 +589,19 @@ class EngineWheel {
       if (this.hover) this.go(this.hover.userData);
     });
 
-    const io = new IntersectionObserver(([en]) => { this.visible = en.isIntersecting; });
+    /* SIEMPRE la ÚLTIMA entrada del lote, nunca la primera: el observer
+       entrega las notificaciones pendientes agrupadas en un solo
+       callback, y al aterrizar en /#engine la inicial ("no visible",
+       medida antes del scroll automático) y la real ("visible") pueden
+       llegar juntas — destructurar [en] tomaba la VIEJA y descartaba la
+       nueva, this.visible quedaba en falso con la rueda en pantalla y
+       loop() no volvía a renderizar jamás: rueda congelada (sin 3D, sin
+       glow, sin respiración) en ~la mitad de los regresos desde un
+       servicio, al azar del timing (bug reportado 2026-07-13, matriz de
+       reproducción: 6 servicios × 2 rondas). */
+    const io = new IntersectionObserver((entries) => {
+      this.visible = entries[entries.length - 1].isIntersecting;
+    });
     io.observe(this.root);
 
     this.overlay.querySelectorAll('a[data-anchor]').forEach((a) => {
