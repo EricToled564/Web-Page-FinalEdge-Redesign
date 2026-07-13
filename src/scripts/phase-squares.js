@@ -22,8 +22,24 @@
 
 const CELL = 9;      // px CSS por celda (idéntico al efecto original)
 const SQ = 6;        // lado del cuadro dentro de la celda (aire de retícula)
-const FPS = 12;      // cadencia del original: estática discreta, no smooth
+/* 12→24: el cliente precisó que la transición del efecto de referencia
+   es significativamente más rápida (2026-07-13) */
+const FPS = 24;
 const LUZ = 1.22;    // factor de ACLARADO del tono (ver nota de TONO)
+/* grados DISCRETOS de brillo por celda (precisión del cliente sobre la
+   referencia: "cada pixel tiene 3 o 4 grados de brillantez desde el más
+   oscuro hasta el más claro y los va implementando de forma
+   progresiva"): el brillo continuo del ruido se CUANTIZA a esta
+   escalera — cada celda solo puede estar apagada o en uno de estos
+   peldaños, y al pasar las nubes va subiendo/bajando peldaño a peldaño,
+   que es lo que produce la ilusión de patrón en movimiento. */
+const GRADOS = 4;
+/* techo de intensidad de la escalera (pedido 2026-07-13: "reducir el
+   tono del nivel más fuerte para que no se afecte la lectura del
+   texto"): los 4 peldaños conservan su proporción pero el más intenso
+   se queda en 60% — el patrón sigue leyéndose como escalera y el copy
+   encima nunca pierde su contraste. */
+const TOPE = 0.6;
 
 function hash(x) {
   x = (x ^ 61) ^ (x >>> 16);
@@ -90,19 +106,23 @@ function initSquares(canvas) {
     frameSeed++;
     ctx.clearRect(0, 0, canvas.width, canvas.height); // el color lo pone la sección
     ctx.fillStyle = ink;
-    const swell = 0.85 + 0.15 * Math.sin(t * 0.45);
+    const swell = 0.85 + 0.15 * Math.sin(t * 0.9);
     const s = 0.16;
-    const driftX = t * 0.55;
-    const driftY = t * 0.17;
+    /* deriva y mutación al DOBLE que el original: la referencia
+       transiciona significativamente más rápido (precisión 2026-07-13) */
+    const driftX = t * 1.1;
+    const driftY = t * 0.34;
     const off = (cell - sq) / 2;
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        let n = vnoise(x * s + driftX, y * s + driftY, t * 0.45);
+        let n = vnoise(x * s + driftX, y * s + driftY, t * 0.9);
         n = Math.pow(n, 1.5);
         const fl = h3(x, y, frameSeed);
         const b = Math.min(1, n * (0.2 + 0.8 * fl) * swell * 1.6);
-        if (b < 0.06) continue;
-        ctx.globalAlpha = b;
+        /* cuantización a GRADOS peldaños discretos (0 = apagada) */
+        const lv = Math.round(b * GRADOS);
+        if (lv === 0) continue;
+        ctx.globalAlpha = (lv / GRADOS) * TOPE;
         ctx.fillRect(x * cell + off, y * cell + off, sq, sq);
       }
     }
