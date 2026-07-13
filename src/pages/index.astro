@@ -325,8 +325,9 @@ import LockupMark from '../components/LockupMark.astro';
   .presion-band { position: relative; background: var(--accent); padding: 96px 72px; overflow: hidden; }
   /* la estática vive detrás del contenido de ambas barras azules; los
      CTA de la placa siguen clickeables porque vienen después en el DOM */
-  .band-static { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .presion-inner { position: relative; }
+  /* capas explícitas: decoración al fondo, sin puntero (ver hub-static) */
+  .band-static { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+  .presion-inner { position: relative; z-index: 1; }
   .presion-inner { max-width: 1180px; margin: 0 auto; }
   .presion-h2 {
     display: flex;

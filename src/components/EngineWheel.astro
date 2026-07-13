@@ -75,7 +75,7 @@ const { compact = false, fitHeight = false } = Astro.props;
     left: 50%;
     transform: translate(-50%, -50%);
   }
-  .wheel-canvas { display: block; }
+  .wheel-canvas { display: block; z-index: 0; }
   /* refuerzo del mismo contrato de .wheel-stage ("una etiqueta JAMÁS
      puede producir scroll a nivel de página", ver arriba): las etiquetas
      ocultas de la fase/edge que no están enfocadas (opacity:0 vía
@@ -89,7 +89,10 @@ const { compact = false, fitHeight = false } = Astro.props;
      JS/gesto) — .wheel-overlay (el padre directo de las etiquetas)
      nunca clipaba por sí mismo, solo heredaba el clip visual de
      .wheel-stage. overflow:hidden aquí también cierra esa fuga. */
-  .wheel-overlay { pointer-events: none; overflow: hidden; }
+  /* z-index 1 EXPLÍCITO: las etiquetas viven SIEMPRE sobre el canvas
+     3D — los segmentos (pixeles del canvas) no pueden cubrir jamás una
+     etiqueta, se expandan lo que se expandan (reporte 2026-07-13). */
+  .wheel-overlay { pointer-events: none; overflow: hidden; z-index: 1; }
 
   .wl {
     position: absolute;
@@ -175,6 +178,9 @@ const { compact = false, fitHeight = false } = Astro.props;
      siempre queden visualmente DETRÁS de la frase. Misma fórmula que el
      fondo del hero del hub: --pc desaturado 15%. */
   [data-mode='phase'] .wl-band {
+    /* sobre los lockups de servicio (sus hermanos del overlay): la
+       frase es lo último que puede taparse dentro de la rueda */
+    z-index: 2;
     /* fallback primero: si el navegador no soporta la sintaxis de color
        relativo (Safari < 16.4), el chip queda en el color pleno de la
        fase en vez de quedar TRANSPARENTE (que era perder el respaldo y

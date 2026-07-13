@@ -1,0 +1,27 @@
+---
+/**
+ * Página de diagnóstico de versión: muestra en grande qué build está
+ * sirviendo el deploy (fecha-hora del build + commit si Vercel lo
+ * expone). Existe porque hubo una racha de reportes de "no cambió nada"
+ * imposibles de distinguir entre caché/deploy viejo y bug real — con
+ * esta página cualquiera puede leer la versión en 5 segundos, sin
+ * DevTools. No está enlazada desde ninguna parte del sitio.
+ */
+import '../styles/global.css';
+
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+const SHA = (import.meta.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || '').slice(0, 7) || 'local';
+---
+<html lang="es-MX">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>build — Final Edge</title>
+  </head>
+  <body style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:16px;background:var(--bg);color:var(--fg);font-family:var(--font-ui,monospace);text-align:center;padding:24px">
+    <p style="font-size:14px;letter-spacing:.2em;color:var(--fg-muted)">VERSIÓN DESPLEGADA</p>
+    <p style="font-size:clamp(28px,5vw,56px);font-weight:600;letter-spacing:-.02em">{BUILD}</p>
+    <p style="font-size:18px;color:var(--fg-muted)">commit {SHA}</p>
+  </body>
+</html>
