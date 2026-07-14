@@ -91,6 +91,15 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
         width={videoHero.w}
         height={videoHero.h}
       />
+      {edge.statement && (
+        <div class="svc-vhero-copy reveal">
+          <p class="svc-statement">{edge.statement}</p>
+          <div class="svc-actions">
+            {sibling && <a class="btn" href={sibling.slug}>Explorar {sibling.service}</a>}
+            <a class="btn btn--ghost" href="/#engine">Explora el final edge [ENGINE]</a>
+          </div>
+        </div>
+      )}
     </section>
   ) : (
   <section class="svc-hero" style={`--pc:${phase.color}`}>
@@ -141,16 +150,6 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
           <svg class="svc-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></svg>
           <svg class="svc-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><line x1="15" y1="9" x2="21" y2="15"></line><line x1="21" y1="9" x2="15" y2="15"></line></svg>
         </button>
-      </div>
-    </section>
-  )}
-
-  {edge.statement && (
-    <section class="section svc-statement-sec" style={`--pc:${phase.color}`}>
-      <p class="svc-statement reveal">{edge.statement}</p>
-      <div class="svc-actions reveal">
-        {sibling && <a class="btn" href={sibling.slug}>Explorar {sibling.service}</a>}
-        <a class="btn btn--ghost" href="/#engine">Explora el final edge [ENGINE]</a>
       </div>
     </section>
   )}
@@ -215,8 +214,11 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     position: relative;
     min-height: calc(100vh - 92px);
     display: flex;
+    /* columna: logo arriba, statement + botones debajo (mock 2026-07-14) */
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 30px;
     overflow: hidden;
   }
   .svc-vhero-video {
@@ -343,20 +345,27 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature-video { transform: none; opacity: 1; }
   }
 
-  /* statement del servicio (copy del cliente 2026-07-14): mismas
-     características que "El sistema que potencializa tu
-     productividad…" del home (.h2.engine-h2, la referencia anexada por
-     el cliente): clamp(14px, 1.3vw, 16px), peso 400, espaciado normal,
-     interlineado 1.12, color muted. Sin sombra: fondo plano (R3.2). */
+  /* statement del servicio (copy del cliente 2026-07-14) DENTRO del
+     hero, abajo del logo (pedido 2026-07-14 con mock): mismo font que
+     los statements de las fases (la referencia .engine-h2 del home:
+     clamp(14px, 1.3vw, 16px), peso 400, espaciado normal, interlineado
+     1.12), en blanco y con sombra oscura debajo del texto para
+     garantizar la legibilidad sobre el video — pedido explícito. */
+  .svc-vhero-copy {
+    position: relative;
+    max-width: 62ch;
+    padding: 0 24px;
+  }
   .svc-statement {
     font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 400;
     letter-spacing: normal;
     line-height: 1.12;
-    color: var(--fg-muted);
-    max-width: 60ch;
+    color: color-mix(in srgb, var(--fg) 92%, transparent);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 70%, transparent),
+                 0 3px 14px color-mix(in srgb, var(--void-deep) 55%, transparent);
   }
-  .svc-statement-sec .svc-actions { margin-top: 36px; }
+  .svc-vhero-copy .svc-actions { margin-top: 28px; }
 
   .svc-hero { padding: 150px 72px 88px; }  .svc-grid {
     max-width: 1180px;

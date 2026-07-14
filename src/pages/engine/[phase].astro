@@ -161,16 +161,18 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     text-align: center;
   }
   .hub-name {
-    font-size: var(--text-opener);
+    /* mitad del tamaño original (pedido explícito 2026-07-14) */
+    font-size: calc(var(--text-opener) / 2);
     font-weight: 600;
     letter-spacing: -.06em;
     line-height: .95;
     color: var(--fg); /* blanco sobre la base oscura del efecto (pedido explícito) */
-    /* sombra LIGERA para que el blanco resalte sobre el campo animado —
-       pedido explícito 2026-07-13; excepción a R3.2 registrada en
-       brand/RULES.md. Tinta derivada de void, nunca un hex nuevo. */
-    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
-                 0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
+    /* sombra reforzada para que el blanco resalte sobre el campo
+       animado — pedidos explícitos 2026-07-13/14; excepción a R3.2
+       registrada en brand/RULES.md. Tinta derivada de void, nunca un
+       hex nuevo. */
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 3px color-mix(in srgb, var(--void-deep) 78%, transparent),
+                 0 3px 16px color-mix(in srgb, var(--void-deep) 60%, transparent);
   }
   /* mismo cursor parpadeante del hero ("Tu ventaja definitiva▌") tras el
      nombre de la fase (pedido explícito, las 3). .cursor global ya trae
@@ -233,9 +235,9 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     font-weight: 400;
     letter-spacing: normal;
     line-height: 1.12;
-    color: color-mix(in srgb, var(--fg) 90%, transparent);
-    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
-                 0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
+    color: color-mix(in srgb, var(--fg) 92%, transparent);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 3px color-mix(in srgb, var(--void-deep) 78%, transparent),
+                 0 3px 16px color-mix(in srgb, var(--void-deep) 60%, transparent);
     max-width: 60ch;
   }
   /* Ancho del carril = ancho de la palabra del título (--title-em, ver
@@ -269,12 +271,13 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
   }
   .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
 
-  /* Botones en tinta fantasma (el cliente descartó los rellenos de
-     color): borde y texto void sobre el color de fase, hover invertido
-     que revela el color. Ambos CTA son pares — las dos fases que no
-     están representadas en esta lámina. */
+  /* Botones con FONDO SÓLIDO (pedido explícito 2026-07-14, legibilidad
+     sobre el efecto): el mismo tono oscuro derivado del color de fase
+     que ya usa el chip "Conoce más:" — nunca un hex nuevo. Hover
+     invertido igual que antes. */
   .hub-btn-next {
-    background: transparent;
+    background: var(--void-deep);
+    background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
     border-color: color-mix(in srgb, var(--fg) 55%, transparent);
     color: var(--fg);
     font-weight: 600;

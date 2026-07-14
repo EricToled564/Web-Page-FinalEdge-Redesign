@@ -91,7 +91,10 @@ export const EDGES = [
     id: 'intelligence',
     phase: 'evaluacion',
     angle: 30,
-    service: 'Business Intelligence',
+    /* nombre corregido por el cliente 2026-07-14: "Intelligence", no
+       "Business Intelligence" (el slug /servicios/business-intelligence/
+       se conserva para no romper enlaces ya desplegados) */
+    service: 'Intelligence',
     slug: '/servicios/business-intelligence/',
     statement: 'Cuando no tienes semanas para investigar, nuestros agentes y flujos propietarios de IA analizan mercados, consumidores, competidores, precios y tendencias en días. Más de 30 años de experiencia de negocio convierten esa información en insights relevantes, accionables y orientados a la toma de decisiones.',
     icon: '/assets/edge-icons/intelligence.png',
