@@ -12,6 +12,9 @@ export function getStaticPaths() {
 }
 const { edge } = Astro.props;
 const phase = phaseOfEdge(edge);
+/* el otro servicio de la misma fase — botón "Explorar …" bajo el
+   statement (pedido 2026-07-14) */
+const sibling = EDGES.find((e) => e.phase === edge.phase && e.id !== edge.id);
 /* Muestra del rediseño del landing de servicios (pedido 2026-07-13),
    empezando por el hero: video de fondo + el lockup horneado centrado
    encima, con su plancha negra exacta debajo (mismo patrón que el logo
@@ -138,6 +141,16 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
           <svg class="svc-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></svg>
           <svg class="svc-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><line x1="15" y1="9" x2="21" y2="15"></line><line x1="21" y1="9" x2="15" y2="15"></line></svg>
         </button>
+      </div>
+    </section>
+  )}
+
+  {edge.statement && (
+    <section class="section svc-statement-sec" style={`--pc:${phase.color}`}>
+      <p class="svc-statement reveal">{edge.statement}</p>
+      <div class="svc-actions reveal">
+        {sibling && <a class="btn" href={sibling.slug}>Explorar {sibling.service}</a>}
+        <a class="btn btn--ghost" href="/#engine">Explora el final edge [ENGINE]</a>
       </div>
     </section>
   )}
@@ -330,8 +343,21 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature-video { transform: none; opacity: 1; }
   }
 
-  .svc-hero { padding: 150px 72px 88px; }
-  .svc-grid {
+  /* statement del servicio (copy del cliente 2026-07-14): mismo tamaño
+     y trazo que el texto del hero del home, sin negrita — el mismo
+     tratamiento aprobado para los statements de las fases. Sin sombra:
+     aquí el fondo es plano, no el efecto (R3.2). */
+  .svc-statement {
+    font-size: clamp(17px, 2.3vw, 32px);
+    font-weight: 400;
+    letter-spacing: -.03em;
+    line-height: 1.08;
+    color: color-mix(in srgb, var(--fg) 90%, transparent);
+    max-width: 60ch;
+  }
+  .svc-statement-sec .svc-actions { margin-top: 36px; }
+
+  .svc-hero { padding: 150px 72px 88px; }  .svc-grid {
     max-width: 1180px;
     margin: 0 auto;
     display: grid;

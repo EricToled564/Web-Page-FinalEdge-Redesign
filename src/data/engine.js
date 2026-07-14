@@ -62,6 +62,7 @@ export const EDGES = [
     angle: 330,
     service: 'Estrategia',
     slug: '/servicios/estrategia/',
+    statement: 'Cuando necesitas concentrar tus recursos donde pueden generar mayor crecimiento, transformamos datos internos y externos en una estrategia clara, diferenciadora y lista para ejecutar. La IA acelera el análisis; la experiencia de negocio define la dirección y las prioridades.',
     icon: '/assets/edge-icons/strategy.png',
     hook: 'De datos dispersos a dirección estratégica.',
     summary:
@@ -92,6 +93,7 @@ export const EDGES = [
     angle: 30,
     service: 'Business Intelligence',
     slug: '/servicios/business-intelligence/',
+    statement: 'Cuando no tienes semanas para investigar, nuestros agentes y flujos propietarios de IA analizan mercados, consumidores, competidores, precios y tendencias en días. Más de 30 años de experiencia de negocio convierten esa información en insights relevantes, accionables y orientados a la toma de decisiones.',
     icon: '/assets/edge-icons/intelligence.png',
     hook: 'La respuesta correcta empieza con la pregunta correcta.',
     summary:
@@ -122,6 +124,7 @@ export const EDGES = [
     angle: 90,
     service: 'Team Readiness',
     slug: '/servicios/team-readiness/',
+    statement: 'La IA no genera valor si la organización no sabe cómo aplicarla. Evaluamos el nivel de preparación y desarrollamos las capacidades de líderes y equipos mediante programas adaptados a cada función, industria y nivel de responsabilidad.',
     icon: '/assets/edge-icons/readiness.png',
     hook: 'Mide. Entrena. Transforma.',
     summary:
@@ -150,6 +153,7 @@ export const EDGES = [
     angle: 150,
     service: 'Optimización de Procesos',
     slug: '/servicios/optimizacion-de-procesos/',
+    statement: 'Antes de invertir en automatización, identificamos dónde se pierde tiempo, dinero y capacidad operativa. Nuestros flujos de IA aceleran el análisis, mientras la experiencia de negocio prioriza las iniciativas con mayor impacto, retorno y viabilidad.',
     icon: '/assets/edge-icons/flow.png',
     hook: 'Antes de automatizar, tienes que mapear.',
     summary:
@@ -179,6 +183,7 @@ export const EDGES = [
     angle: 210,
     service: 'Sistemas',
     slug: '/servicios/sistemas/',
+    statement: 'Desarrollamos software y herramientas digitales personalizadas con el apoyo de agentes de programación de IA y dirección experta. Cada solución parte de una necesidad concreta del negocio y se entrega en una fracción del tiempo y del costo del desarrollo tradicional.',
     icon: '/assets/edge-icons/systems.png',
     hook: 'De la idea al sistema desplegado.',
     summary:
@@ -210,6 +215,7 @@ export const EDGES = [
     angle: 270,
     service: 'Producción Creativa',
     slug: '/servicios/produccion-creativa/',
+    statement: 'Cuando necesitas producir más contenido sin multiplicar el presupuesto, combinamos IA, dirección estratégica y talento creativo internacional. Creamos campañas y producciones de calidad cinematográfica, antes reservadas para las grandes multinacionales, en días y no en meses.',
     icon: '/assets/edge-icons/creative.png',
     hook: 'Producción con IA de clase mundial. Dirigida por humanos.',
     summary:
