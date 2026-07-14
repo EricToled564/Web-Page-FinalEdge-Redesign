@@ -343,16 +343,17 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature-video { transform: none; opacity: 1; }
   }
 
-  /* statement del servicio (copy del cliente 2026-07-14): mismo tamaño
-     y trazo que el texto del hero del home, sin negrita — el mismo
-     tratamiento aprobado para los statements de las fases. Sin sombra:
-     aquí el fondo es plano, no el efecto (R3.2). */
+  /* statement del servicio (copy del cliente 2026-07-14): mismas
+     características que "El sistema que potencializa tu
+     productividad…" del home (.h2.engine-h2, la referencia anexada por
+     el cliente): clamp(14px, 1.3vw, 16px), peso 400, espaciado normal,
+     interlineado 1.12, color muted. Sin sombra: fondo plano (R3.2). */
   .svc-statement {
-    font-size: clamp(17px, 2.3vw, 32px);
+    font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 400;
-    letter-spacing: -.03em;
-    line-height: 1.08;
-    color: color-mix(in srgb, var(--fg) 90%, transparent);
+    letter-spacing: normal;
+    line-height: 1.12;
+    color: var(--fg-muted);
     max-width: 60ch;
   }
   .svc-statement-sec .svc-actions { margin-top: 36px; }

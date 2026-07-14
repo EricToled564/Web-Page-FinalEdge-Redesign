@@ -223,14 +223,16 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
   }
   .hub-statement {
     margin-top: 16px;
-    /* mismo tamaño y trazo que el texto del hero del home (.hero-h1:
-       clamp(17px, 2.3vw, 32px), letter-spacing -.03em, line-height
-       1.08) pero SIN negrita — pedido explícito 2026-07-14 junto con
-       el copy nuevo de las tres fases. */
-    font-size: clamp(17px, 2.3vw, 32px);
+    /* mismas características que "El sistema que potencializa tu
+       productividad…" del home (.h2.engine-h2, la referencia anexada
+       por el cliente 2026-07-14): clamp(14px, 1.3vw, 16px), peso 400,
+       espaciado normal, interlineado 1.12. El color se queda blanco
+       con sombra ligera — pedido explícito previo para leer sobre el
+       efecto. */
+    font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 400;
-    letter-spacing: -.03em;
-    line-height: 1.08;
+    letter-spacing: normal;
+    line-height: 1.12;
     color: color-mix(in srgb, var(--fg) 90%, transparent);
     text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
