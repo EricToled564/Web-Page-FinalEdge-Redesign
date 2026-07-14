@@ -168,6 +168,13 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    /* reserva la franja de los botones (anclados en absoluto al fondo:
+       bottom:0 apunta al borde de la caja, no al padding, así que no se
+       mueven): el contenido en flujo — incluida la rueda — sube y el
+       abanico deja de empalmarse con los botones (pedido 2026-07-14).
+       Un padding aquí es lo ÚNICO que funciona: mover la rueda con
+       márgenes lo cancelan exactamente los márgenes auto (Δ medido: 0). */
+    padding-bottom: 84px;
   }
   .hub-name {
     /* margen auto arriba: junto con el auto de .hub-wheel reparte el
@@ -314,17 +321,19 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     max-width: calc(100vw - 48px);
   }
 
-  /* Botones con FONDO SÓLIDO (pedido explícito 2026-07-14, legibilidad
-     sobre el efecto): el mismo tono oscuro derivado del color de fase
-     que ya usa el chip "Conoce más:" — nunca un hex nuevo. Hover
-     invertido igual que antes. */
+  /* Botones con FONDO SÓLIDO EXACTAMENTE en el hex de la fase (pedido
+     explícito 2026-07-14: "igual al hex de la fase, no te inventes un
+     color nuevo"): --pc ES el hex del modelo (engine.js), sin derivar.
+     Tinta oscura encima para contraste; hover invertido a blanco. */
   .hub-btn-next {
-    background: var(--void-deep);
-    background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
-    border-color: color-mix(in srgb, var(--fg) 55%, transparent);
-    color: var(--fg);
-    /* mismo tamaño que el statement de la fase (pedido 2026-07-14) */
+    background: var(--pc, var(--accent));
+    border-color: var(--pc, var(--accent));
+    color: var(--void-deep);
+    /* mismo tamaño que el statement de la fase y en mayúsculas/minúsculas
+       normales, no uppercase (pedidos 2026-07-14) */
     font-size: clamp(14px, 1.3vw, 16px);
+    text-transform: none;
+    letter-spacing: normal;
     font-weight: 600;
   }
   .hub-btn-next:hover,
