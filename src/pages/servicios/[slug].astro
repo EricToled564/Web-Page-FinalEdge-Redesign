@@ -94,10 +94,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       {edge.statement && (
         <div class="svc-vhero-copy reveal">
           <p class="svc-statement">{edge.statement}</p>
-          <div class="svc-actions">
-            {sibling && <a class="btn" href={sibling.slug}>Explorar {sibling.service}</a>}
-            <a class="btn btn--ghost" href="/#engine">Explora el final edge [ENGINE]</a>
-          </div>
+        </div>
+      )}
+      {edge.statement && (
+        <div class={`svc-vhero-actions reveal${featureVideo ? ' svc-vhero-actions--tabbed' : ''}`}>
+          {sibling && <a class="btn svc-hero-btn" href={sibling.slug}>Explorar {sibling.service}</a>}
+          <a class="btn svc-hero-btn" href="/#engine">Explora el final edge [ENGINE]</a>
         </div>
       )}
     </section>
@@ -361,11 +363,44 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     font-weight: 400;
     letter-spacing: normal;
     line-height: 1.12;
+    /* centrado (pedido explícito 2026-07-14) */
+    text-align: center;
     color: color-mix(in srgb, var(--fg) 92%, transparent);
     text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 70%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 55%, transparent);
   }
-  .svc-vhero-copy .svc-actions { margin-top: 28px; }
+  /* botones del hero de servicio (pedido 2026-07-14): uno al lado del
+     otro, cerca del borde inferior de la lámina, con fondo SÓLIDO del
+     color de la fase y tinta oscura encima. En creative suben por
+     encima de la pestaña del video que asoma en el hero (-14vh). */
+  .svc-vhero-actions {
+    position: absolute;
+    bottom: 30px;
+    /* centrado sin transform: .reveal anima transform y lo pisaría */
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    width: max-content;
+    max-width: calc(100vw - 48px);
+  }
+  .svc-vhero-actions--tabbed { bottom: calc(14vh + 22px); }
+  .svc-hero-btn {
+    background: var(--pc, var(--accent));
+    border-color: var(--pc, var(--accent));
+    color: var(--void-deep);
+    font-size: clamp(14px, 1.3vw, 16px);
+    font-weight: 600;
+  }
+  .svc-hero-btn:hover {
+    background: var(--fg);
+    border-color: var(--fg);
+    color: var(--void-deep);
+  }
 
   .svc-hero { padding: 150px 72px 88px; }  .svc-grid {
     max-width: 1180px;

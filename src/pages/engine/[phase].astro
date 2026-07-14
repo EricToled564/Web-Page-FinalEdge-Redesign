@@ -105,7 +105,11 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
        explícito). */
     background: var(--void-deep);
     background: oklch(from var(--pc) calc(l * 0.28) calc(c * 0.7) h);
-    min-height: 100vh;
+    /* 100vh - 92px de nav (igual que .svc-vhero): con 100vh plenos los
+       últimos 92px del hero cuelgan FUERA de la lámina visible — el
+       ancla inferior de los botones quedaba a 956px en un viewport de
+       900 (medido) y el reveal nunca los alcanzaba. */
+    min-height: calc(100vh - 92px);
     display: flex;
     /* flex-start, no center: el centrado vertical metía ~220px de aire
        muerto entre el nav y el título y hundía los botones al fondo del
@@ -113,7 +117,11 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
        queja explícita). Anclado arriba, el título queda a un paso del
        nav y los botones suben ~200px: visibles incluso en laptops de
        ~790px de alto útil. El fondo de estática sigue llenando el 100vh. */
-    align-items: flex-start;
+    /* stretch (antes flex-start): la pila ocupa todo el alto útil de la
+       lámina para poder repartirse con márgenes auto — título+statement
+       lo más cerca posible del centro vertical, rueda+botones como
+       grupo abajo, pegados al borde inferior (pedido 2026-07-14). */
+    align-items: stretch;
     justify-content: center;
     padding: 108px 24px 36px;
   }
@@ -138,7 +146,8 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     transform: translateX(-50%);
     z-index: 3;
     font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: 18.2px;
+    /* mismo tamaño que el statement de la fase (pedido 2026-07-14) */
+    font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 600;
     letter-spacing: 2.2px;
     color: var(--fg);
@@ -161,6 +170,10 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     text-align: center;
   }
   .hub-name {
+    /* margen auto arriba: junto con el auto de .hub-wheel reparte el
+       aire libre en dos — el bloque título+statement queda lo más
+       cercano posible al centro vertical de la lámina. */
+    margin-top: auto;
     /* mitad del tamaño original (pedido explícito 2026-07-14) */
     font-size: calc(var(--text-opener) / 2);
     font-weight: 600;
@@ -239,6 +252,10 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 3px color-mix(in srgb, var(--void-deep) 78%, transparent),
                  0 3px 16px color-mix(in srgb, var(--void-deep) 60%, transparent);
     max-width: 60ch;
+    /* auto: junto con el auto de .hub-name reparte el aire libre en dos
+       — el bloque título+statement queda lo más cercano posible al
+       centro vertical y empuja rueda+botones hacia el borde inferior. */
+    margin-bottom: auto;
   }
   /* Ancho del carril = ancho de la palabra del título (--title-em, ver
      frontmatter) × 1.0335 (el ×1.59 original reducido un 35% — pedido
@@ -263,13 +280,39 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     --rail-w: min(100%, calc(var(--text-opener) * var(--title-em) * 1.0335 + 52px));
     --stage-h: calc((var(--text-opener) * var(--title-em) * 1.0335) * 0.9032 + 52px);
     width: var(--rail-w);
+    /* el recorte negativo del vacío superior del canvas se queda (sin
+       él la pila desborda la lámina — medido: botones a 976px en un
+       viewport de 900); el empuje hacia abajo lo hace el margen auto
+       de .hub-statement. El negativo inferior mantiene a los botones
+       abrazando al abanico, bajando con él como grupo. */
     margin-top: calc(var(--stage-h) * -0.215 + 12px);
     margin-bottom: calc(var(--stage-h) * -0.375 + 16px);
+    align-self: center;
     display: flex;
     align-items: center;
     justify-content: center;
   }
-  .hub-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin-top: 12px; }
+  /* botones anclados al borde inferior de la lámina (pedido 2026-07-14):
+     absolutos al fondo de la pila (que ya es relative y mide el alto
+     útil completo) — quedan a los 36px del padding inferior del hero,
+     debajo del abanico, sin empujar el layout. */
+  .hub-actions {
+    position: absolute;
+    bottom: 0;
+    /* centrado horizontal sin transform: .reveal anima transform y
+       pisaría un translateX aquí (detectado midiendo: el grupo quedaba
+       56px abajo y fuera de lámina hasta el reveal). */
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    width: max-content;
+    max-width: calc(100vw - 48px);
+  }
 
   /* Botones con FONDO SÓLIDO (pedido explícito 2026-07-14, legibilidad
      sobre el efecto): el mismo tono oscuro derivado del color de fase
@@ -280,6 +323,8 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
     border-color: color-mix(in srgb, var(--fg) 55%, transparent);
     color: var(--fg);
+    /* mismo tamaño que el statement de la fase (pedido 2026-07-14) */
+    font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 600;
   }
   .hub-btn-next:hover,
