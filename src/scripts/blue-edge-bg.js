@@ -205,7 +205,10 @@ function brandColors(host) {
     dark: mixT(anchor, 0, 0.72),
     mid: mixT(anchor, 0, 0.40),
     edge: anchor,
-    highlight: mixT(anchor, 1, 0.78),
+    /* 0.35 hacia blanco (antes 0.78): el cliente reportó que las crestas
+       se veían casi blancas — el punto más claro se queda mucho más
+       cerca del tono de marca (2026-07-14) */
+    highlight: mixT(anchor, 1, 0.35),
   };
 }
 
