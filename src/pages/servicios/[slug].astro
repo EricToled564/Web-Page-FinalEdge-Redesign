@@ -393,7 +393,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     background: var(--pc, var(--accent));
     border-color: var(--pc, var(--accent));
     color: var(--void-deep);
+    /* mismo tamaño que el texto bajo el logo y en mayúsculas/minúsculas
+       normales, sin el uppercase+tracking del .btn base (pedido
+       2026-07-14) — igual que los botones de las fases. */
     font-size: clamp(14px, 1.3vw, 16px);
+    text-transform: none;
+    letter-spacing: normal;
     font-weight: 600;
   }
   .svc-hero-btn:hover {
