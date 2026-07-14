@@ -53,7 +53,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     <div class="hub-stack">
       <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}<span class="cursor hub-cursor">▌</span></h1>
       <p class="hub-statement reveal">
-        {phase.statement[0]}<br />{phase.statement[1]}
+        {phase.statement}
       </p>
       <!-- la fase que giró e iluminó se queda como menú vivo del hub:
            los dos servicios se abren tocando los edges de la rueda.
@@ -223,8 +223,14 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
   }
   .hub-statement {
     margin-top: 16px;
-    font-size: var(--text-subtitle);
-    line-height: 1.45;
+    /* mismo tamaño y trazo que el texto del hero del home (.hero-h1:
+       clamp(17px, 2.3vw, 32px), letter-spacing -.03em, line-height
+       1.08) pero SIN negrita — pedido explícito 2026-07-14 junto con
+       el copy nuevo de las tres fases. */
+    font-size: clamp(17px, 2.3vw, 32px);
+    font-weight: 400;
+    letter-spacing: -.03em;
+    line-height: 1.08;
     color: color-mix(in srgb, var(--fg) 90%, transparent);
     text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
                  0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);

@@ -16,9 +16,10 @@ export const PHASES = [
     tagline: 'Decidir dónde la IA mueve tu margen, antes de tocar una herramienta.',
     lead: 'Inteligencia de mercado, análisis competitivo y planeación estratégica, potenciados integralmente por inteligencia artificial.',
     next: { name: 'Capacidades', slug: '/engine/capacidades/' },
-    /* statement del hub — copy aprobado por el cliente 2026-07-11:
-       dos golpes cortos y memorables, anclados en el posicionamiento */
-    statement: ['Primero el margen. Después la herramienta.', '30 años del lado del cliente deciden dónde.'],
+    /* statement del hub — copy entregado por el cliente 2026-07-14
+       (párrafo único; se muestra al tamaño del texto del hero del
+       home, sin negrita) */
+    statement: 'Investigamos mercados, consumidores, competidores y datos internos con agentes y flujos propios de IA. Más de 30 años de experiencia de negocio convierten esa inteligencia en una estrategia clara, ejecutable y diseñada para convertirse en una verdadera ventaja competitiva.',
     edges: ['intelligence', 'strategy'],
     startAngle: 300, // banda: strategy 330° + intelligence 30°
   },
@@ -33,7 +34,7 @@ export const PHASES = [
     tagline: 'Preparar a tu gente y a tus procesos para que la IA aterrice.',
     lead: 'Diagnóstico organizacional, entrenamiento ejecutivo y mapeo de procesos realizados con inteligencia artificial para acelerar la automatización.',
     next: { name: 'Ejecución', slug: '/engine/ejecucion/' },
-    statement: ['La IA no falla por la herramienta.', 'Falla por la gente y los procesos. Preparamos ambos.'],
+    statement: 'Preparamos a las personas y optimizamos los procesos para que la inteligencia artificial genere resultados reales. Combinamos diagnóstico, capacitación y rediseño operativo para acelerar la adopción, la productividad y el retorno.',
     edges: ['readiness', 'flow'],
     startAngle: 60,
   },
@@ -48,7 +49,7 @@ export const PHASES = [
     tagline: 'Construir, desplegar y producir para que la IA empiece a trabajar.',
     lead: 'Despliegue de aplicaciones, agentes y soluciones a la medida mediante desarrollo acelerado con IA, junto con contenido de estándar de calidad global. Implementación ultrarrápida y eficiente, a escala empresarial.',
     next: { name: 'Evaluación', slug: '/engine/evaluacion/' },
-    statement: ['Productividad las 24 horas.', 'Haz más. Sin contratar más.'],
+    statement: 'Convertimos la estrategia en software, herramientas digitales personalizadas y contenido que generan resultados reales. Desarrollamos cada solución con agentes de programación de IA y dirección experta, y producimos contenido de calidad cinematográfica, antes reservado para grandes marcas multinacionales, en una fracción del tiempo y del costo tradicional.',
     edges: ['systems', 'creative'],
     startAngle: 180,
   },
