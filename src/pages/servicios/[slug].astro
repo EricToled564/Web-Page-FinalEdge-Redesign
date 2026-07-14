@@ -116,6 +116,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   {featureVideo && (
     <section class="svc-feature" data-svc-feature style={`--pc:${phase.color}`}>
       <div class="svc-feature-sticky">
+        <p class="svc-feature-label" aria-hidden="true">Conoce lo que podemos hacer:</p>
         <video
           class="svc-feature-video"
           data-svc-feature-video
@@ -237,15 +238,37 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
      de scale .35 / opacity .35 a 1 / 1, y las miniaturas del fondo se
      desvanecen y abren paso. El script solo escribe transform/opacity
      (nunca layout) vía requestAnimationFrame. */
-  .svc-feature { height: 260vh; position: relative; }
+  /* Arranque tipo "pestaña" (diagrama del cliente 2026-07-14): la
+     sección sube sobre el hero con margen negativo, de modo que al
+     cargar la página se vean DENTRO del hero la leyenda "Conoce lo que
+     podemos hacer:" y el borde superior del video chico — una pestaña
+     que invita a bajar. Por eso el visor dejó de centrar el video:
+     leyenda y video van anclados arriba (columna), y el video crece
+     hacia abajo desde su borde superior (transform-origin: top). */
+  .svc-feature { height: 260vh; position: relative; z-index: 2; margin-top: -26vh; }
   .svc-feature-sticky {
     position: sticky;
     top: 92px;
     height: calc(100vh - 92px);
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 18px;
+    gap: 14px;
     overflow: hidden;
+  }
+  /* misma voz que "Conoce más:" en los hubs (Geist Mono 600 —
+     tipografía aprobada del brand book), en blanco sobre el hero */
+  .svc-feature-label {
+    margin: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 18.2px;
+    font-weight: 600;
+    letter-spacing: 2.2px;
+    color: var(--fg);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent);
+    white-space: nowrap;
   }
   .svc-feature-video {
     display: block;
@@ -256,6 +279,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        y descuadraba el progreso de la animación a media lectura. */
     aspect-ratio: 16 / 9;
     transform: scale(0.35);
+    transform-origin: top center;
     opacity: 0.35;
     will-change: transform, opacity;
   }
@@ -291,7 +315,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   /* con movimiento reducido no hay animación de scroll: el video se
      muestra completo y nítido de entrada. */
   @media (prefers-reduced-motion: reduce) {
-    .svc-feature { height: auto; }
+    .svc-feature { height: auto; margin-top: 0; }
     .svc-feature-sticky { position: static; height: auto; padding: 96px 24px; }
     .svc-feature-video { transform: none; opacity: 1; }
   }
