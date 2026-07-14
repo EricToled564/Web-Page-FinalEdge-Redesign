@@ -1,83 +1,404 @@
 /**
- * Fondo animado "Blue Edge" — código de referencia entregado por el
- * cliente (zip 2026-07-13, blue_edge_background). PORTADO FIEL: mismo
- * campo (ruido fractal 4 octavas + dos ondas senoidales + onda radial
- * viajera), misma retícula de glifos 'a' de 10px, mismos 24fps, mismo
- * tope de dpr 1.5, mismo shimmer y vaivén por celda. Los ÚNICOS cambios
- * (los que pidió el cliente):
- *  - Colores: derivados en runtime de la paleta de marca (el --pc de la
- *    fase en los hubs, --accent Edge Blue en las bandas del home) — la
- *    base oscura y la escalera oscuro→medio→brillante se calculan del
- *    token, nunca un hex nuevo (R1.1).
+ * Fondo "Blue Edge ASCII" — código WebGL 2 de referencia entregado por
+ * el cliente (zip 2026-07-14, blue_edge_ascii_webgl) "para arreglar el
+ * efecto": campo orgánico procedural en GLSL (fbm con dominio deformado
+ * + respiración de cobertura en ciclo de 24s) sobre una retícula de
+ * glifos 'a' generada en runtime. PORTADO FIEL: shaders literales,
+ * mismos parámetros (cellSize 7, speed 1, contrast 1.16, glow 0.28,
+ * dpr máx 1.75). Corre en GPU, así que ya no compite con la rueda 3D
+ * por el hilo principal (la causa medida del entrecortado anterior).
+ * Los ÚNICOS cambios (los que el cliente ya había pedido):
+ *  - Colores: la escalera de 5 anclas (darkest→dark→mid→edge→highlight)
+ *    se deriva en runtime del token de marca (--pc en hubs, --accent en
+ *    las bandas del home) conservando las proporciones del demo, cuyo
+ *    ancla es su edge — jamás un hex literal nuevo (R1.1).
+ *  - Glifo con Geist Mono (la tipografía de marca) en vez de Arial; la
+ *    textura se regenera cuando la webfont termina de cargar.
  *  - Integración a nuestro ciclo de vida: múltiples canvas por atributo
  *    data-blue-edge, re-boot en astro:page-load, pausa real fuera de
- *    pantalla (IntersectionObserver, última entrada del lote) y muerte
- *    del bucle cuando la página navega (canvas.isConnected).
- *  - Movimiento (pedido explícito 2026-07-13, "más rápido y más random,
- *    diferencia claramente perceptible"): velocidad global 0.48 → 1.05
- *    (~2.2×), deriva del ruido ×3 (el campo se desplaza en vez de casi
- *    flotar), shimmer al doble de amplitud (0.15 → 0.30) y semilla
- *    aleatoria por carga en vez del 9301 fijo del demo — cada visita y
- *    cada canvas generan un patrón distinto.
+ *    pantalla (IntersectionObserver, última entrada del lote), muerte y
+ *    limpieza GPU cuando la página navega (canvas.isConnected).
+ *  - Respaldo: si WebGL 2 no está disponible, se usa la versión Canvas
+ *    2D anterior (el port fiel del primer zip), intacta al final del
+ *    archivo.
  * El texto encima va en blanco (pedido explícito) — la base oscura del
  * efecto le da contraste pleno.
- *
- * Rendimiento (2026-07-13): la matemática del campo es LA MISMA del
- * original (verificado bit a bit contra el zip, error máximo 0.0), pero
- * reorganizada para no recalcular lo que no cambia dentro de un cuadro:
- * el ruido se evalúa sobre una retícula entera pequeña (~3k puntos por
- * cuadro) en vez de 16 senos por celda (~340k), los términos que solo
- * dependen de la fila o de la columna se calculan una vez por fila /
- * columna, y los glifos se dibujan agrupados por color de paleta (32
- * cambios de fillStyle por cuadro en vez de uno por glifo; los glifos
- * no se solapan — retícula de 10px, vaivén ±1.4px — así que el orden no
- * altera un solo píxel; también verificado: diff de píxeles = 0).
- * Motivo: en el demo del zip el efecto es lo ÚNICO que corre en la
- * página; aquí convive con la rueda 3D en el mismo rAF, y cada ms de
- * pintada se descuenta del presupuesto de cuadro de TODA la página. Con
- * la pintada al doble de costo el efecto bajaba de ~20 pintadas/s a
- * menos de la mitad en cuanto la página tenía carga real — eso es lo
- * que se percibía como "casi no se mueve".
  */
+
+const DEFAULTS = {
+  cellSize: 7.0,
+  speed: 1.0,
+  loopDuration: 24.0,
+  contrast: 1.16,
+  glow: 0.28,
+  maxDpr: 1.75,
+};
+
+const GLYPH_FONT = "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
+
+const VERTEX_SHADER = `#version 300 es
+  in vec2 aPosition;
+  void main() {
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+  }
+`;
+
+/* fragment shader LITERAL del código del cliente */
+const FRAGMENT_SHADER = `#version 300 es
+  precision highp float;
+
+  uniform vec2 uResolution;
+  uniform float uTime;
+  uniform float uCellSize;
+  uniform float uLoopDuration;
+  uniform float uContrast;
+  uniform float uGlow;
+  uniform sampler2D uGlyph;
+  uniform vec3 uDarkest;
+  uniform vec3 uDark;
+  uniform vec3 uMid;
+  uniform vec3 uEdge;
+  uniform vec3 uHighlight;
+
+  out vec4 outColor;
+
+  float hash21(vec2 p) {
+    p = fract(p * vec2(123.34, 345.45));
+    p += dot(p, p + 34.345);
+    return fract(p.x * p.y);
+  }
+
+  vec2 hash22(vec2 p) {
+    float n = hash21(p);
+    return vec2(n, hash21(p + n + 17.17));
+  }
+
+  float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+
+    float a = hash21(i);
+    float b = hash21(i + vec2(1.0, 0.0));
+    float c = hash21(i + vec2(0.0, 1.0));
+    float d = hash21(i + vec2(1.0, 1.0));
+
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+  }
+
+  float fbm(vec2 p) {
+    float value = 0.0;
+    float amplitude = 0.52;
+    mat2 rotation = mat2(0.80, 0.60, -0.60, 0.80);
+    for (int i = 0; i < 5; i++) {
+      value += amplitude * noise(p);
+      p = rotation * p * 2.03 + vec2(11.7, 7.3);
+      amplitude *= 0.49;
+    }
+    return value;
+  }
+
+  float organicField(vec2 p, float phase) {
+    vec2 orbitA = vec2(cos(phase), sin(phase));
+    vec2 orbitB = vec2(cos(phase + 2.0944), sin(phase + 2.0944));
+    vec2 orbitC = vec2(cos(phase + 4.1888), sin(phase + 4.1888));
+
+    vec2 q = vec2(
+      fbm(p * 0.92 + orbitA * 0.92),
+      fbm(p * 0.92 + vec2(5.2, 1.3) + orbitB * 0.84)
+    );
+
+    vec2 r = vec2(
+      fbm(p * 1.26 + 3.30 * q + vec2(1.7, 9.2) + orbitB * 0.52),
+      fbm(p * 1.26 + 3.30 * q + vec2(8.3, 2.8) + orbitC * 0.52)
+    );
+
+    float broad = fbm(p * 0.58 + 1.50 * q + orbitC * 0.38);
+    float detail = fbm(p * 1.72 + 4.15 * r + orbitA * 0.31);
+    float folds = 0.5 + 0.5 * sin(
+      p.x * 2.45 + p.y * 1.05 + q.x * 5.2 - r.y * 4.4 + phase * 0.72
+    );
+
+    return broad * 0.41 + detail * 0.45 + folds * 0.14;
+  }
+
+  vec3 palette(float v) {
+    vec3 c = mix(uDark, uMid, smoothstep(0.05, 0.48, v));
+    c = mix(c, uEdge, smoothstep(0.43, 0.79, v));
+    c = mix(c, uHighlight, smoothstep(0.82, 1.0, v));
+    return c;
+  }
+
+  void main() {
+    vec2 frag = gl_FragCoord.xy;
+    vec2 uv = frag / uResolution;
+    vec2 centered = (frag - 0.5 * uResolution) / min(uResolution.x, uResolution.y);
+    centered.y *= -1.0;
+
+    float phase = mod(uTime, uLoopDuration) / uLoopDuration * 6.28318530718;
+
+    // Static glyph grid with a tiny deterministic irregularity, like the source effect.
+    vec2 cellId = floor(frag / uCellSize);
+    vec2 cellUv = fract(frag / uCellSize);
+    vec2 jitter = (hash22(cellId) - 0.5) * 0.16;
+    cellUv -= jitter;
+
+    // Sample the animated field at each cell center so every glyph acts as one tonal pixel.
+    vec2 cellCenterPx = (cellId + 0.5) * uCellSize;
+    vec2 p = (cellCenterPx - 0.5 * uResolution) / min(uResolution.x, uResolution.y);
+    p.y *= -1.0;
+    p *= 3.05;
+
+    // Mild large-scale bend prevents the pattern from feeling like a flat noise texture.
+    float bend = fbm(p * 0.37 + vec2(cos(phase), sin(phase)) * 0.40);
+    p += vec2(sin(p.y * 1.25 + phase), cos(p.x * 1.05 - phase)) * (bend - 0.5) * 0.36;
+
+    float field = organicField(p, phase);
+    float fine = fbm(p * 3.25 + vec2(cos(phase), sin(phase)) * 0.25);
+    field = mix(field, fine, 0.13);
+    field = clamp((field - 0.5) * uContrast + 0.5, 0.0, 1.0);
+
+    // Breathing coverage recreates the source transition from dense light to broken dark masses.
+    float breath = 0.5 + 0.5 * cos(phase);
+    float threshold = mix(0.64, 0.30, breath);
+    float solid = smoothstep(threshold - 0.095, threshold + 0.105, field);
+    float ghost = smoothstep(threshold - 0.27, threshold - 0.04, field) * 0.32;
+    float presence = max(solid, ghost);
+
+    // Runtime-generated lowercase "a" texture; no image or video asset is used.
+    float glyph = texture(uGlyph, vec2(cellUv.x, 1.0 - cellUv.y)).r;
+    glyph = smoothstep(0.12, 0.82, glyph);
+
+    float tonal = clamp((field - threshold + 0.30) / 0.57, 0.0, 1.0);
+    tonal *= 0.82 + hash21(cellId + 91.7) * 0.18;
+    vec3 ink = palette(tonal);
+
+    float alpha = glyph * presence;
+    float halo = glyph * solid * uGlow * 0.17;
+    vec3 color = mix(uDarkest, ink, alpha);
+    color += uEdge * halo;
+
+    // Very subtle vignette, preserving the organic source look without hiding the corners.
+    vec2 vuv = uv * (1.0 - uv.yx);
+    float vignette = pow(max(vuv.x * vuv.y * 15.0, 0.0), 0.10);
+    color = mix(uDarkest, color, 0.88 + 0.12 * vignette);
+
+    outColor = vec4(color, 1.0);
+  }
+`;
+
+/* escalera de 5 anclas derivada del token de marca vivo: el ancla del
+   demo es su "edge" y las demás guardan estas proporciones hacia negro
+   / blanco. Sin hex literales (R1.1): el truco fillStyle normaliza el
+   token (hex, rgb u oklch) a un hex canónico; si el token faltara, el
+   contexto conserva su negro inicial — jamás un color inventado aquí. */
+function brandColors(host) {
+  const probe = document.createElement('canvas').getContext('2d');
+  const raw = (getComputedStyle(host).getPropertyValue('--pc')
+    || getComputedStyle(document.documentElement).getPropertyValue('--accent')).trim();
+  probe.fillStyle = raw;
+  const v = Number.parseInt(probe.fillStyle.slice(1), 16);
+  const anchor = [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255];
+  const mixT = (c, target, k) => c.map((ch) => ch + (target - ch) * k);
+  return {
+    darkest: mixT(anchor, 0, 0.84),
+    dark: mixT(anchor, 0, 0.72),
+    mid: mixT(anchor, 0, 0.40),
+    edge: anchor,
+    highlight: mixT(anchor, 1, 0.78),
+  };
+}
+
+function createGlyphTexture(gl) {
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d', { alpha: true });
+  ctx.clearRect(0, 0, size, size);
+  ctx.fillStyle = '#fff'; /* blanco del canal rojo de la textura, no un color de marca */
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `700 104px ${GLYPH_FONT}`;
+  ctx.fillText('a', size * 0.50, size * 0.50);
+
+  const texture = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  return texture;
+}
+
+function compileShader(gl, type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const message = gl.getShaderInfoLog(shader) || 'Error de compilación de shader';
+    gl.deleteShader(shader);
+    throw new Error(message);
+  }
+  return shader;
+}
+
+function createProgram(gl) {
+  const vertex = compileShader(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
+  const fragment = compileShader(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
+  const program = gl.createProgram();
+  gl.attachShader(program, vertex);
+  gl.attachShader(program, fragment);
+  gl.linkProgram(program);
+  gl.deleteShader(vertex);
+  gl.deleteShader(fragment);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const message = gl.getProgramInfoLog(program) || 'Error de link de WebGL';
+    gl.deleteProgram(program);
+    throw new Error(message);
+  }
+  return program;
+}
+
+/* devuelve true si el canvas quedó corriendo con WebGL 2 */
+function initBlueEdgeGL(canvas) {
+  const gl = canvas.getContext('webgl2', {
+    alpha: false,
+    antialias: false,
+    depth: false,
+    stencil: false,
+    powerPreference: 'high-performance',
+  });
+  if (!gl) return false;
+
+  const host = canvas.parentElement;
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const program = createProgram(gl);
+  let glyphTexture = createGlyphTexture(gl);
+
+  /* la textura del glifo se pinta con la fuente que haya en el momento;
+     cuando Geist Mono termina de cargar se regenera una única vez */
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(() => {
+      if (!canvas.isConnected) return;
+      gl.deleteTexture(glyphTexture);
+      glyphTexture = createGlyphTexture(gl);
+      if (reducedMotion) render(performance.now());
+    });
+  }
+
+  const position = gl.getAttribLocation(program, 'aPosition');
+  const buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(position);
+  gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+
+  const U = {};
+  for (const name of ['uResolution', 'uTime', 'uCellSize', 'uLoopDuration', 'uContrast',
+    'uGlow', 'uGlyph', 'uDarkest', 'uDark', 'uMid', 'uEdge', 'uHighlight']) {
+    U[name] = gl.getUniformLocation(program, name);
+  }
+
+  let colors = brandColors(host);
+  let dpr = 1;
+  const startTime = performance.now();
+
+  function resize() {
+    const rect = host.getBoundingClientRect();
+    dpr = Math.min(devicePixelRatio || 1, DEFAULTS.maxDpr);
+    const width = Math.max(1, Math.round(rect.width * dpr));
+    const height = Math.max(1, Math.round(rect.height * dpr));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    gl.viewport(0, 0, width, height);
+    colors = brandColors(host);
+    if (reducedMotion) render(performance.now());
+  }
+
+  function render(now) {
+    /* bajo prefers-reduced-motion: un solo cuadro fijo, como el original */
+    const elapsed = reducedMotion ? 0 : ((now - startTime) / 1000) * DEFAULTS.speed;
+    gl.useProgram(program);
+    gl.uniform2f(U.uResolution, canvas.width, canvas.height);
+    gl.uniform1f(U.uTime, elapsed);
+    gl.uniform1f(U.uCellSize, DEFAULTS.cellSize * dpr);
+    gl.uniform1f(U.uLoopDuration, DEFAULTS.loopDuration);
+    gl.uniform1f(U.uContrast, DEFAULTS.contrast);
+    gl.uniform1f(U.uGlow, DEFAULTS.glow);
+    gl.uniform3fv(U.uDarkest, colors.darkest);
+    gl.uniform3fv(U.uDark, colors.dark);
+    gl.uniform3fv(U.uMid, colors.mid);
+    gl.uniform3fv(U.uEdge, colors.edge);
+    gl.uniform3fv(U.uHighlight, colors.highlight);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, glyphTexture);
+    gl.uniform1i(U.uGlyph, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  resize();
+  addEventListener('resize', resize, { passive: true });
+
+  if (reducedMotion) return true;
+
+  let visible = true;
+  /* última entrada del lote, no la primera (mismo bug que la rueda) */
+  new IntersectionObserver((en) => { visible = en[en.length - 1].isIntersecting; }).observe(canvas);
+
+  function loop(now) {
+    if (!canvas.isConnected) {
+      /* la página navegó: se corta el bucle y se libera la GPU */
+      gl.deleteTexture(glyphTexture);
+      gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+      return;
+    }
+    requestAnimationFrame(loop);
+    if (!visible || document.hidden) return;
+    render(now);
+  }
+  requestAnimationFrame(loop);
+  return true;
+}
+
+/* ==================================================================
+   RESPALDO Canvas 2D — el port fiel del primer zip del cliente
+   (blue_edge_background), con las mejoras de rendimiento verificadas
+   bit a bit y los ajustes de movimiento que pidió después (velocidad
+   1.05, deriva ×3, shimmer ×2, semilla aleatoria). Solo corre si
+   WebGL 2 no está disponible.
+   ================================================================== */
 
 const CONFIG = {
   glyph: 'a',
   gridSize: 10,
   maxDpr: 1.5,
   fps: 24,
-  speed: 1.05, // original 0.48 — subido a pedido ("más rápido, claramente perceptible")
+  speed: 1.05,
   threshold: 0.49,
-  fontFamily: "'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace",
+  fontFamily: GLYPH_FONT,
 };
 
-function initBlueEdge(canvas) {
+function initBlueEdge2D(canvas) {
   const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true });
   if (!ctx) return;
   const host = canvas.parentElement;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 
   let width = 0, height = 0, dpr = 1, cols = 0, rows = 0, lastFrame = 0;
-  /* semilla aleatoria por canvas ("más random"): el demo usaba 9301 fijo
-     — mismo patrón en cada visita; ahora cada carga y cada canvas
-     arrancan con un campo distinto. */
   const seed = 1000 + Math.random() * 9000;
-  /* deriva del ruido ×3 sobre el original (0.021 / 0.014): es lo que
-     hace que las nubes se DESPLACEN visiblemente y no solo respiren.
-     Una sola constante para el campo y la retícula precomputada — si
-     divergieran, smoothNoiseAt leería fuera de rango. */
   const DRIFT_X = 0.063, DRIFT_Y = 0.042;
   const palette = [];
   let baseColor = 'black'; // se recalcula del token en rebuildPalette()
 
-  /* color ancla desde el token vivo del host (--pc en hubs, --accent en
-     bandas): el truco fillStyle normaliza CUALQUIER sintaxis CSS de
-     color (hex, rgb, oklch) a un hex canónico legible. */
   function anchorRgb() {
     const raw = (getComputedStyle(host).getPropertyValue('--pc')
       || getComputedStyle(document.documentElement).getPropertyValue('--accent')).trim();
-    /* sin hex de respaldo (R1.1): los tokens siempre existen; si raw
-       fuera inválido, fillStyle conserva su valor anterior (negro
-       inicial del contexto) — jamás un color inventado aquí. */
     ctx.fillStyle = raw;
     const hex = ctx.fillStyle;
     const v = Number.parseInt(hex.slice(1), 16);
@@ -97,8 +418,6 @@ function initBlueEdge(canvas) {
 
   function rebuildPalette() {
     const anchor = anchorRgb();
-    /* misma estructura de 3 anclas del original (dark → middle → bright),
-       derivadas del token de marca en vez de los hexes del demo */
     const dark = mixToward(anchor, 0, 0.72);
     const middle = anchor;
     const bright = mixToward(anchor, 255, 0.5);
@@ -117,13 +436,6 @@ function initBlueEdge(canvas) {
     return value - Math.floor(value);
   }
 
-  /* ruido fractal del original, con la retícula entera de pseudoRandom
-     precomputada por cuadro: las 4 octavas solo consultan pseudoRandom
-     en puntos enteros de un rango pequeño (≈ 5.3·frecuencia + 2 por
-     eje), así que se evalúa UNA vez cada punto y las celdas interpolan
-     sobre el arreglo. Mismas frecuencias y amplitudes acumuladas en el
-     mismo orden que el bucle original (amplitude·=0.5, frequency·=2.03)
-     — los dobles resultantes son idénticos, no aproximados. */
   const FREQS = [1, 2.03, 2.03 * 2.03, 2.03 * 2.03 * 2.03];
   const AMPS = [0.58, 0.58 * 0.5, 0.58 * 0.5 * 0.5, 0.58 * 0.5 * 0.5 * 0.5];
   const NORM = AMPS[0] + AMPS[1] + AMPS[2] + AMPS[3];
@@ -147,7 +459,6 @@ function initBlueEdge(canvas) {
     }
   }
 
-  /* smoothNoise del original leyendo la retícula precomputada */
   function smoothNoiseAt(L, x, y) {
     const x0 = Math.floor(x), y0 = Math.floor(y);
     const tx = x - x0, ty = y - y0;
@@ -177,11 +488,6 @@ function initBlueEdge(canvas) {
     paint(lastTime); // sin fotograma en blanco tras un resize
   }
 
-  /* el campo del original celda a celda, con los términos que solo
-     dependen de la fila o de la columna calculados una vez por fila /
-     columna (mismas expresiones, mismos dobles) y los glifos agrupados
-     por color de paleta para dibujar con 32 fillStyle por cuadro. Las
-     cubetas se reutilizan entre cuadros (sin basura por cuadro). */
   const buckets = [];
   let rowSinA = new Float64Array(0), rowSwayX = new Float64Array(0), rowDy = new Float64Array(0);
   let colCosB = new Float64Array(0), colSwayY = new Float64Array(0), colX = new Float64Array(0);
@@ -246,8 +552,6 @@ function initBlueEdge(canvas) {
         if (value < CONFIG.threshold) continue;
         const normalized = (value - CONFIG.threshold) / (1 - CONFIG.threshold);
         const paletteIndex = Math.min(palette.length - 1, Math.floor(normalized * palette.length));
-        /* 0.30 (original 0.15): chispeo al doble, y con speed 1.05 su
-           cadencia de refresco también sube ~2.2× */
         const shimmer = pseudoRandom(column + shimmerK, row) * 0.30;
         buckets[paletteIndex].push(
           Math.min(1, 0.23 + normalized * 0.84 + shimmer),
@@ -278,7 +582,6 @@ function initBlueEdge(canvas) {
   }
 
   let visible = true;
-  /* última entrada del lote, no la primera (mismo bug que la rueda) */
   new IntersectionObserver((en) => { visible = en[en.length - 1].isIntersecting; }).observe(canvas);
 
   function loop(now) {
@@ -296,7 +599,12 @@ function boot() {
   document.querySelectorAll('canvas[data-blue-edge]').forEach((c) => {
     if (c.dataset.blueEdgeBooted) return;
     c.dataset.blueEdgeBooted = '1';
-    initBlueEdge(c);
+    try {
+      if (initBlueEdgeGL(c)) return;
+    } catch {
+      /* shader/contexto falló: cae al respaldo 2D */
+    }
+    initBlueEdge2D(c);
   });
 }
 
