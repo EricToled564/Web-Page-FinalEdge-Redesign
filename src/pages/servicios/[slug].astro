@@ -71,7 +71,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   description={edge.summary}
 >
   {videoHero ? (
-    <section class="svc-vhero" style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
+    <section class={`svc-vhero${featureVideo ? ' svc-vhero--tabbed' : ''}`} style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
       <video
         class="svc-vhero-video"
         data-svc-hero-video
@@ -438,6 +438,23 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   @media (max-width: 980px) {
     .svc-hero { padding: 120px 24px 64px; }
     .svc-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 40px; }
+    /* MÓVIL (auditoría 2026-07-14): los botones anclados al fondo se
+       encimaban con el statement centrado (creative, medido en captura
+       390×844) y el segundo se recortaba bajo el chip del asistente.
+       En pantallas angostas vuelven al flujo, apilados y centrados
+       bajo el texto. */
+    .svc-vhero { padding: 32px 20px 48px; gap: 24px; }
+    .svc-vhero-actions {
+      position: static;
+      margin: 4px auto 0;
+      flex-direction: column;
+      align-items: stretch;
+      width: min(100%, 420px);
+    }
+    .svc-hero-btn { text-align: center; }
+    /* creative: la pestaña del video asoma en el fondo del hero (-14vh)
+       — el contenido centrado le deja esa franja libre */
+    .svc-vhero--tabbed { padding-bottom: 17vh; }
   }
 </style>
 

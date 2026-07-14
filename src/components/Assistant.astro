@@ -37,6 +37,13 @@
     padding: 24px;
   }
   .assistant-copy { margin: 14px 0 18px; font-size: 14px; color: var(--fg-2); }
+  /* MÓVIL (auditoría 2026-07-14): el chip a ancho de escritorio cubría
+     CTAs y texto al pasar bajo él — compacto y pegado a la esquina.
+     La fuente se queda en 14px (piso duro R2.1). */
+  @media (max-width: 640px) {
+    .assistant { right: 12px; bottom: 12px; }
+    .assistant-toggle { padding: 9px 12px; letter-spacing: .02em; }
+  }
 </style>
 
 <script>

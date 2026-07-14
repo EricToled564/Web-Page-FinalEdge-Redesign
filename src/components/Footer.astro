@@ -83,6 +83,8 @@ import LockupMark from './LockupMark.astro';
   @media (max-width: 900px) {
     .footer-inner { grid-template-columns: repeat(1, minmax(0, 1fr)); padding: 64px 24px 40px; }
     .footer-nav { grid-template-columns: repeat(1, minmax(0, 1fr)); }
-    .footer-meta { padding: 20px 24px 32px; }
+    /* aire extra abajo: el chip fijo del asistente cubría el © en móvil
+       (auditoría 2026-07-14) */
+    .footer-meta { padding: 20px 24px 88px; }
   }
 </style>

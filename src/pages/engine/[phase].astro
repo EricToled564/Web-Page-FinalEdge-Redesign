@@ -344,7 +344,22 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
   }
 
   @media (max-width: 980px) {
-    .hub-hero--static { padding: 120px 16px 72px; }
+    .hub-hero--static { padding: 108px 16px 48px; }
+    /* MÓVIL (auditoría 2026-07-14): los botones anclados al fondo se
+       apilaban ENCIMA del abanico (los gajos — el menú de servicios —
+       quedaban tapados, medido en captura 390×844). En pantallas
+       angostas vuelven al flujo natural bajo la rueda y la página crece
+       lo que necesite; el centrado con márgenes auto tampoco aplica. */
+    .hub-stack { padding-bottom: 0; }
+    .hub-name { margin-top: 0; }
+    .hub-statement { margin-bottom: 0; }
+    .hub-actions {
+      position: static;
+      margin: 16px auto 0;
+      width: 100%;
+      max-width: 420px;
+    }
+    .hub-btn-next { width: 100%; text-align: center; }
   }
 </style>
 
