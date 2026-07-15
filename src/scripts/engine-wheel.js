@@ -747,7 +747,7 @@ class EngineWheel {
       const label = this.anchors.get('phase-' + p.id)?.el;
       if (!label) continue;
       if (!label.dataset.phaseLabel) label.dataset.phaseLabel = label.textContent;
-      label.textContent = state.mode === 'phase' ? 'Conoce más:' : label.dataset.phaseLabel;
+      label.textContent = state.mode === 'phase' ? 'Elige un servicio:' : label.dataset.phaseLabel;
     }
     this.root.dataset.mode = state.mode;
     this.root.dataset.focus = state.mode === 'phase' ? state.phase.id : state.mode === 'service' ? state.edge.id : '';

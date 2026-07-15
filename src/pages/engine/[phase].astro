@@ -13,13 +13,10 @@ const { phase } = Astro.props;
    debajo, la rueda como único menú de servicios (con "Conoce más:" en vez
    de repetir el nombre de la fase — ver apply() en engine-wheel.js) y dos
    botones en tinta (contraste elegante, sin rellenos de color). */
-/* Los CTA del hub llevan a las DOS fases que no son la actual (pedido
-   2026-07-11, sustituye al botón "Regresar al Engine"): la siguiente en
-   el ciclo primero, la restante después. */
-const otherPhases = [
-  PHASES.find((p) => p.slug === phase.next.slug),
-  PHASES.find((p) => p.id !== phase.id && p.slug !== phase.next.slug),
-];
+/* Navegación del hub (pedido 2026-07-15): dos flechas bajo el abanico —
+   izquierda a la rueda, derecha a la siguiente fase del ciclo
+   (phase.next ya trae el orden evaluación→capacidades→ejecución→
+   evaluación desde el modelo). */
 /* La rueda-menú debe medir lo que mide la PALABRA del título (pedido
    original). Geist Mono es monoespaciada: el ancho de la palabra es una
    función cerrada del font-size — avance por carácter (0.594em, medido
@@ -63,13 +60,22 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
            rueda se dimensiona SOLO por el ancho del carril, que es
            función pura del viewport. -->
       <div class="hub-wheel reveal">
-        <p class="hub-cta-label" aria-hidden="true">Conoce más:</p>
+        <p class="hub-cta-label" aria-hidden="true">Elige un servicio:</p>
         <EngineWheel compact />
       </div>
+      <!-- Flechas de navegación (pedido 2026-07-15, sustituyen a los
+           dos botones "Explorar …"), debajo de donde termina el
+           abanico: la IZQUIERDA regresa a la rueda del home; la
+           DERECHA lleva a la siguiente fase del ciclo (evaluación →
+           capacidades → ejecución → evaluación). Aplica en escritorio
+           y en móvil por igual (confirmado 2026-07-15). -->
       <div class="hub-actions reveal">
-        {otherPhases.map((p) => (
-          <a class="btn hub-btn-next" href={p.slug}>Explorar {p.name}</a>
-        ))}
+        <a class="hub-arrow" href="/#engine" aria-label="Regresar a la rueda">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M19 12H5" /><path d="M11 6l-6 6 6 6" /></svg>
+        </a>
+        <a class="hub-arrow" href={phase.next.slug} aria-label={`Siguiente fase: ${phase.next.name}`}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+        </a>
       </div>
     </div>
   </section>
@@ -321,23 +327,24 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     max-width: calc(100vw - 48px);
   }
 
-  /* Botones con FONDO SÓLIDO EXACTAMENTE en el hex de la fase (pedido
-     explícito 2026-07-14: "igual al hex de la fase, no te inventes un
-     color nuevo"): --pc ES el hex del modelo (engine.js), sin derivar.
-     Tinta oscura encima para contraste; hover invertido a blanco. */
-  .hub-btn-next {
+  /* Flechas de navegación (pedido 2026-07-15, sustituyen a los botones):
+     chip cuadrado con el hex exacto de la fase (--pc directo del modelo)
+     y trazo oscuro; hover invertido a blanco, mismo lenguaje que tenían
+     los botones. Área táctil de 52px. */
+  .hub-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
     background: var(--pc, var(--accent));
-    border-color: var(--pc, var(--accent));
+    border: 1px solid var(--pc, var(--accent));
     color: var(--void-deep);
-    /* mismo tamaño que el statement de la fase y en mayúsculas/minúsculas
-       normales, no uppercase (pedidos 2026-07-14) */
-    font-size: clamp(14px, 1.3vw, 16px);
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 600;
+    transition: background var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
   }
-  .hub-btn-next:hover,
-  .hub-btn-next:active {
+  .hub-arrow svg { width: 24px; height: 24px; }
+  .hub-arrow:hover,
+  .hub-arrow:active {
     background: var(--fg);
     border-color: var(--fg);
     color: var(--void-deep);
@@ -357,10 +364,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     .hub-actions {
       position: static;
       margin: 16px auto 0;
-      width: 100%;
-      max-width: 420px;
     }
-    .hub-btn-next { width: 100%; text-align: center; }
     /* abanico a sangre completa (pedido 2026-07-15: sección de los
        servicios mucho mayor): carril = 100vw y margen interno mínimo
        (BUFFER móvil 2px, engine-wheel.js) → canvas de ~386px (antes

@@ -94,12 +94,28 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       {edge.statement && (
         <div class="svc-vhero-copy reveal">
           <p class="svc-statement">{edge.statement}</p>
+          <!-- "Conoce más" + flecha hacia abajo (pedido 2026-07-15):
+               centrado bajo el texto principal; al presionarlo baja a
+               la siguiente lámina de este servicio (ver initSvcMore). -->
+          <button class="svc-more" type="button" data-svc-more>
+            Conoce más
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+          </button>
         </div>
       )}
+      <!-- Flechas de navegación (pedido 2026-07-15, sustituyen a los dos
+           botones): IZQUIERDA regresa a la fase; DERECHA lleva al otro
+           servicio de la fase. Escritorio y móvil por igual. -->
       {edge.statement && (
         <div class={`svc-vhero-actions reveal${featureVideo ? ' svc-vhero-actions--tabbed' : ''}`}>
-          {sibling && <a class="btn svc-hero-btn" href={sibling.slug}>Explorar {sibling.service}</a>}
-          <a class="btn svc-hero-btn" href="/#engine">Explora el final edge [ENGINE]</a>
+          <a class="svc-arrow" href={phase.slug} aria-label={`Regresar a ${phase.name}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M19 12H5" /><path d="M11 6l-6 6 6 6" /></svg>
+          </a>
+          {sibling && (
+            <a class="svc-arrow" href={sibling.slug} aria-label={`Siguiente servicio: ${sibling.service}`}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg>
+            </a>
+          )}
         </div>
       )}
     </section>
@@ -391,28 +407,53 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     max-width: calc(100vw - 48px);
   }
   .svc-vhero-actions--tabbed { bottom: calc(14vh + 8px); }
-  .svc-hero-btn {
+  /* Flechas de navegación (pedido 2026-07-15, sustituyen a los dos
+     botones): chip cuadrado con el hex exacto de la fase, trazo oscuro,
+     hover invertido a blanco — mismo lenguaje que las flechas de los
+     hubs. Área táctil de 52px. */
+  .svc-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
     background: var(--pc, var(--accent));
-    border-color: var(--pc, var(--accent));
+    border: 1px solid var(--pc, var(--accent));
     color: var(--void-deep);
-    /* mismo tamaño que el texto bajo el logo y en mayúsculas/minúsculas
-       normales, sin el uppercase+tracking del .btn base (pedido
-       2026-07-14) — igual que los botones de las fases. */
-    font-size: clamp(14px, 1.3vw, 16px);
-    text-transform: none;
-    letter-spacing: normal;
-    font-weight: 600;
-    /* padding compacto (antes el 16px 28px del .btn base): "mucho menos
-       prominentes" — pedido 2026-07-15 */
-    padding: 9px 18px;
+    transition: background var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
   }
-  .svc-hero-btn:hover {
+  .svc-arrow svg { width: 24px; height: 24px; }
+  .svc-arrow:hover,
+  .svc-arrow:active {
     background: var(--fg);
     border-color: var(--fg);
     color: var(--void-deep);
   }
+  /* "Conoce más" + flecha hacia abajo, centrado bajo el statement
+     (pedido 2026-07-15): misma voz tipográfica del texto, con la sombra
+     ya exceptuada para leerse sobre el video. */
+  .svc-more {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    margin: 26px auto 0;
+    background: none;
+    border: 0;
+    cursor: pointer;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(14px, 1.3vw, 16px);
+    font-weight: 600;
+    letter-spacing: normal;
+    color: var(--fg);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 70%, transparent);
+    transition: color var(--t-hover) var(--ease);
+  }
+  .svc-more svg { width: 22px; height: 22px; }
+  .svc-more:hover { color: var(--pc, var(--accent)); }
 
-  .svc-hero { padding: 150px 72px 88px; }  .svc-grid {
+  .svc-hero { padding: 150px 72px 88px; }
+  .svc-grid {
     max-width: 1180px;
     margin: 0 auto;
     display: grid;
@@ -448,19 +489,10 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        390×844) y el segundo se recortaba bajo el chip del asistente.
        En pantallas angostas vuelven al flujo, apilados y centrados
        bajo el texto. */
-    .svc-vhero { padding: 32px 20px 20px; gap: 24px; }
-    /* pedido 2026-07-15: botones discretos y pegados al borde inferior
-       también en móvil — el margen auto del logo y el de los botones
-       centran el bloque logo+texto y empujan los botones al fondo. */
-    .svc-vhero-logo { margin-top: auto; }
-    .svc-vhero-actions {
-      position: static;
-      margin: auto auto 0;
-      flex-direction: column;
-      align-items: center;
-      width: auto;
-    }
-    .svc-hero-btn { text-align: center; width: auto; }
+    .svc-vhero { padding: 32px 20px 84px; gap: 24px; }
+    /* las flechas son un par compacto de 52px: se quedan ancladas al
+       borde inferior también en móvil (el padding de 84px del hero les
+       reserva la franja bajo el contenido centrado). */
     /* creative: la pestaña del video asoma en el fondo del hero (-14vh)
        — el contenido centrado le deja esa franja libre */
     .svc-vhero--tabbed { padding-bottom: 17vh; }
@@ -511,6 +543,24 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   }
   playSvcHeroVideo();
   document.addEventListener('astro:page-load', playSvcHeroVideo);
+
+  /* "Conoce más" del hero (pedido 2026-07-15): baja a la SIGUIENTE
+     lámina de la página del servicio — la sección que sigue al hero
+     (en creative es la sección del video; en el resto, estadísticas).
+     scrollIntoView nativo, sin easing propio (R3.4 no aplica a scroll
+     del navegador). */
+  function initSvcMore() {
+    const btn = document.querySelector('[data-svc-more]') as HTMLElement | null;
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      const hero = document.querySelector('.svc-vhero');
+      const next = hero?.nextElementSibling;
+      next?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+  initSvcMore();
+  document.addEventListener('astro:page-load', initSvcMore);
 
   /* Animación de la sección de video ligada al scroll (ver el CSS de
      .svc-feature): p = progreso 0→1 del recorrido de la sección; el
