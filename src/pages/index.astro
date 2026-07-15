@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import EngineWheel from '../components/EngineWheel.astro';
 import LockupMark from '../components/LockupMark.astro';
+import { EDGES } from '../data/engine.js';
 ---
 <Base>
   <!-- 00 · HERO — video de fondo (fotograma clave: filamento del foco en
@@ -87,27 +88,19 @@ import LockupMark from '../components/LockupMark.astro';
         </p>
         <hr />
       </header>
-      <!-- "¿Qué más puede hacer Final Edge por ti?" (pedido 2026-07-15,
-           referencia visual estilo Raycast): sustituye al statement
-           anterior. Cada frase mapea a un servicio REAL; al posar el
-           puntero se ilumina la frase Y el gajo de su servicio en la
-           rueda (evento wheel-glow → activateHover, engine-wheel.js).
-           Las frases sin data-edge no señalan a un servicio concreto y
-           no se encienden. -->
-      <h2 class="h2 engine-h2 engine-can-title reveal">¿Qué más puede hacer Final Edge por ti?</h2>
-      <p class="engine-can reveal" data-engine-can>
-        <span data-edge="intelligence">Investiga tu mercado.</span>
-        <span data-edge="intelligence">Analiza a tu competencia.</span>
-        <span data-edge="intelligence">Compara precios y tendencias.</span>
-        <span data-edge="strategy">Convierte datos en estrategia.</span>
-        <span data-edge="readiness">Prepara a tu gente para la IA.</span>
-        <span data-edge="flow">Detecta dónde pierdes tiempo y dinero.</span>
-        <span data-edge="flow">Rediseña tus procesos.</span>
-        <span data-edge="systems">Construye tu software a la medida.</span>
-        <span data-edge="systems">Automatiza lo repetitivo.</span>
-        <span data-edge="creative">Produce campañas de calidad cinematográfica.</span>
-        <span>Responde en días, no en meses. Y mucho, mucho más.</span>
-      </p>
+      <!-- Menú de servicios (pedido 2026-07-15, referencia visual de
+           lista de chips): al POSAR el puntero sobre un item, el gajo
+           de ese servicio se activa y se mueve en la rueda — el mismo
+           hover real (evento wheel-glow → activateHover, engine-wheel
+           .js). El CLICK — aquí o en el gajo — navega a la página del
+           servicio. Chips rectangulares con hairline: las pastillas
+           redondeadas de la referencia violarían R3.3 (border-radius
+           prohibido). -->
+      <nav class="engine-menu reveal" aria-label="Servicios del Engine" data-engine-menu>
+        {EDGES.map((e) => (
+          <a class="engine-menu-item" href={e.slug} data-edge={e.id}>{e.service}</a>
+        ))}
+      </nav>
     </div>
     <div class="engine-col-wheel">
       <div class="wheel-card" id="wheel-entry">
@@ -186,23 +179,24 @@ import LockupMark from '../components/LockupMark.astro';
     initCosmosScroll();
     document.addEventListener('astro:page-load', initCosmosScroll);
 
-    /* "¿Qué más puede hacer Final Edge por ti?" (pedido 2026-07-15):
-       posar el puntero sobre una frase enciende el gajo de su servicio
-       en la rueda por el mismo camino del hover real (evento
-       wheel-glow → activateHover en engine-wheel.js); al salir, se
-       apaga. La frase misma se ilumina por CSS (:hover). */
-    function initEngineCan() {
-      const box = document.querySelector('[data-engine-can]') as HTMLElement | null;
+    /* Menú de servicios (pedido 2026-07-15): posar el puntero sobre un
+       item activa el gajo de su servicio en la rueda por el mismo
+       camino del hover real (evento wheel-glow → activateHover en
+       engine-wheel.js) — se levanta, brilla y se mueve igual que
+       tocándolo. Al salir se apaga. El click es un <a> normal a la
+       página del servicio. */
+    function initEngineMenu() {
+      const box = document.querySelector('[data-engine-menu]') as HTMLElement | null;
       if (!box || box.dataset.bound === '1') return;
       box.dataset.bound = '1';
       const glow = (id: string | null) => document.dispatchEvent(new CustomEvent('wheel-glow', { detail: id }));
-      for (const span of box.querySelectorAll('span[data-edge]')) {
-        span.addEventListener('pointerenter', () => glow((span as HTMLElement).dataset.edge ?? null));
-        span.addEventListener('pointerleave', () => glow(null));
+      for (const item of box.querySelectorAll('a[data-edge]')) {
+        item.addEventListener('pointerenter', () => glow((item as HTMLElement).dataset.edge ?? null));
+        item.addEventListener('pointerleave', () => glow(null));
       }
     }
-    initEngineCan();
-    document.addEventListener('astro:page-load', initEngineCan);
+    initEngineMenu();
+    document.addEventListener('astro:page-load', initEngineMenu);
 
     /* El atributo autoplay del <video> del hero solo actúa en la carga
        de DOCUMENTO: al regresar al home por navegación SPA (p. ej. click
@@ -484,25 +478,32 @@ import LockupMark from '../components/LockupMark.astro';
      contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
      text-transform: mayúsculas y minúsculas normales, como el copy. */
   .engine-h2 { font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
-  /* título de la lista en blanco pleno (como la referencia del cliente:
-     pregunta en blanco, capacidades en gris tenue) */
-  .engine-can-title { color: var(--fg); font-weight: 600 !important; }
-  .engine-can {
-    margin-top: 14px;
+  /* Menú de servicios (referencia visual del cliente: columna de chips;
+     rectangulares por R3.3). Hover: chip a blanco + gajo activo en la
+     rueda (wheel-glow). Click: navega al servicio. */
+  .engine-menu {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .engine-menu-item {
+    display: inline-block;
     font-size: clamp(14px, 1.3vw, 16px);
-    line-height: 1.75;
+    font-weight: 500;
     letter-spacing: normal;
-    color: var(--fg-muted);
-    max-width: 44ch;
+    color: var(--fg);
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    padding: 9px 18px;
+    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
   }
-  /* cada frase se ilumina al hover (y la rueda enciende su gajo — ver
-     data-engine-can en el script). Geist Mono es monoespaciada: pasar a
-     600 no cambia el avance, así que no hay reflow al encender. */
-  .engine-can span[data-edge] {
-    transition: color var(--t-hover) var(--ease);
-    cursor: default;
+  .engine-menu-item:hover {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
   }
-  .engine-can span[data-edge]:hover { color: var(--fg); font-weight: 600; }
   .engine-col-wheel {
     display: flex;
     align-items: center;
@@ -548,10 +549,26 @@ import LockupMark from '../components/LockupMark.astro';
       grid-template-columns: 1fr;
       /* misma alineación con la cuadrícula de "La Presión" también en la
          columna apilada: su padding lateral es 72px hasta 760px y 24px
-         de ahí para abajo (ver el media query de .presion-band). */
-      padding: 56px 72px;
-      gap: 32px;
+         de ahí para abajo (ver el media query de .presion-band). El
+         padding vertical y el gap se compactan para que menú + rueda
+         quepan en UNA pantalla (pedido 2026-07-15). */
+      padding: 28px 72px 16px;
+      gap: 18px;
     }
+    /* menú HORIZONTAL en móvil, en la misma pantalla que la rueda
+       (pedido 2026-07-15): fila de chips que envuelve, centrada. El
+       encabezado con el lockup se oculta AQUÍ (solo móvil): medido, con
+       él la sección medía 755px contra 664 de viewport — y el centro de
+       la rueda ya muestra "final edge [ENGINE]". */
+    .engine-col-text .section-head { display: none; }
+    .engine-menu {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .engine-menu-item { padding: 8px 12px; }
     .engine-col-text { padding-right: 0; }
     /* rueda a sangre completa en móvil (pedido 2026-07-15: ≥30% mayor):
        la columna ignora el padding lateral de la sección — combinada
