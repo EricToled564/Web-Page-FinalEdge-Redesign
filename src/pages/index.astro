@@ -199,6 +199,15 @@ import LockupMark from '../components/LockupMark.astro';
       n.muted = true;
       n.defaultMuted = true;
       v.replaceWith(n);
+      /* blob precargado (window.__videoWarm, ver Base.astro): en el
+         regreso SPA el clip arranca de memoria, sin volver a la red
+         (fix 2026-07-15 — medido que el <video> jamás reutiliza la
+         caché HTTP del prefetch). */
+      const warm = (window as any).__videoWarm;
+      const p = warm ? warm[n.getAttribute('src') || ''] : null;
+      if (p) Promise.resolve(p).then((url) => {
+        if (url && n.isConnected && n.currentTime < 0.3) { n.src = url; n.muted = true; n.play().catch(() => {}); }
+      }).catch(() => {});
       n.play().catch(() => {});
     });
 

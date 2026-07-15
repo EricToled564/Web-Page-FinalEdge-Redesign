@@ -130,6 +130,27 @@ const jsonLd = {
         if (!matchMedia('(pointer: fine)').matches) return;
         const c = (navigator as any).connection;
         if (c && (c.saveData || (c.effectiveType && c.effectiveType !== '4g'))) return;
+        /* ALMACÉN EN MEMORIA (fix 2026-07-15, reporte "los videos tardan
+           mucho en comenzar DE NUEVO"): el prefetch anterior solo
+           calentaba la caché HTTP, y MEDIDO con CDP el <video> jamás la
+           reutiliza (0 hits de disco tras un prefetch completo: el
+           elemento pide rangos y la respuesta cacheada del fetch no los
+           satisface, y en Vercel los assets de /public/ van con
+           must-revalidate). Ahora cada clip precargado vive como blob y
+           las páginas lo conectan DIRECTO al <video> (window.__videoWarm,
+           ver playSvcHeroVideo en /servicios/): cero red al llegar.
+           El documento persiste entre navegaciones SPA (ClientRouter),
+           así que el almacén sobrevive el viaje completo. ~17MB de
+           memoria solo en escritorio (pointer: fine). */
+        const warm = ((window as any).__videoWarm = (window as any).__videoWarm || {});
+        const load = (src: string) => {
+          if (warm[src]) return warm[src];
+          warm[src] = fetch(src)
+            .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+            .then((b) => URL.createObjectURL(b))
+            .catch(() => { delete warm[src]; return null; });
+          return warm[src];
+        };
         const vids = [
           '/assets/video/hero-bg.mp4',
           '/assets/video/svc-strategy-hero.mp4',
@@ -142,12 +163,25 @@ const jsonLd = {
         let i = 0;
         const next = () => {
           if (i >= vids.length) return;
-          fetch(vids[i++], { priority: 'low' } as RequestInit)
-            .then((r) => (r.ok ? r.blob() : null))
-            .catch(() => {})
-            .finally(() => setTimeout(next, 250));
+          Promise.resolve(load(vids[i++])).finally(() => setTimeout(next, 250));
         };
-        setTimeout(next, 2500);
+        setTimeout(next, 1200);
+        /* precarga por INTENCIÓN: al posar el puntero sobre el enlace de
+           un servicio (nav, rueda, flechas), su video brinca la fila —
+           para cuando el click aterriza, el blob suele estar listo. */
+        const BY_SLUG: Record<string, string> = {
+          'estrategia': '/assets/video/svc-strategy-hero.mp4',
+          'business-intelligence': '/assets/video/svc-intelligence-hero.mp4',
+          'team-readiness': '/assets/video/svc-readiness-hero.mp4',
+          'optimizacion-de-procesos': '/assets/video/svc-flow-hero.mp4',
+          'sistemas': '/assets/video/svc-systems-hero.mp4',
+          'produccion-creativa': '/assets/video/svc-creative-hero.mp4',
+        };
+        document.addEventListener('pointerover', (ev) => {
+          const a = (ev.target as HTMLElement | null)?.closest?.('a[href*="/servicios/"]');
+          const m = a?.getAttribute('href')?.match(/\/servicios\/([^/]+)\//);
+          if (m && BY_SLUG[m[1]]) load(BY_SLUG[m[1]]);
+        }, { passive: true });
       }
       prefetchHeroVideos();
     </script>

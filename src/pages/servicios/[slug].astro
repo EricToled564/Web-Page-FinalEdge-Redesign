@@ -506,6 +506,27 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
      abstracción compartida ahora arriesgaría regresarlo. Capas:
      reconstrucción del elemento en cada regreso SPA, reintentos con
      vigilancia, load() de rescate y arranque por gesto (Safari). */
+  /* Conecta el blob precargado (window.__videoWarm, ver Base.astro) al
+     <video> del hero: cero red al llegar — MEDIDO que el <video> jamás
+     reutiliza la caché HTTP del prefetch (fix 2026-07-15, "los videos
+     tardan mucho en comenzar de nuevo"). Solo si el clip aún no corre:
+     si el blob resuelve tarde y el clip ya avanza por red, no se
+     reinicia. */
+  function applyWarmSrc(v: HTMLVideoElement) {
+    const src = v.getAttribute('src');
+    const warm = (window as any).__videoWarm;
+    const p = warm && src ? warm[src] : null;
+    if (!p) return;
+    Promise.resolve(p).then((url) => {
+      if (url && v.isConnected && !v.dataset.warmed && v.currentTime < 0.3) {
+        v.dataset.warmed = '1';
+        v.src = url;
+        v.muted = true;
+        v.play().catch(() => {});
+      }
+    }).catch(() => {});
+  }
+
   document.addEventListener('astro:after-swap', () => {
     const v = document.querySelector('[data-svc-hero-video]') as HTMLVideoElement | null;
     if (!v) return;
@@ -513,6 +534,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     n.muted = true;
     n.defaultMuted = true;
     v.replaceWith(n);
+    applyWarmSrc(n);
     n.play().catch(() => {});
   });
 
@@ -520,6 +542,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   function playSvcHeroVideo() {
     const v = document.querySelector('[data-svc-hero-video]') as HTMLVideoElement | null;
     if (!v) return;
+    applyWarmSrc(v);
     const kick = () => { if (v.isConnected && v.paused) { v.muted = true; v.play().catch(() => {}); } };
     kick();
     v.addEventListener('loadeddata', kick, { once: true });
