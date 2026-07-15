@@ -1296,6 +1296,22 @@ class EngineWheel {
 /* -------- ciclo de vida con ClientRouter (isla persistida) -------- */
 let instance = null;
 
+/* Iluminación EXTERNA de un gajo (sección "¿Qué más puede hacer Final
+   Edge por ti?" del home, pedido 2026-07-15): los spans del texto piden
+   encender el servicio que les corresponde por el MISMO camino que el
+   hover de las etiquetas de la rueda — _labelHover congela pick() para
+   que el raycast del puntero (que está sobre el texto, no sobre el
+   canvas) no pise el glow en el siguiente cuadro, y activateHover()
+   aplica exactamente el mismo levantamiento + glow del hover real.
+   detail = id del edge ('intelligence', …) o null para apagar. */
+document.addEventListener('wheel-glow', (ev) => {
+  if (!instance || instance.dead) return;
+  const id = ev.detail;
+  const g = id ? instance.parts.sectors[id] : null;
+  instance._labelHover = g || null;
+  instance.activateHover(g || null);
+});
+
 function boot() {
   const root = document.getElementById('engine-wheel');
   if (!root) return;

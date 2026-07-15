@@ -87,7 +87,27 @@ import LockupMark from '../components/LockupMark.astro';
         </p>
         <hr />
       </header>
-      <h2 class="h2 engine-h2 reveal">El sistema que potencializa tu productividad y la convierte en una ventaja competitiva.</h2>
+      <!-- "¿Qué más puede hacer Final Edge por ti?" (pedido 2026-07-15,
+           referencia visual estilo Raycast): sustituye al statement
+           anterior. Cada frase mapea a un servicio REAL; al posar el
+           puntero se ilumina la frase Y el gajo de su servicio en la
+           rueda (evento wheel-glow → activateHover, engine-wheel.js).
+           Las frases sin data-edge no señalan a un servicio concreto y
+           no se encienden. -->
+      <h2 class="h2 engine-h2 engine-can-title reveal">¿Qué más puede hacer Final Edge por ti?</h2>
+      <p class="engine-can reveal" data-engine-can>
+        <span data-edge="intelligence">Investiga tu mercado.</span>
+        <span data-edge="intelligence">Analiza a tu competencia.</span>
+        <span data-edge="intelligence">Compara precios y tendencias.</span>
+        <span data-edge="strategy">Convierte datos en estrategia.</span>
+        <span data-edge="readiness">Prepara a tu gente para la IA.</span>
+        <span data-edge="flow">Detecta dónde pierdes tiempo y dinero.</span>
+        <span data-edge="flow">Rediseña tus procesos.</span>
+        <span data-edge="systems">Construye tu software a la medida.</span>
+        <span data-edge="systems">Automatiza lo repetitivo.</span>
+        <span data-edge="creative">Produce campañas de calidad cinematográfica.</span>
+        <span>Responde en días, no en meses. Y mucho, mucho más.</span>
+      </p>
     </div>
     <div class="engine-col-wheel">
       <div class="wheel-card" id="wheel-entry">
@@ -165,6 +185,24 @@ import LockupMark from '../components/LockupMark.astro';
     }
     initCosmosScroll();
     document.addEventListener('astro:page-load', initCosmosScroll);
+
+    /* "¿Qué más puede hacer Final Edge por ti?" (pedido 2026-07-15):
+       posar el puntero sobre una frase enciende el gajo de su servicio
+       en la rueda por el mismo camino del hover real (evento
+       wheel-glow → activateHover en engine-wheel.js); al salir, se
+       apaga. La frase misma se ilumina por CSS (:hover). */
+    function initEngineCan() {
+      const box = document.querySelector('[data-engine-can]') as HTMLElement | null;
+      if (!box || box.dataset.bound === '1') return;
+      box.dataset.bound = '1';
+      const glow = (id: string | null) => document.dispatchEvent(new CustomEvent('wheel-glow', { detail: id }));
+      for (const span of box.querySelectorAll('span[data-edge]')) {
+        span.addEventListener('pointerenter', () => glow((span as HTMLElement).dataset.edge ?? null));
+        span.addEventListener('pointerleave', () => glow(null));
+      }
+    }
+    initEngineCan();
+    document.addEventListener('astro:page-load', initEngineCan);
 
     /* El atributo autoplay del <video> del hero solo actúa en la carga
        de DOCUMENTO: al regresar al home por navegación SPA (p. ej. click
@@ -446,6 +484,25 @@ import LockupMark from '../components/LockupMark.astro';
      contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
      text-transform: mayúsculas y minúsculas normales, como el copy. */
   .engine-h2 { font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
+  /* título de la lista en blanco pleno (como la referencia del cliente:
+     pregunta en blanco, capacidades en gris tenue) */
+  .engine-can-title { color: var(--fg); font-weight: 600 !important; }
+  .engine-can {
+    margin-top: 14px;
+    font-size: clamp(14px, 1.3vw, 16px);
+    line-height: 1.75;
+    letter-spacing: normal;
+    color: var(--fg-muted);
+    max-width: 44ch;
+  }
+  /* cada frase se ilumina al hover (y la rueda enciende su gajo — ver
+     data-engine-can en el script). Geist Mono es monoespaciada: pasar a
+     600 no cambia el avance, así que no hay reflow al encender. */
+  .engine-can span[data-edge] {
+    transition: color var(--t-hover) var(--ease);
+    cursor: default;
+  }
+  .engine-can span[data-edge]:hover { color: var(--fg); font-weight: 600; }
   .engine-col-wheel {
     display: flex;
     align-items: center;
