@@ -3,6 +3,21 @@ import Base from '../layouts/Base.astro';
 import EngineWheel from '../components/EngineWheel.astro';
 import LockupMark from '../components/LockupMark.astro';
 import { EDGES } from '../data/engine.js';
+/* Items del menú de servicios (labels pedidos 2026-07-15, solo para el
+   menú del home — los nombres canónicos de los servicios no cambian):
+   "Planeación Estratégica" (antes Estrategia), "Inteligencia de
+   Negocios" (antes Intelligence) MÁS una línea extra "Inteligencia de
+   Mercados" que también lleva a intelligence, y "Creación de Software
+   Personalizado" (antes Sistemas). */
+const MENU_ITEMS = [
+  { label: 'Planeación Estratégica', edge: 'strategy' },
+  { label: 'Inteligencia de Negocios', edge: 'intelligence' },
+  { label: 'Inteligencia de Mercados', edge: 'intelligence' },
+  { label: 'Capacitación en IA', edge: 'readiness' },
+  { label: 'Optimización de Procesos', edge: 'flow' },
+  { label: 'Creación de Software Personalizado', edge: 'systems' },
+  { label: 'Producción Creativa', edge: 'creative' },
+].map((m) => ({ ...m, slug: EDGES.find((e) => e.id === m.edge).slug }));
 ---
 <Base>
   <!-- 00 · HERO — video de fondo (fotograma clave: filamento del foco en
@@ -97,8 +112,8 @@ import { EDGES } from '../data/engine.js';
            redondeadas de la referencia violarían R3.3 (border-radius
            prohibido). -->
       <nav class="engine-menu reveal" aria-label="Servicios del Engine" data-engine-menu>
-        {EDGES.map((e) => (
-          <a class="engine-menu-item" href={e.slug} data-edge={e.id}>{e.service}</a>
+        {MENU_ITEMS.map((m) => (
+          <a class="engine-menu-item" href={m.slug} data-edge={m.edge}>{m.label}</a>
         ))}
       </nav>
     </div>
@@ -556,19 +571,27 @@ import { EDGES } from '../data/engine.js';
       gap: 18px;
     }
     /* menú HORIZONTAL en móvil, en la misma pantalla que la rueda
-       (pedido 2026-07-15): fila de chips que envuelve, centrada. El
-       encabezado con el lockup se oculta AQUÍ (solo móvil): medido, con
-       él la sección medía 755px contra 664 de viewport — y el centro de
-       la rueda ya muestra "final edge [ENGINE]". */
+       (pedido 2026-07-15): UNA fila de chips deslizable — con 7 labels
+       largos la fila que envolvía medía 797px de sección contra 664 de
+       viewport (medido); en fila única la sección completa cabe. El
+       encabezado con el lockup se oculta AQUÍ (solo móvil): el centro
+       de la rueda ya muestra "final edge [ENGINE]". */
     .engine-col-text .section-head { display: none; }
     .engine-menu {
       flex-direction: row;
-      flex-wrap: wrap;
-      justify-content: center;
+      flex-wrap: nowrap;
+      justify-content: flex-start;
       gap: 8px;
       margin-top: 14px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 6px;
+      /* sangra al ancho completo para que la fila corra de borde a borde */
+      width: 100vw;
+      margin-inline: calc(50% - 50vw);
+      padding-inline: 24px;
     }
-    .engine-menu-item { padding: 8px 12px; }
+    .engine-menu-item { padding: 8px 12px; white-space: nowrap; flex: 0 0 auto; }
     .engine-col-text { padding-right: 0; }
     /* rueda a sangre completa en móvil (pedido 2026-07-15: ≥30% mayor):
        la columna ignora el padding lateral de la sección — combinada
