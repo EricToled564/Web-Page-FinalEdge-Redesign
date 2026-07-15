@@ -28,7 +28,7 @@ const { compact = false, fitHeight = false } = Astro.props;
     })}
     {PHASES.map((p) => (
       <a class={`wl wl-band wl-phase-${p.id}`} data-anchor={`phase-${p.id}`} href={p.slug}>
-        {p.label}
+        {p.name}
       </a>
     ))}
     <div class="wl wl-hub" data-anchor="hub" aria-hidden="true">
@@ -157,7 +157,12 @@ const { compact = false, fitHeight = false } = Astro.props;
      translate(-50%,-50%) sobre su propio centro (ver projectLabels() en
      engine-wheel.js), así que agrandarlo no mueve ni un solo punto de
      la geometría 3D de la rueda. */
-  .wl-band { font-size: 20px; letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
+  /* Chips de fase en mayúsculas/minúsculas ({p.name}, ya no el label en
+     ALTAS) y al MISMO tamaño que el título de la sección del home
+     (.engine-h2: clamp(14px, 1.3vw, 16px)) — pedido 2026-07-15 sobre
+     "los botones de [la sección] tu ventaja competitiva". El tracking
+     baja proporcional (20→16 = ×0.8). */
+  .wl-band { font-size: clamp(14px, 1.3vw, 16px); letter-spacing: 2.1px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
   /* En el hub de fase (modo 'phase') la banda dice "Conoce más:" sobre el
      fondo de color de la fase (landing 2026-07-11) y el cliente pidió
      quitarle el rectángulo negro y reducirla en la misma proporción que

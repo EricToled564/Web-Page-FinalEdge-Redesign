@@ -375,7 +375,9 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
      encima de la pestaña del video que asoma en el hero (-14vh). */
   .svc-vhero-actions {
     position: absolute;
-    bottom: 30px;
+    /* 14px (antes 30): "mucho menos prominentes y más cerca al borde
+       inferior del slide" — pedido 2026-07-15 */
+    bottom: 14px;
     /* centrado sin transform: .reveal anima transform y lo pisaría */
     left: 0;
     right: 0;
@@ -388,7 +390,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     width: max-content;
     max-width: calc(100vw - 48px);
   }
-  .svc-vhero-actions--tabbed { bottom: calc(14vh + 22px); }
+  .svc-vhero-actions--tabbed { bottom: calc(14vh + 8px); }
   .svc-hero-btn {
     background: var(--pc, var(--accent));
     border-color: var(--pc, var(--accent));
@@ -400,6 +402,9 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     text-transform: none;
     letter-spacing: normal;
     font-weight: 600;
+    /* padding compacto (antes el 16px 28px del .btn base): "mucho menos
+       prominentes" — pedido 2026-07-15 */
+    padding: 9px 18px;
   }
   .svc-hero-btn:hover {
     background: var(--fg);
@@ -443,15 +448,19 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        390×844) y el segundo se recortaba bajo el chip del asistente.
        En pantallas angostas vuelven al flujo, apilados y centrados
        bajo el texto. */
-    .svc-vhero { padding: 32px 20px 48px; gap: 24px; }
+    .svc-vhero { padding: 32px 20px 20px; gap: 24px; }
+    /* pedido 2026-07-15: botones discretos y pegados al borde inferior
+       también en móvil — el margen auto del logo y el de los botones
+       centran el bloque logo+texto y empujan los botones al fondo. */
+    .svc-vhero-logo { margin-top: auto; }
     .svc-vhero-actions {
       position: static;
-      margin: 4px auto 0;
+      margin: auto auto 0;
       flex-direction: column;
-      align-items: stretch;
-      width: min(100%, 420px);
+      align-items: center;
+      width: auto;
     }
-    .svc-hero-btn { text-align: center; }
+    .svc-hero-btn { text-align: center; width: auto; }
     /* creative: la pestaña del video asoma en el fondo del hero (-14vh)
        — el contenido centrado le deja esa franja libre */
     .svc-vhero--tabbed { padding-bottom: 17vh; }

@@ -349,10 +349,11 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
        apilaban ENCIMA del abanico (los gajos — el menú de servicios —
        quedaban tapados, medido en captura 390×844). En pantallas
        angostas vuelven al flujo natural bajo la rueda y la página crece
-       lo que necesite; el centrado con márgenes auto tampoco aplica. */
+       lo que necesite. Los márgenes auto del título/statement SÍ se
+       conservan (pedido 2026-07-15): texto lo más cercano al centro y
+       rueda+botones hacia el borde inferior; si el contenido no cabe,
+       los autos colapsan a 0 y todo fluye — sin empalmes posibles. */
     .hub-stack { padding-bottom: 0; }
-    .hub-name { margin-top: 0; }
-    .hub-statement { margin-bottom: 0; }
     .hub-actions {
       position: static;
       margin: 16px auto 0;
@@ -360,6 +361,17 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
       max-width: 420px;
     }
     .hub-btn-next { width: 100%; text-align: center; }
+    /* abanico a sangre completa (pedido 2026-07-15: sección de los
+       servicios mucho mayor): carril = 100vw y margen interno mínimo
+       (BUFFER móvil 2px, engine-wheel.js) → canvas de ~386px (antes
+       306: +26% lineal, +59% de área). --stage-h se recalibra a la
+       misma fórmula con el buffer móvil para que los recortes
+       negativos sigan siendo proporcionales al abanico real. */
+    .hub-wheel {
+      --rail-w: 100vw;
+      --stage-h: calc((100vw - 2px) * 0.9032 + 2px);
+      margin-inline: calc(50% - 50vw);
+    }
   }
 </style>
 

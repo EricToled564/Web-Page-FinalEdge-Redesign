@@ -868,9 +868,15 @@ class EngineWheel {
        (ver arriba) para que el desplazamiento máximo quepa DENTRO de
        este margen original — medido con Playwright en los 6 edges, cero
        píxeles de excedente contra el borde de recorte. */
-    const BUFFER = 26;
+    /* MÓVIL (pedido 2026-07-15: rueda del home ≥30% mayor y abanico de
+       los hubs mucho mayor): en ≤900px el margen se reduce — ahí no hay
+       hover que desborde (sin puntero fino) y cada píxel de margen se
+       descuenta de una rueda ya apretada por el viewport. En escritorio
+       queda el 26 original medido contra el desprendimiento de hover. */
+    const mobile = matchMedia('(max-width: 900px)').matches;
     const routeMode = routeState().mode;
     const compact = routeMode !== 'full';
+    const BUFFER = mobile ? (compact ? 1 : 4) : 26;
     this.root.dataset.compact = compact ? '1' : '0';
     /* 820→900 en modo full: pedido explícito de +30% de tamaño de rueda
        ("intento 20", visibilidad). Este techo por sí solo no la hace más

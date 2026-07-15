@@ -487,7 +487,16 @@ import LockupMark from '../components/LockupMark.astro';
       gap: 32px;
     }
     .engine-col-text { padding-right: 0; }
-    .engine-col-wheel { justify-content: center; padding: 0; }
+    /* rueda a sangre completa en móvil (pedido 2026-07-15: ≥30% mayor):
+       la columna ignora el padding lateral de la sección — combinada
+       con el margen interno reducido del canvas (engine-wheel.js,
+       BUFFER móvil) la rueda pasa de 273px a ~370px de canvas. */
+    .engine-col-wheel {
+      justify-content: center;
+      padding: 0;
+      width: 100vw;
+      margin-inline: calc(50% - 50vw);
+    }
     .engine-col-wheel .wheel-card { height: auto; max-width: 100%; }
   }
 
