@@ -218,7 +218,7 @@ export const EDGES = [
     angle: 270,
     service: 'Producción Creativa',
     slug: '/servicios/produccion-creativa/',
-    statement: 'Cuando necesitas producir más contenido sin multiplicar el presupuesto, combinamos IA, dirección estratégica y talento creativo internacional. Creamos campañas y producciones de calidad cinematográfica, antes reservadas para las grandes multinacionales, en días y no en meses.',
+    statement: 'Potenciado por IA. Dirigido por humanos. Del brief a la entrega final en días. Con toda la calidad, riqueza e impacto de la producción tradicional a una fracción del costo.',
     icon: '/assets/edge-icons/creative.png',
     hook: 'Producción con IA de clase mundial. Dirigida por humanos.',
     summary:
