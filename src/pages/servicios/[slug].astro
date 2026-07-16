@@ -181,6 +181,27 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             </button>
           </div>
         </div>
+        <!-- CTA bajo la pantalla (pedido 2026-07-16): baja a la lámina de
+             manifiesto donde las palabras se iluminan al hacer scroll. -->
+        <button class="svc-feature-cta" data-svc-next type="button">
+          Conoce nuestro trabajo
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+        </button>
+      </div>
+    </section>
+  )}
+
+  {featureVideo && (
+    <!-- Lámina de manifiesto (pedido 2026-07-16): al hacer scroll down las
+         palabras se iluminan una a una en el color de la fase, con el aire
+         de los landings de fase. -->
+    <section class="reel-manifesto" data-reel-manifesto style={`--pc:${phase.color}`}>
+      <div class="reel-manifesto-stage">
+        <p class="reel-manifesto-text">
+          {'Probablemente la mejor productora impulsada por IA de marca latina'.split(' ').map((w) => (
+            <span class="reel-word">{w}</span>
+          ))}
+        </p>
       </div>
     </section>
   )}
@@ -329,13 +350,36 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     transition: opacity var(--t-ui) var(--ease);
   }
   .svc-feature[data-state='expanded'] .svc-feature-label { opacity: 0; }
+  /* CTA bajo la pantalla: baja al manifiesto. Aparece al expandir. */
+  .svc-feature-cta {
+    margin: 0;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--fg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--t-ui) var(--ease), color var(--t-hover) var(--ease);
+  }
+  .svc-feature[data-state='expanded'] .svc-feature-cta { opacity: 1; pointer-events: auto; }
+  .svc-feature-cta:hover { color: var(--pc, var(--accent)); }
+  .svc-feature-cta svg { width: 20px; height: 20px; animation: svc-bob 1.8s var(--ease) infinite; }
+  @keyframes svc-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
   /* el frame contiene el video + los controles y es lo que escala */
   .svc-feature-frame {
     position: relative;
     display: block;
-    width: min(1400px, 94vw);
+    width: min(1180px, 84vw);
     aspect-ratio: 16 / 9;
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - 250px);
     transform: scale(0.92);
     transform-origin: center;
     opacity: 0.5;
@@ -371,6 +415,52 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     box-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (borde interior de pantalla) */
       inset 0 0 0 1px color-mix(in srgb, var(--pc, var(--accent)) 45%, transparent),
       0 0 0 1px color-mix(in srgb, var(--void-deep) 70%, transparent);
+  }
+  /* --- Lámina de manifiesto: las palabras se encienden en el color de la
+     fase al hacer scroll (pedido 2026-07-16), con el aire de los landings
+     de fase (fondo oscuro + halo de fase). --- */
+  .reel-manifesto { position: relative; height: 250vh; z-index: 2; }
+  .reel-manifesto-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6vw;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 80% at 50% 44%,
+        color-mix(in srgb, var(--pc, var(--accent)) 15%, var(--bg)) 0%,
+        var(--bg) 62%);
+  }
+  .reel-manifesto-text {
+    margin: 0;
+    max-width: 22ch;
+    text-align: center;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: clamp(30px, 5.2vw, 72px);
+    line-height: 1.18;
+    letter-spacing: -0.4px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.1em 0.34em;
+  }
+  .reel-word {
+    color: color-mix(in srgb, var(--fg) 13%, transparent);   /* apagada */
+    transition: color 340ms var(--ease), text-shadow 340ms var(--ease);
+  }
+  .reel-word.lit {
+    color: var(--pc, var(--accent));                          /* encendida */
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (palabras que se encienden) */
+      0 0 28px color-mix(in srgb, var(--pc, var(--accent)) 55%, transparent);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .reel-manifesto { height: auto; }
+    .reel-manifesto-stage { position: static; height: auto; padding: 96px 6vw; }
+    .reel-word { color: var(--fg); }
   }
   .svc-feature-video {
     display: block;
@@ -836,4 +926,46 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   document.addEventListener('astro:page-load', initSvcFeature);
   /* al navegar fuera (SPA), restaurar el chip del asistente */
   document.addEventListener('astro:before-swap', () => document.body.classList.remove('reel-open'));
+
+  /* CTA "Conoce nuestro trabajo": baja a la lámina de manifiesto */
+  function initSvcNext() {
+    const btn = document.querySelector('[data-svc-next]') as HTMLElement | null;
+    if (!btn || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      document.querySelector('[data-reel-manifesto]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+  initSvcNext();
+  document.addEventListener('astro:page-load', initSvcNext);
+
+  /* Manifiesto: enciende las palabras una a una según el avance del scroll
+     mientras la lámina está fijada (pedido 2026-07-16). */
+  function initReelManifesto() {
+    const sec = document.querySelector('[data-reel-manifesto]') as HTMLElement | null;
+    if (!sec || sec.dataset.mfInit === '1') return;
+    sec.dataset.mfInit = '1';
+    const words = Array.from(sec.querySelectorAll('.reel-word')) as HTMLElement[];
+    if (!words.length) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      words.forEach((w) => w.classList.add('lit'));
+      return;
+    }
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const total = sec.offsetHeight - innerHeight;                 // recorrido con la lámina fijada
+      const scrolled = Math.min(Math.max(-sec.getBoundingClientRect().top, 0), total);
+      const p = total > 0 ? scrolled / total : 0;
+      /* todas encendidas al 82% del recorrido: se ven completas antes de salir */
+      const lit = Math.round(Math.min(p / 0.82, 1) * words.length);
+      words.forEach((w, i) => w.classList.toggle('lit', i < lit));
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    update();
+  }
+  initReelManifesto();
+  document.addEventListener('astro:page-load', initReelManifesto);
 </script>
