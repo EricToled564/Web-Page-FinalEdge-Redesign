@@ -160,9 +160,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             preload="auto"
             aria-hidden="true"
           ></video>
-          <!-- Botón PLAY grande (pedido 2026-07-16): entra deslizándose desde
-               fuera hacia dentro por la derecha; desaparece al reproducir y
-               reaparece al volver a la posición original. -->
+          <!-- Cubierta negra: tapa el primer frame del video hasta que se
+               da play (pedido 2026-07-16). Se desvanece al reproducir. -->
+          <div class="svc-feature-cover" data-svc-cover aria-hidden="true"></div>
+          <!-- Botón PLAY grande (pedido 2026-07-16): entra deslizándose,
+               visible, desde FUERA del marco por la izquierda hasta quedar
+               dentro; desaparece al reproducir y reaparece al volver. -->
           <button class="svc-feature-play" data-svc-bigplay type="button" aria-label="Reproducir el video">Play</button>
           <!-- Controles DENTRO del video (pedido 2026-07-15): play/pausa y
                volumen; visibles solo cuando la pantalla está expandida.
@@ -375,9 +378,21 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     height: 100%;
     object-fit: cover;
   }
+  /* cubierta negra sobre la pantalla (no sobre el bisel): tapa el primer
+     frame del video hasta que se da play. inset = padding del marco. */
+  .svc-feature-cover {
+    position: absolute;
+    inset: 12px;
+    z-index: 2;
+    background: var(--void-deep);
+    opacity: 1;
+    pointer-events: none;
+    transition: opacity var(--t-ui) var(--ease);
+  }
+  .svc-feature[data-reel='live'] .svc-feature-cover { opacity: 0; }
   /* PLAY grande a la izquierda (pedido 2026-07-16): empieza FUERA del marco
-     (recortado por overflow:hidden) y entra deslizándose hasta quedar
-     dentro al expandir; se va al reproducir. */
+     (recortado por overflow:hidden) y entra deslizándose, VISIBLE, hasta
+     quedar dentro al expandir; se va al reproducir. */
   .svc-feature-play {
     position: absolute;
     top: 50%;
@@ -398,7 +413,9 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     opacity: 0;
     pointer-events: none;
     cursor: pointer;
-    transition: transform var(--t-enter) var(--ease), opacity 240ms var(--ease);
+    /* opacity casi instantánea: se vuelve visible mientras aún está fuera
+       (recortada) para que se PERCIBA entrar deslizándose, no aparecer. */
+    transition: transform var(--t-enter) var(--ease), opacity 120ms var(--ease);
   }
   .svc-feature[data-state='expanded'][data-reel='ready'] .svc-feature-play {
     transform: translate(0, -50%);       /* dentro del marco */
@@ -588,6 +605,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        del marco sin encimarse con el video. */
     .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
     .svc-feature-frame { padding: 8px; }
+    .svc-feature-cover { inset: 8px; }
     .svc-feature-controls { bottom: 12px; right: 12px; gap: 8px; }
     .svc-ctl { width: 44px; height: 44px; }
     .svc-ctl svg { width: 19px; height: 19px; }
@@ -808,7 +826,10 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     /* abrir el reel directo (botón "Conoce lo que podemos hacer"): llevar la
        lámina a la zona de fijado; el PLAY entra listo para reproducir. */
     (sec as any)._openReel = () => {
-      window.scrollTo({ top: sec.offsetTop + Math.round(vh() * 0.3), behavior: 'smooth' });
+      /* posición absoluta robusta (offsetTop falla si hay offsetParent
+         posicionado); dejar la lámina fijada llenando el visor */
+      const absTop = sec.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: Math.round(absTop + vh() * 0.35), behavior: 'smooth' });
     };
   }
   initSvcFeature();
