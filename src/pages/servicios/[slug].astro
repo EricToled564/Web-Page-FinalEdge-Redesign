@@ -197,11 +197,40 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
          de los landings de fase. -->
     <section class="reel-manifesto" data-reel-manifesto style={`--pc:${phase.color}`}>
       <div class="reel-manifesto-stage">
+        <!-- mismo fondo que el landing de la fase (pedido 2026-07-16): el
+             efecto Blue Edge sobre la base oscura del tono de fase. -->
+        <canvas class="reel-manifesto-bg" data-blue-edge aria-hidden="true"></canvas>
         <p class="reel-manifesto-text">
           {'Probablemente la mejor productora impulsada por IA de América Latina'.split(' ').map((w) => (
             <span class="reel-word">{w}</span>
           ))}
         </p>
+      </div>
+    </section>
+  )}
+
+  {featureVideo && (
+    <!-- Galería de trabajo (pedido 2026-07-16): 3 tarjetas — Video,
+         Imágenes, Música — en fila (layout de referencia del cliente). -->
+    <section class="section reel-gallery" style={`--pc:${phase.color}`}>
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="prompt">&gt;_</span>nuestro trabajo</p>
+        <hr />
+      </header>
+      <div class="reel-gallery-grid reveal">
+        {[
+          { label: 'Video', img: '/assets/gallery/gal-video.jpg', desc: 'Reels, comerciales y contenido en movimiento.' },
+          { label: 'Imágenes', img: '/assets/gallery/gal-imagenes.jpg', desc: 'Fotografía y arte visual generado a medida.' },
+          { label: 'Música', img: '/assets/gallery/gal-musica.jpg', desc: 'Bandas sonoras y audio original.' },
+        ].map((c) => (
+          <a class="reel-card" href="/#valoracion" aria-label={c.label}>
+            <span class="reel-card-media"><img src={c.img} alt={c.label} width="800" height="450" loading="lazy" /></span>
+            <span class="reel-card-body">
+              <span class="reel-card-title"><span class="prompt">&gt;_</span>{c.label}</span>
+              <span class="reel-card-desc">{c.desc}</span>
+            </span>
+          </a>
+        ))}
       </div>
     </section>
   )}
@@ -429,15 +458,26 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     justify-content: center;
     padding: 0 6vw;
     overflow: hidden;
-    background:
-      radial-gradient(120% 80% at 50% 44%,
-        color-mix(in srgb, var(--pc, var(--accent)) 15%, var(--bg)) 0%,
-        var(--bg) 62%);
+    /* MISMA base que el landing de la fase: tono de fase mezclado a negro
+       (fallback void). El canvas Blue Edge pinta encima. */
+    background: var(--void-deep);
+    background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
+  }
+  /* efecto Blue Edge al fondo (igual que .hub-static del landing de fase) */
+  .reel-manifesto-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
   }
   .reel-manifesto-text {
-    margin: 0;
+    position: relative;
+    z-index: 1;
+    margin: 0 0 0 auto;              /* bloque a la derecha */
     max-width: 22ch;
-    text-align: center;
+    text-align: right;
     font-family: 'Geist Mono', ui-monospace, monospace;
     font-weight: 600;
     font-size: clamp(30px, 5.2vw, 72px);
@@ -445,7 +485,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     letter-spacing: -0.4px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
+    justify-content: flex-end;       /* palabras alineadas a la derecha */
     gap: 0.1em 0.34em;
   }
   .reel-word {
@@ -461,6 +501,31 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .reel-manifesto { height: auto; }
     .reel-manifesto-stage { position: static; height: auto; padding: 96px 6vw; }
     .reel-word { color: var(--fg); }
+  }
+  /* --- Galería de trabajo: 3 tarjetas en fila (Video/Imágenes/Música) --- */
+  .reel-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+  .reel-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--hairline);
+    background: var(--panel);
+    color: var(--fg);
+    text-decoration: none;
+    transition: border-color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
+  }
+  .reel-card:hover { border-color: var(--pc, var(--accent)); transform: translateY(-4px); }
+  .reel-card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; border-bottom: 1px solid var(--hairline); }
+  .reel-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-enter) var(--ease); }
+  .reel-card:hover .reel-card-media img { transform: scale(1.04); }
+  .reel-card-body { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 7px; }
+  .reel-card-title { font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 600; font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
+  .reel-card-desc { font-size: 14px; color: var(--fg-muted); line-height: 1.42; }
+  @media (max-width: 860px) {
+    .reel-gallery-grid { grid-template-columns: 1fr; gap: 18px; }
   }
   .svc-feature-video {
     display: block;
@@ -969,3 +1034,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   initReelManifesto();
   document.addEventListener('astro:page-load', initReelManifesto);
 </script>
+
+<!-- Efecto Blue Edge para el fondo del manifiesto (mismo del landing de
+     fase). Boot propio + re-boot en astro:page-load; no-op si no hay canvas. -->
+<script>import '../../scripts/blue-edge-bg.js';</script>
