@@ -71,7 +71,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   description={edge.summary}
 >
   {videoHero ? (
-    <section class={`svc-vhero${featureVideo ? ' svc-vhero--tabbed' : ''}`} style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
+    <section class="svc-vhero" style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
       <video
         class="svc-vhero-video"
         data-svc-hero-video
@@ -94,11 +94,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       {edge.statement && (
         <div class="svc-vhero-copy reveal">
           <p class="svc-statement">{edge.statement}</p>
-          <!-- "Conoce más" + flecha hacia abajo (pedido 2026-07-15):
-               centrado bajo el texto principal; al presionarlo baja a
-               la siguiente lámina de este servicio (ver initSvcMore). -->
+          <!-- CTA bajo el statement: en creative "Conoce lo que podemos
+               hacer" abre DIRECTO el reel (expandido); en el resto
+               "Conoce más" baja a la siguiente lámina (pedido
+               2026-07-16). Flecha hacia abajo. -->
           <button class="svc-more" type="button" data-svc-more>
-            Conoce más
+            {featureVideo ? 'Conoce lo que podemos hacer' : 'Conoce más'}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
           </button>
         </div>
@@ -107,7 +108,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
            botones): IZQUIERDA regresa a la fase; DERECHA lleva al otro
            servicio de la fase. Escritorio y móvil por igual. -->
       {edge.statement && (
-        <div class={`svc-vhero-actions reveal${featureVideo ? ' svc-vhero-actions--tabbed' : ''}`}>
+        <div class="svc-vhero-actions reveal">
           <a class="svc-arrow" href={phase.slug} aria-label={`Regresar a ${phase.name}`}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M19 12H5" /><path d="M11 6l-6 6 6 6" /></svg>
           </a>
@@ -144,7 +145,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   )}
 
   {featureVideo && (
-    <section class="svc-feature" data-svc-feature data-state="idle" style={`--pc:${phase.color}`}>
+    <section class="svc-feature" data-svc-feature data-state="idle" data-reel="ready" style={`--pc:${phase.color}`}>
       <div class="svc-feature-stage">
         <p class="svc-feature-label" aria-hidden="true">Conoce lo que podemos hacer:</p>
         <div class="svc-feature-frame" data-svc-frame>
@@ -159,8 +160,13 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             preload="auto"
             aria-hidden="true"
           ></video>
+          <!-- Botón PLAY grande (pedido 2026-07-16): entra deslizándose desde
+               fuera hacia dentro por la derecha; desaparece al reproducir y
+               reaparece al volver a la posición original. -->
+          <button class="svc-feature-play" data-svc-bigplay type="button" aria-label="Reproducir el video">Play</button>
           <!-- Controles DENTRO del video (pedido 2026-07-15): play/pausa y
-               volumen; visibles solo cuando la pantalla está expandida. -->
+               volumen; visibles solo cuando la pantalla está expandida.
+               En la esquina inferior derecha para no chocar con subtítulos. -->
           <div class="svc-feature-controls" data-svc-controls>
             <button class="svc-ctl" data-svc-play data-playing="0" type="button" aria-label="Reproducir o pausar el video">
               <svg class="svc-ctl-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="8 5 19 12 8 19 8 5"></polygon></svg>
@@ -290,7 +296,10 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
      otro flick lo destraba y pausa; click alterna play/pausa. El stage
      se fija (sticky) durante un rango de scroll (la sección mide 160vh)
      para que el gesto de expansión siempre tenga dónde engancharse. */
-  .svc-feature { height: 160vh; position: relative; z-index: 2; margin-top: -14vh; }
+  /* sin peek en el hero (2026-07-16): el reel se alcanza con el botón
+     "Conoce lo que podemos hacer" (o bajando) — así las flechas del
+     hero quedan en la misma posición que en los otros servicios. */
+  .svc-feature { height: 160vh; position: relative; z-index: 2; margin-top: 0; }
   .svc-feature-stage {
     position: sticky;
     top: 92px;
@@ -324,11 +333,29 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     width: min(1400px, 94vw);
     aspect-ratio: 16 / 9;
     max-height: calc(100vh - 140px);
-    transform: scale(0.4);
+    transform: scale(0.92);
     transform-origin: center;
-    opacity: 0.55;
-    border: 2px solid var(--pc, var(--accent));
+    opacity: 0.5;
+    overflow: hidden;              /* el PLAY entra desde fuera del marco */
     cursor: pointer;
+    /* marco 3D minimalista premium (rediseño 2026-07-16): un bisel oscuro
+       maquinado (padding con degradado iluminado desde arriba-izq), una
+       línea de fase finísima al borde interior de la "pantalla", y una
+       sombra de elevación en dos capas para que flote. Excepción de
+       sombra autorizada por pedido explícito. */
+    padding: 12px;
+    background:
+      linear-gradient(152deg,
+        color-mix(in srgb, var(--fg) 13%, var(--void-deep)) 0%,
+        var(--void-deep) 44%,
+        var(--void-deep) 100%);
+    border: 1px solid color-mix(in srgb, var(--fg) 9%, transparent);
+    box-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (marco 3D pedido) */
+      inset 0 1px 0 color-mix(in srgb, #FFFFFF 14%, transparent),
+      inset 0 -1px 0 color-mix(in srgb, var(--void-deep) 60%, transparent),
+      inset 0 0 0 1px color-mix(in srgb, var(--void-deep) 55%, transparent),
+      0 2px 4px color-mix(in srgb, var(--void-deep) 50%, transparent),
+      0 42px 90px -28px color-mix(in srgb, var(--void-deep) 78%, transparent);
     transition: transform var(--t-enter) var(--ease), opacity var(--t-enter) var(--ease);
     will-change: transform, opacity;
   }
@@ -336,19 +363,56 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     transform: scale(1);
     opacity: 1;
   }
+  /* la "pantalla" (video): hairline de fase al borde interior del bisel */
+  .svc-feature-video {
+    box-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (borde interior de pantalla) */
+      inset 0 0 0 1px color-mix(in srgb, var(--pc, var(--accent)) 45%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--void-deep) 70%, transparent);
+  }
   .svc-feature-video {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
+  /* PLAY grande a la izquierda (pedido 2026-07-16): empieza FUERA del marco
+     (recortado por overflow:hidden) y entra deslizándose hasta quedar
+     dentro al expandir; se va al reproducir. */
+  .svc-feature-play {
+    position: absolute;
+    top: 50%;
+    left: 8%;
+    transform: translate(-190%, -50%);   /* fuera del marco, por la izquierda */
+    z-index: 4;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(56px, 9vw, 136px);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--fg);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video) */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+    transition: transform var(--t-enter) var(--ease), opacity 240ms var(--ease);
+  }
+  .svc-feature[data-state='expanded'][data-reel='ready'] .svc-feature-play {
+    transform: translate(0, -50%);       /* dentro del marco */
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .svc-feature-play:hover { color: var(--pc, var(--accent)); }
   /* controles DENTRO del video (pedido 2026-07-15): visibles solo al
-     expandir. Sin sombras (R3.2): chips con hairline como el resto. */
+     expandir. En la esquina inferior derecha (pedido 2026-07-16) para no
+     chocar con los subtítulos. Sin sombras: chips con hairline. */
   .svc-feature-controls {
     position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
+    bottom: 18px;
+    right: 18px;
     z-index: 3;
     display: flex;
     gap: 12px;
@@ -356,7 +420,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     pointer-events: none;
     transition: opacity var(--t-ui) var(--ease);
   }
-  .svc-feature[data-state='expanded'] .svc-feature-controls {
+  .svc-feature[data-state='expanded'][data-reel='live'] .svc-feature-controls {
     opacity: 1;
     pointer-events: auto;
   }
@@ -386,6 +450,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature-stage { position: static; height: auto; padding: 96px 24px; }
     .svc-feature-frame { transform: none; opacity: 1; }
     .svc-feature-controls { opacity: 1; pointer-events: auto; }
+    .svc-feature-play { display: none; }
     .svc-feature-label { display: none; }
   }
 
@@ -519,9 +584,13 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     /* las flechas son un par compacto de 52px: se quedan ancladas al
        borde inferior también en móvil (el padding de 84px del hero les
        reserva la franja bajo el contenido centrado). */
-    /* creative: la pestaña del video asoma en el fondo del hero (-14vh)
-       — el contenido centrado le deja esa franja libre */
-    .svc-vhero--tabbed { padding-bottom: 17vh; }
+    /* el PLAY grande se achica en pantallas angostas para caber dentro
+       del marco sin encimarse con el video. */
+    .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
+    .svc-feature-frame { padding: 8px; }
+    .svc-feature-controls { bottom: 12px; right: 12px; gap: 8px; }
+    .svc-ctl { width: 44px; height: 44px; }
+    .svc-ctl svg { width: 19px; height: 19px; }
   }
 </style>
 
@@ -603,6 +672,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     if (!btn || btn.dataset.bound === '1') return;
     btn.dataset.bound = '1';
     btn.addEventListener('click', () => {
+      /* si hay sección de reel, ir DIRECTO a la pantalla del video ya
+         agrandada (con el PLAY grande listo) — la expone initSvcFeature
+         como _openReel (pedido 2026-07-16). Si no, bajar a la siguiente
+         lámina como antes. */
+      const feat = document.querySelector('[data-svc-feature]') as any;
+      if (feat && typeof feat._openReel === 'function') { feat._openReel(); return; }
       const hero = document.querySelector('.svc-vhero');
       const next = hero?.nextElementSibling;
       next?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -611,14 +686,15 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   initSvcMore();
   document.addEventListener('astro:page-load', initSvcMore);
 
-  /* Sección de video con SCROLL-LOCK por gestos (rediseño 2026-07-15,
-     pedido explícito): al llegar a la sección, UN flick hacia abajo
-     expande el video al 100% y TRABA el scroll; aparecen los controles
-     de play/pausa y volumen DENTRO del video. OTRO flick lo destraba y
-     pausa el video automáticamente. Un click en la pantalla alterna
-     play/pausa. Bajo prefers-reduced-motion no hay secuestro de scroll:
-     el CSS deja el video completo y aquí solo se gestiona play/pausa por
-     visibilidad. */
+  /* Sección de reel (rediseño 2026-07-16, pedido explícito): al fijarse
+     la lámina llenando el visor, el marco 3D se agranda al 100% y entra
+     por la derecha un PLAY grande. Al hacer click (en el PLAY o en la
+     pantalla) el video arranca desde el inicio, el PLAY desaparece y
+     quedan los controles de play/pausa y volumen en la esquina inferior
+     derecha. Al hacer scroll (arriba o abajo) fuera de la zona, el video
+     se pausa y se reinicia a 0, y el PLAY reaparece al volver. Sin
+     secuestro de scroll. Bajo prefers-reduced-motion el CSS deja el video
+     completo con controles y sin el PLAY grande. */
   function initSvcFeature() {
     const sec = document.querySelector('[data-svc-feature]') as HTMLElement | null;
     if (!sec) return;
@@ -651,12 +727,31 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     const pauseVid = () => { vid.pause(); syncIcons(); };
     const toggleVid = () => { if (vid.paused) playVid(soundWanted); else pauseVid(); };
 
-    /* CLICK en la pantalla = iniciar/parar (pedido 2026-07-15). El click
-       en los controles no cuenta como click de pantalla. */
+    /* estados del reel (pedido 2026-07-16):
+       data-state = idle | expanded  → escala del marco (expandido al fijarse)
+       data-reel  = ready | live     → ready muestra el PLAY grande; live
+                                       muestra los controles (pausa/volumen). */
+    const bigPlay = sec.querySelector('[data-svc-bigplay]') as HTMLElement | null;
+    const goLive = () => {
+      sec.dataset.reel = 'live';        // se va el PLAY grande, entran controles
+      playVid(soundWanted);
+    };
+    const resetReel = () => {
+      vid.pause();
+      try { vid.currentTime = 0; } catch (_) {}   // reinicia desde el principio
+      soundWanted = false; vid.muted = true;
+      sec.dataset.reel = 'ready';        // el PLAY grande vuelve a aparecer
+      syncIcons();
+    };
+
+    /* CLICK en la pantalla: si aún no arranca, iniciar (= PLAY); si ya está
+       en vivo, alternar play/pausa. Los clics en controles/PLAY no cuentan. */
     frame?.addEventListener('click', (e) => {
-      if ((e.target as HTMLElement).closest('[data-svc-controls]')) return;
-      toggleVid();
+      const t = e.target as HTMLElement;
+      if (t.closest('[data-svc-controls]') || t.closest('[data-svc-bigplay]')) return;
+      if (sec.dataset.reel !== 'live') goLive(); else toggleVid();
     });
+    bigPlay?.addEventListener('click', (e) => { e.stopPropagation(); goLive(); });
     playBtn?.addEventListener('click', (e) => { e.stopPropagation(); toggleVid(); });
     soundBtn?.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -665,114 +760,59 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       syncIcons();
     });
 
+    const vh = () => innerHeight || 800;
+
     if (reduced) {
-      /* sin secuestro de scroll: play/pausa por visibilidad */
+      /* movimiento reducido: sin fijado ni reinicio por scroll. El marco se
+         ve completo; el usuario toca PLAY para ver el reel. */
       sec.dataset.state = 'expanded';
-      const io = new IntersectionObserver((es) => {
-        const en = es[es.length - 1];
-        if (en.isIntersecting) playVid(soundWanted); else pauseVid();
-      }, { threshold: 0.4 });
-      io.observe(vid);
+      (sec as any)._openReel = () => sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return;
     }
 
-    /* ---- máquina de estados del scroll-lock ---- */
-    let locked = false;     // expandido + scroll bloqueado
-    let released = false;   // ya soltado en esta pasada; se re-arma al salir de la zona
-    /* "un gesto" = un flick: inGesture se mantiene mientras lleguen
-       eventos de rueda seguidos y se limpia tras 180ms de quietud, así
-       la inercia del trackpad no cuenta como varios gestos. */
-    let inGesture = false, gTimer = 0;
-    const endGestureSoon = () => { clearTimeout(gTimer); gTimer = window.setTimeout(() => { inGesture = false; }, 180); };
-
-    const vh = () => innerHeight || 800;
-    /* el stage (sticky top:92) está fijado y llenando el visor cuando el
-       tope de la sección ya cruzó el nav y su fondo sigue por debajo. */
+    /* --- modelo por scroll (sin secuestro de scroll): cuando la lámina se
+       fija llenando el visor, se expande el marco y entra el PLAY; al salir
+       de esa zona (scroll hacia arriba o hacia abajo) se pausa, se reinicia
+       a 0 y el PLAY reaparece para la próxima visita. --- */
     const centered = () => {
       const r = sec.getBoundingClientRect();
       return r.top <= 96 && r.bottom >= vh() - 4;
     };
-
-    const expand = () => {
-      locked = true; released = false;
-      sec.dataset.state = 'expanded';
-      playVid(soundWanted);
-      /* intento de sonido automático al expandir (una vez) */
-      if (!soundWanted) {
-        soundWanted = true; vid.muted = false; vid.play().catch(() => {});
-        setTimeout(() => {
-          if (vid.paused || vid.muted) { soundWanted = false; vid.muted = true; vid.play().catch(() => {}); }
-          syncIcons();
-        }, 150);
+    let inZone = false, raf = 0;
+    const evalZone = () => {
+      raf = 0;
+      const c = centered();
+      if (c === inZone) return;
+      inZone = c;
+      if (c) {
+        sec.dataset.state = 'expanded';   // marco a tamaño completo + entra PLAY
+        document.body.classList.add('reel-open');   // oculta el chip del asistente
+      } else {
+        sec.dataset.state = 'idle';
+        document.body.classList.remove('reel-open');
+        resetReel();                      // pausa + reinicia + PLAY reaparece
       }
     };
-    const collapse = (dir: number) => {
-      locked = false; released = true;
-      sec.dataset.state = 'idle';
-      pauseVid();
-      /* empujar el scroll fuera de la zona de fijado para no re-enganchar
-         y dejar ver la siguiente lámina (abajo) o el hero (arriba). */
-      const r = sec.getBoundingClientRect();
-      if (dir > 0) scrollBy({ top: Math.max(80, r.bottom - vh() + 80), behavior: 'smooth' });
-      else scrollBy({ top: Math.min(-80, r.top - 92 - 80), behavior: 'smooth' });
-    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(evalZone); };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    evalZone();
 
-    /* RUEDA — no-pasivo para poder preventDefault (trabar el scroll) */
-    addEventListener('wheel', (e) => {
-      /* ignorar micro-scrolls / delta 0 (un trackpad quieto o un rebote
-         no deben contar como gesto — si no, destraba solo) */
-      if (Math.abs(e.deltaY) < 6) { if (locked) e.preventDefault(); return; }
-      if (locked) {
-        e.preventDefault();                 // trabado: bloquea el scroll de la página
-        const dir = e.deltaY > 0 ? 1 : -1;
-        if (!inGesture) { inGesture = true; collapse(dir); }  // un flick = destrabar + pausar
-        endGestureSoon();
-        return;
-      }
-      if (!centered()) { released = false; return; }  // fuera de la zona: re-armar
-      if (released) return;                            // en zona pero ya usado: scroll normal hasta salir
-      if (e.deltaY > 0) {                              // flick hacia abajo en la zona → expandir + trabar
-        e.preventDefault();
-        if (!inGesture) { inGesture = true; expand(); }
-        endGestureSoon();
-      }
-    }, { passive: false });
-
-    /* TECLADO mientras está trabado */
+    /* barra espaciadora: iniciar / alternar mientras la lámina está fijada */
     addEventListener('keydown', (e) => {
-      if (!locked) return;
-      if (e.key === ' ') { e.preventDefault(); toggleVid(); }
-      else if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); collapse(1); }
-      else if (e.key === 'ArrowUp' || e.key === 'PageUp') { e.preventDefault(); collapse(-1); }
+      if (!inZone || e.key !== ' ') return;
+      e.preventDefault();
+      if (sec.dataset.reel !== 'live') goLive(); else toggleVid();
     });
 
-    /* TÁCTIL (móvil) — mismo modelo por swipe */
-    let touchY = 0;
-    addEventListener('touchstart', (e) => { touchY = e.touches[0].clientY; }, { passive: true });
-    addEventListener('touchmove', (e) => {
-      const dy = touchY - e.touches[0].clientY; // >0 = swipe hacia arriba (scroll down)
-      if (locked) {
-        e.preventDefault();
-        if (Math.abs(dy) > 40 && !inGesture) { inGesture = true; collapse(dy > 0 ? 1 : -1); }
-        return;
-      }
-      if (!centered()) { released = false; return; }
-      if (released) return;
-      if (dy > 40) { e.preventDefault(); if (!inGesture) { inGesture = true; expand(); } }
-    }, { passive: false });
-    addEventListener('touchend', () => { inGesture = false; }, { passive: true });
-
-    /* re-armar al salir por completo de la sección (por si se soltó y se
-       vuelve a entrar desde cualquier lado) */
-    const io = new IntersectionObserver((es) => {
-      const en = es[es.length - 1];
-      if (!en.isIntersecting) {
-        released = false; locked = false;
-        if (sec.dataset.state === 'expanded') { sec.dataset.state = 'idle'; pauseVid(); }
-      }
-    }, { threshold: 0 });
-    io.observe(sec);
+    /* abrir el reel directo (botón "Conoce lo que podemos hacer"): llevar la
+       lámina a la zona de fijado; el PLAY entra listo para reproducir. */
+    (sec as any)._openReel = () => {
+      window.scrollTo({ top: sec.offsetTop + Math.round(vh() * 0.3), behavior: 'smooth' });
+    };
   }
   initSvcFeature();
   document.addEventListener('astro:page-load', initSvcFeature);
+  /* al navegar fuera (SPA), restaurar el chip del asistente */
+  document.addEventListener('astro:before-swap', () => document.body.classList.remove('reel-open'));
 </script>

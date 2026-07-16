@@ -171,3 +171,13 @@ h1, h2, h3 { font-weight: 500; }
   color: var(--accent);
   line-height: 1;
 }
+
+/* Mientras el reel de un servicio está expandido (body.reel-open), el chip
+   flotante del asistente se oculta para no chocar con los controles del
+   video en la esquina inferior derecha (pedido 2026-07-16). */
+body.reel-open .assistant {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transition: opacity var(--t-ui, 280ms) var(--ease, ease);
+}
