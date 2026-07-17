@@ -475,9 +475,9 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   .reel-manifesto-text {
     position: relative;
     z-index: 1;
-    margin: 0 0 0 auto;              /* bloque a la derecha */
+    margin: 0 auto 0 0;              /* bloque a la izquierda */
     max-width: 22ch;
-    text-align: right;
+    text-align: left;
     font-family: 'Geist Mono', ui-monospace, monospace;
     font-weight: 600;
     font-size: clamp(30px, 5.2vw, 72px);
@@ -485,7 +485,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     letter-spacing: -0.4px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;       /* palabras alineadas a la derecha */
+    justify-content: flex-start;     /* palabras alineadas a la izquierda */
     gap: 0.1em 0.34em;
   }
   .reel-word {
