@@ -71,6 +71,43 @@ const FEATURE_VIDEOS = {
   },
 };
 const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
+/* Galería de técnicas (2026-07-17): los 13 videos del cliente asignados a
+   las 6 técnicas (asignación editorial propia — el cliente corrige lo que
+   no cuadre). El primer video de cada técnica da el frame de su tarjeta. */
+/* APAGADO hasta subir los encodes web de los 13 videos a
+   /assets/work/v/ (quedaron a medias al pausar el trabajo 2026-07-17):
+   con true, el click en una técnica despliega sus tarjetas de video y
+   cada tarjeta abre la pantalla con el reproductor nativo. */
+const WORK_VIDEOS_READY = false;
+const TECHS = featureVideo
+  ? [
+      { key: 'documental', label: 'Documental', word: 'Documental', videos: [
+        { title: 'Bacalar', slug: 'bacalar' },
+        { title: 'Cardumen en Bacalar', slug: 'cardumen-en-bacalar' },
+      ] },
+      { key: 'personaje', label: 'Personaje', word: 'Personaje', videos: [
+        { title: 'Santa de vacaciones', slug: 'santa-de-vacaciones' },
+        { title: 'Me enamoré en Acolman', slug: 'me-enamore-en-acolman' },
+      ] },
+      { key: 'animacion', label: 'Animación', word: 'Animación', videos: [
+        { title: 'León de fuego', slug: 'leon-de-fuego' },
+      ] },
+      { key: 'publicidad', label: 'Publicidad', word: 'Publicidad', videos: [
+        { title: 'Felicidades México', slug: 'sw-felicidades-mexico' },
+        { title: 'El riesgo es no intentarlo', slug: 'sw-el-riesgo' },
+        { title: 'Experiencia futbolera', slug: 'sw-experiencia-futbolera' },
+        { title: 'Nos renovamos por ti', slug: 'sw-nos-renovamos' },
+        { title: 'Sports World Mix', slug: 'sports-world-mix' },
+        { title: 'Navidad en Vlu', slug: 'navidad-en-vlu' },
+      ] },
+      { key: 'control-movimiento', label: 'Control de movimiento', word: 'Control de movimiento', videos: [
+        { title: 'Explosión en Hong Kong', slug: 'explosion-en-hong-kong' },
+      ] },
+      { key: 'comida', label: 'Comida', word: 'Comida', videos: [
+        { title: 'Buffet', slug: 'buffet' },
+      ] },
+    ]
+  : [];
 ---
 <Base
   title={`${edge.service} — Final Edge`}
@@ -155,7 +192,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
          NATIVO del navegador — controls estándar con play, línea de tiempo
          y volumen. Cero JS de reproducción propio. Póster negro sólido:
          no se ve ningún frame del video hasta dar play. -->
-    <section class="svc-feature" data-svc-feature data-state="idle" style={`--pc:${phase.color}`}>
+    <section class="svc-feature" data-svc-feature data-state="idle" data-reel="ready" style={`--pc:${phase.color}`}>
       <div class="svc-feature-stage">
         <p class="svc-feature-label" aria-hidden="true">Conoce lo que podemos hacer:</p>
         <div class="svc-feature-frame" data-svc-frame>
@@ -169,6 +206,11 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             playsinline
             preload="metadata"
           ></video>
+          <!-- PLAY grande (pedido 2026-07-16, restaurado sobre el player
+               nativo): entra deslizándose desde fuera por la izquierda;
+               click = play con sonido; desaparece al reproducir y vuelve
+               al salir del visor (video reiniciado a 0). -->
+          <button class="svc-feature-play" data-svc-bigplay type="button" aria-label="Reproducir el video">Play</button>
         </div>
         <!-- CTA bajo la pantalla (pedido 2026-07-16): baja a la lámina de
              manifiesto donde las palabras se iluminan al hacer scroll. -->
@@ -238,27 +280,46 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
         <p class="reel-detail-title">5 fases</p>
         <p class="reel-detail-title">Del concepto al final cut en días</p>
 
-        {/* galería de técnicas: la frase central cambia según la miniatura */}
+        {/* galería de técnicas: la frase central cambia con el hover; el
+           CLICK despliega las tarjetas de los videos de esa técnica */}
         <div class="tech-gallery" id="tech-gallery" data-tech-gallery hidden>
           <p class="tech-phrase">Inteligencia artificial<br /><span class="tech-word" data-tech-word>Documental</span> real</p>
           <div class="tech-grid">
-            {[
-              { label: 'Documental', word: 'Documental', img: '/assets/gallery/tech/documental.jpg' },
-              { label: 'Personaje', word: 'Personaje', img: '/assets/gallery/tech/personaje.jpg' },
-              { label: 'Animación', word: 'Animación', img: '/assets/gallery/tech/animacion.jpg' },
-              { label: 'Publicidad', word: 'Publicidad', img: '/assets/gallery/tech/publicidad.jpg' },
-              { label: 'Control de movimiento', word: 'Control de movimiento', img: '/assets/gallery/tech/control-movimiento.jpg' },
-              { label: 'Comida', word: 'Comida', img: '/assets/gallery/tech/comida.jpg' },
-            ].map((t, i) => (
-              <button class={`tech-thumb${i === 0 ? ' is-active' : ''}`} type="button" data-tech-word-set={t.word}>
-                <span class="tech-thumb-media"><img src={t.img} alt={t.label} width="300" height="400" loading="lazy" /></span>
+            {TECHS.map((t, i) => (
+              <button class={`tech-thumb${i === 0 ? ' is-active' : ''}`} type="button" data-tech-word-set={t.word} data-tech-key={t.key}>
+                <span class="tech-thumb-media"><img src={`/assets/gallery/tech2/${t.key}.jpg`} alt={t.label} width="600" height="800" loading="lazy" /></span>
                 <span class="tech-thumb-label">{t.label}</span>
               </button>
             ))}
           </div>
+          {/* tarjetas de videos por técnica (se muestran al hacer click) */}
+          {WORK_VIDEOS_READY && (
+            <div class="tech-videos" data-tech-videos hidden>
+              {TECHS.map((t) => (
+                <div class="tech-videos-group" data-tech-group={t.key} hidden>
+                  {t.videos.map((v) => (
+                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4`} data-video-title={v.title}>
+                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg`} alt={v.title} width="640" height="360" loading="lazy" /></span>
+                      <span class="work-card-title">{v.title}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
+  )}
+
+  {featureVideo && (
+    <!-- Pantalla de reproducción (2026-07-17): overlay con el reproductor
+         NATIVO (play, línea de tiempo, volumen, pantalla completa). -->
+    <div class="work-player" data-work-player hidden>
+      <button class="work-player-close" data-work-close type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="width:20px;height:20px"><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg></button>
+      <p class="work-player-title" data-work-title></p>
+      <video class="work-player-video" data-work-video controls playsinline preload="metadata"></video>
+    </div>
   )}
 
   <section class="section" style={`--pc:${phase.color}`}>
@@ -472,6 +533,40 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       inset 0 0 0 1px color-mix(in srgb, var(--pc, var(--accent)) 45%, transparent),
       0 0 0 1px color-mix(in srgb, var(--void-deep) 70%, transparent);
   }
+  /* PLAY grande a la izquierda (pedido 2026-07-16, restaurado): empieza
+     FUERA del marco (recortado por overflow:hidden) y entra deslizándose,
+     visible, hasta quedar dentro al expandir; se va al reproducir. Va
+     arriba del centro para no tapar la barra nativa de controles. */
+  .svc-feature-play {
+    position: absolute;
+    top: 44%;
+    left: 8%;
+    transform: translate(-190%, -50%);   /* fuera del marco, por la izquierda */
+    z-index: 4;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: clamp(56px, 9vw, 136px);
+    font-weight: 600;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: var(--fg);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video) */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    cursor: pointer;
+    /* opacity casi instantánea: se vuelve visible mientras aún está fuera
+       (recortada) para que se PERCIBA entrar deslizándose, no aparecer. */
+    transition: transform var(--t-enter) var(--ease), opacity 120ms var(--ease);
+  }
+  .svc-feature[data-state='expanded'][data-reel='ready'] .svc-feature-play {
+    transform: translate(0, -50%);       /* dentro del marco */
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .svc-feature-play:hover { color: var(--pc, var(--accent)); }
   /* --- Lámina de manifiesto: las palabras se encienden en el color de la
      fase al hacer scroll (pedido 2026-07-16), con el aire de los landings
      de fase (fondo oscuro + halo de fase). --- */
@@ -670,8 +765,86 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   }
   .tech-thumb:hover .tech-thumb-label,
   .tech-thumb.is-active .tech-thumb-label { color: var(--fg); }
+  /* tarjetas de videos de la técnica elegida */
+  .tech-videos { margin-top: 34px; }
+  .tech-videos[hidden] { display: none; }
+  .tech-videos-group {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+  }
+  .tech-videos-group[hidden] { display: none; }
+  .work-card {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    padding: 0;
+    cursor: pointer;
+    color: var(--fg);
+    font: inherit;
+    text-align: left;
+    transition: border-color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
+  }
+  .work-card:hover { border-color: var(--pc, var(--accent)); transform: translateY(-4px); }
+  .work-card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; border-bottom: 1px solid var(--hairline); }
+  .work-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-enter) var(--ease); }
+  .work-card:hover .work-card-media img { transform: scale(1.05); }
+  .work-card-title {
+    padding: 12px 14px 14px;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.4px;
+  }
+  /* pantalla de reproducción: overlay oscuro con el player nativo */
+  .work-player {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    background: color-mix(in srgb, var(--void-deep) 96%, transparent);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 4vh 4vw;
+  }
+  .work-player[hidden] { display: none; }
+  .work-player-video {
+    width: min(1400px, 92vw);
+    max-height: 80vh;
+    background: var(--void-deep);
+    border: 1px solid var(--hairline);
+  }
+  .work-player-title {
+    margin: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: 1.4px;
+    color: var(--fg);
+  }
+  .work-player-close {
+    position: absolute;
+    top: 22px;
+    right: 26px;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid var(--hairline);
+    color: var(--fg);
+    font-size: 19px;
+    cursor: pointer;
+    transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+  }
+  .work-player-close:hover { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
     .tech-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .tech-videos-group { grid-template-columns: 1fr; }
   }
   .reel-video-detail.is-open .reel-detail-title {
     opacity: 1;
@@ -696,6 +869,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature { height: auto; margin-top: 0; }
     .svc-feature-stage { position: static; height: auto; padding: 96px 24px; }
     .svc-feature-frame { transform: none; opacity: 1; }
+    .svc-feature-play { display: none; }
     .svc-feature-label { display: none; }
   }
 
@@ -830,6 +1004,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        borde inferior también en móvil (el padding de 84px del hero les
        reserva la franja bajo el contenido centrado). */
     .svc-feature-frame { padding: 8px; }
+    .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
   }
 </style>
 
@@ -967,9 +1142,22 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       frame.appendChild(d);
     });
 
-    /* pausa al salir del visor (no toca la carga ni el arranque) */
+    /* PLAY grande (restaurado): click = play con sonido (gesto directo);
+       si el navegador lo bloquea, cae a mudo. Desaparece al reproducir
+       (data-reel=live) y vuelve al reiniciar. */
+    const bigPlay = sec.querySelector('[data-svc-bigplay]') as HTMLElement | null;
+    bigPlay?.addEventListener('click', () => {
+      vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+    });
+    vid.addEventListener('play', () => { sec.dataset.reel = 'live'; });
+
+    /* al salir del visor: pausa + reinicio a 0 y el PLAY reaparece */
     new IntersectionObserver((es) => {
-      if (!es[es.length - 1].isIntersecting && !vid.paused) vid.pause();
+      if (!es[es.length - 1].isIntersecting) {
+        if (!vid.paused) vid.pause();
+        try { vid.currentTime = 0; } catch (_) {}
+        sec.dataset.reel = 'ready';
+      }
     }, { threshold: 0.15 }).observe(vid);
 
     const vh = () => innerHeight || 800;
@@ -1090,15 +1278,62 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     trigger.addEventListener('mouseenter', open);
     trigger.addEventListener('click', open);
     const thumbs = Array.from(gallery.querySelectorAll('[data-tech-word-set]')) as HTMLElement[];
+    const videosWrap = gallery.querySelector('[data-tech-videos]') as HTMLElement | null;
+    const groups = videosWrap ? (Array.from(videosWrap.querySelectorAll('[data-tech-group]')) as HTMLElement[]) : [];
     const pick = (el: HTMLElement) => {
       if (word) word.textContent = el.getAttribute('data-tech-word-set') || '';
       thumbs.forEach((t) => t.classList.toggle('is-active', t === el));
     };
+    /* CLICK: además de la palabra, despliega las tarjetas de esa técnica */
+    const openVideos = (el: HTMLElement) => {
+      const key = el.getAttribute('data-tech-key');
+      if (!videosWrap || !key) return;
+      videosWrap.hidden = false;
+      groups.forEach((g) => { g.hidden = g.getAttribute('data-tech-group') !== key; });
+      requestAnimationFrame(() => videosWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    };
     thumbs.forEach((el) => {
       el.addEventListener('mouseenter', () => pick(el));
-      el.addEventListener('click', () => pick(el));
+      el.addEventListener('click', () => { pick(el); openVideos(el); });
     });
   }
   initTechGallery();
   document.addEventListener('astro:page-load', initTechGallery);
+
+  /* Pantalla de reproducción (2026-07-17): al hacer click en una tarjeta
+     de video se abre el overlay con el reproductor NATIVO (línea de
+     tiempo incluida). Cierra con el botón, click en el fondo o Escape. */
+  let workPlayerBound = false;
+  function initWorkPlayer() {
+    if (workPlayerBound) return;
+    workPlayerBound = true;
+    const closePlayer = () => {
+      const ov = document.querySelector('[data-work-player]') as HTMLElement | null;
+      if (!ov || ov.hidden) return;
+      const v = ov.querySelector('[data-work-video]') as HTMLVideoElement | null;
+      if (v) { v.pause(); v.removeAttribute('src'); try { v.load(); } catch (_) {} }
+      ov.hidden = true;
+    };
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      const card = t.closest('[data-video-src]');
+      if (card) {
+        const ov = document.querySelector('[data-work-player]') as HTMLElement | null;
+        const v = ov?.querySelector('[data-work-video]') as HTMLVideoElement | null;
+        const title = ov?.querySelector('[data-work-title]') as HTMLElement | null;
+        if (!ov || !v) return;
+        if (title) title.textContent = card.getAttribute('data-video-title') || '';
+        v.src = card.getAttribute('data-video-src') || '';
+        ov.hidden = false;
+        v.play().catch(() => {});
+        return;
+      }
+      if (t.closest('[data-work-close]')) { closePlayer(); return; }
+      const ov = t.closest('[data-work-player]');
+      if (ov && t === ov) closePlayer();   // click en el fondo oscuro
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePlayer(); });
+    document.addEventListener('astro:before-swap', closePlayer);
+  }
+  initWorkPlayer();
 </script>
