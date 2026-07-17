@@ -1053,22 +1053,24 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let soundWanted = false;
 
-    /* PRECARGA A MEMORIA (fix 2026-07-17 "el reel se traba en el primer
-       frame"): el <video> hacía streaming de un archivo grande desde Vercel
-       y se quedaba pegado antes de bufferear; los videos del hero (chicos)
-       no fallan porque se bajan COMPLETOS a un blob. Aquí hacemos lo mismo:
-       fetch del clip → blob en RAM → se cambia el src ANTES de que arranque
-       (nunca a mitad de reproducción, para no reiniciarlo). Al dar play,
-       corre desde memoria: cero streaming, cero trabas. */
+    /* PRECARGA A MEMORIA + RESCATE (fix 2026-07-17 "se traba en el primer
+       frame y se arregla y luego se traba"): el <video> hace streaming de un
+       archivo grande desde Vercel y se queda pegado antes de bufferear. Aquí
+       bajamos el clip COMPLETO a un blob en RAM y reproducimos DESDE MEMORIA.
+       CLAVE del bug anterior: si el usuario ya dio Play y el video quedó
+       TRABADO (no avanzó), antes NO lo tocábamos; ahora igual cambiamos al
+       blob y REANUDAMOS desde memoria. Solo se respeta si ya iba corriendo
+       de verdad (avanzó > 0.6s). */
     (() => {
       const rsrc = vid.getAttribute('src');
-      if (!rsrc || vid.dataset.warmed === '1') return;
+      if (!rsrc) return;
       fetch(rsrc).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
         if (!blob || vid.dataset.warmed === '1') return;
-        if (sec.dataset.reel === 'live' || vid.currentTime > 0.3) return; // ya arrancó: no tocar
+        if (!vid.paused && vid.currentTime > 0.6) return;   // ya corre bien: no tocar
         vid.dataset.warmed = '1';
-        vid.src = URL.createObjectURL(blob);
-        vid.load();
+        const live = sec.dataset.reel === 'live';
+        try { vid.src = URL.createObjectURL(blob); vid.load(); } catch (_) { return; }
+        if (live) playVid(soundWanted);                     // rescatar el trabado desde memoria
       }).catch(() => {});
     })();
 
