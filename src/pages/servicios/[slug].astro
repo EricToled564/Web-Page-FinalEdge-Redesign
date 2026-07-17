@@ -60,7 +60,13 @@ const videoHero = VIDEO_HEROES[edge.id]
    miniatura de esta sección (2026-07-13). Hoy solo creative la tiene. */
 const FEATURE_VIDEOS = {
   creative: {
-    src: '/assets/video/svc-creative-feature.mp4',
+    /* nombre VERSIONADO (fix definitivo 2026-07-17): el archivo se cachea
+       1 semana por vercel.json; con el mismo nombre, el navegador seguía
+       sirviendo la versión vieja (1440p) aunque se subiera una nueva — por
+       eso el reel "se arreglaba y se volvía a trabar". Un nombre nuevo
+       invalida TODAS las capas de caché. Si se sustituye el video, subir
+       el número de versión. */
+    src: '/assets/video/svc-creative-feature-v2.mp4',
     poster: '/assets/video/svc-creative-feature-poster.jpg',
   },
 };
