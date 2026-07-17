@@ -887,6 +887,25 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let soundWanted = false;
 
+    /* PRECARGA A MEMORIA (fix 2026-07-17 "el reel se traba en el primer
+       frame"): el <video> hacía streaming de un archivo grande desde Vercel
+       y se quedaba pegado antes de bufferear; los videos del hero (chicos)
+       no fallan porque se bajan COMPLETOS a un blob. Aquí hacemos lo mismo:
+       fetch del clip → blob en RAM → se cambia el src ANTES de que arranque
+       (nunca a mitad de reproducción, para no reiniciarlo). Al dar play,
+       corre desde memoria: cero streaming, cero trabas. */
+    (() => {
+      const rsrc = vid.getAttribute('src');
+      if (!rsrc || vid.dataset.warmed === '1') return;
+      fetch(rsrc).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
+        if (!blob || vid.dataset.warmed === '1') return;
+        if (sec.dataset.reel === 'live' || vid.currentTime > 0.3) return; // ya arrancó: no tocar
+        vid.dataset.warmed = '1';
+        vid.src = URL.createObjectURL(blob);
+        vid.load();
+      }).catch(() => {});
+    })();
+
     const syncIcons = () => {
       if (playBtn) playBtn.dataset.playing = vid.paused ? '0' : '1';
       if (soundBtn) soundBtn.dataset.sound = (!vid.muted && !vid.paused) ? 'on' : 'off';
