@@ -218,8 +218,15 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
         <hr />
       </header>
       <div class="reel-gallery-grid reveal">
+        {/* Video: botón que despliega abajo los 3 títulos (pedido 2026-07-17) */}
+        <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
+          <span class="reel-card-media"><img src="/assets/gallery/gal-video.jpg" alt="Video" width="800" height="450" loading="lazy" /></span>
+          <span class="reel-card-body">
+            <span class="reel-card-title"><span class="prompt">&gt;_</span>Video</span>
+            <span class="reel-card-desc">Reels, comerciales y contenido en movimiento.</span>
+          </span>
+        </button>
         {[
-          { label: 'Video', img: '/assets/gallery/gal-video.jpg', desc: 'Reels, comerciales y contenido en movimiento.' },
           { label: 'Imágenes', img: '/assets/gallery/gal-imagenes.jpg', desc: 'Fotografía y arte visual generado a medida.' },
           { label: 'Música', img: '/assets/gallery/gal-musica.jpg', desc: 'Bandas sonoras y audio original.' },
         ].map((c) => (
@@ -231,6 +238,36 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             </span>
           </a>
         ))}
+      </div>
+      {/* 3 títulos que aparecen al dar click en la tarjeta de Video */}
+      <div class="reel-video-detail" id="video-detail" data-video-detail hidden>
+        {/* título 1: al hover/click abre la galería de técnicas */}
+        <button class="reel-detail-title reel-detail-trigger" type="button" data-open-tech aria-expanded="false" aria-controls="tech-gallery">
+          Dominamos todas las técnicas
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+        </button>
+        <p class="reel-detail-title">5 fases</p>
+        <p class="reel-detail-title">Del concepto al final cut en días</p>
+
+        {/* galería de técnicas: la frase central cambia según la miniatura */}
+        <div class="tech-gallery" id="tech-gallery" data-tech-gallery hidden>
+          <p class="tech-phrase">Inteligencia artificial<br /><span class="tech-word" data-tech-word>Documental</span> real</p>
+          <div class="tech-grid">
+            {[
+              { label: 'Documental', word: 'Documental', img: '/assets/gallery/tech/documental.jpg' },
+              { label: 'Personaje', word: 'Personaje', img: '/assets/gallery/tech/personaje.jpg' },
+              { label: 'Animación', word: 'Animación', img: '/assets/gallery/tech/animacion.jpg' },
+              { label: 'Publicidad', word: 'Publicidad', img: '/assets/gallery/tech/publicidad.jpg' },
+              { label: 'Control de movimiento', word: 'Control de movimiento', img: '/assets/gallery/tech/control-movimiento.jpg' },
+              { label: 'Comida', word: 'Comida', img: '/assets/gallery/tech/comida.jpg' },
+            ].map((t, i) => (
+              <button class={`tech-thumb${i === 0 ? ' is-active' : ''}`} type="button" data-tech-word-set={t.word}>
+                <span class="tech-thumb-media"><img src={t.img} alt={t.label} width="300" height="400" loading="lazy" /></span>
+                <span class="tech-thumb-label">{t.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </section>
   )}
@@ -515,9 +552,17 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     background: var(--panel);
     color: var(--fg);
     text-decoration: none;
+    /* normaliza el <button> para que se vea igual que los <a> */
+    text-align: left;
+    font: inherit;
+    padding: 0;
+    width: 100%;
+    cursor: pointer;
+    appearance: none;
     transition: border-color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
   }
   .reel-card:hover { border-color: var(--pc, var(--accent)); transform: translateY(-4px); }
+  .reel-card[aria-expanded='true'] { border-color: var(--pc, var(--accent)); }
   .reel-card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; border-bottom: 1px solid var(--hairline); }
   .reel-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-enter) var(--ease); }
   .reel-card:hover .reel-card-media img { transform: scale(1.04); }
@@ -526,6 +571,127 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   .reel-card-desc { font-size: 14px; color: var(--fg-muted); line-height: 1.42; }
   @media (max-width: 860px) {
     .reel-gallery-grid { grid-template-columns: 1fr; gap: 18px; }
+  }
+  /* 3 títulos que se despliegan al dar click en la tarjeta de Video */
+  .reel-video-detail {
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid var(--hairline);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .reel-video-detail[hidden] { display: none; }
+  .reel-detail-title {
+    margin: 0;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: clamp(22px, 3.4vw, 42px);
+    line-height: 1.12;
+    letter-spacing: -0.3px;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    /* entrada escalonada al abrir */
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .reel-detail-title svg { width: clamp(22px, 2.6vw, 30px); height: clamp(22px, 2.6vw, 30px); color: var(--pc, var(--accent)); flex: none; }
+  /* título 1 como botón que abre la galería de técnicas */
+  .reel-detail-trigger {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    width: fit-content;
+    transition: color var(--t-hover) var(--ease);
+  }
+  .reel-detail-trigger:hover,
+  .reel-detail-trigger[aria-expanded='true'] { color: var(--pc, var(--accent)); }
+  /* galería de técnicas: frase central que cambia + miniaturas */
+  .tech-gallery {
+    margin-top: 36px;
+    padding-top: 34px;
+    border-top: 1px solid var(--hairline);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  .tech-gallery[hidden] { display: none; }
+  .tech-gallery.is-open {
+    opacity: 1;
+    transform: none;
+    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+  }
+  .tech-phrase {
+    margin: 0 0 34px;
+    text-align: center;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: clamp(28px, 5vw, 62px);
+    line-height: 1.08;
+    letter-spacing: -0.4px;
+    color: var(--fg);
+  }
+  .tech-word { color: var(--pc, var(--accent)); transition: color var(--t-hover) var(--ease); }
+  .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+  }
+  .tech-thumb {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    color: var(--fg);
+    font: inherit;
+  }
+  .tech-thumb-media {
+    display: block;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    border: 1px solid var(--hairline);
+    transition: border-color var(--t-hover) var(--ease);
+  }
+  .tech-thumb-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(0.4) brightness(0.72);
+    transition: filter var(--t-ui) var(--ease), transform var(--t-enter) var(--ease);
+  }
+  .tech-thumb:hover .tech-thumb-media,
+  .tech-thumb.is-active .tech-thumb-media { border-color: var(--pc, var(--accent)); }
+  .tech-thumb:hover .tech-thumb-media img,
+  .tech-thumb.is-active .tech-thumb-media img { filter: none; transform: scale(1.05); }
+  .tech-thumb-label {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 14px;
+    letter-spacing: 0.03em;
+    text-align: center;
+    color: var(--fg-muted);
+    transition: color var(--t-hover) var(--ease);
+  }
+  .tech-thumb:hover .tech-thumb-label,
+  .tech-thumb.is-active .tech-thumb-label { color: var(--fg); }
+  @media (max-width: 860px) {
+    .tech-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  .reel-video-detail.is-open .reel-detail-title {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+  }
+  .reel-video-detail.is-open .reel-detail-title:nth-child(2) { transition-delay: 90ms; }
+  .reel-video-detail.is-open .reel-detail-title:nth-child(3) { transition-delay: 180ms; }
+  @media (prefers-reduced-motion: reduce) {
+    .reel-detail-title { opacity: 1; transform: none; }
   }
   .svc-feature-video {
     display: block;
@@ -1057,4 +1223,57 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   }
   initReelManifesto();
   document.addEventListener('astro:page-load', initReelManifesto);
+
+  /* Tarjeta de Video: despliega/oculta los 3 títulos (pedido 2026-07-17) */
+  function initVideoDetail() {
+    const btn = document.querySelector('[data-video-toggle]') as HTMLElement | null;
+    const panel = document.querySelector('[data-video-detail]') as HTMLElement | null;
+    if (!btn || !panel || btn.dataset.bound === '1') return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', () => {
+      if (panel.hidden) {
+        panel.hidden = false;
+        requestAnimationFrame(() => panel.classList.add('is-open'));
+        btn.setAttribute('aria-expanded', 'true');
+        requestAnimationFrame(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+      } else {
+        panel.classList.remove('is-open');
+        btn.setAttribute('aria-expanded', 'false');
+        setTimeout(() => { if (!panel.classList.contains('is-open')) panel.hidden = true; }, 340);
+      }
+    });
+  }
+  initVideoDetail();
+  document.addEventListener('astro:page-load', initVideoDetail);
+
+  /* Galería de técnicas (pedido 2026-07-17): el título 1 la abre (hover o
+     click); al pasar/hacer click en una miniatura, la palabra central
+     cambia por el nombre de esa técnica. */
+  function initTechGallery() {
+    const trigger = document.querySelector('[data-open-tech]') as HTMLElement | null;
+    const gallery = document.querySelector('[data-tech-gallery]') as HTMLElement | null;
+    const word = document.querySelector('[data-tech-word]') as HTMLElement | null;
+    if (!trigger || !gallery || trigger.dataset.techBound === '1') return;
+    trigger.dataset.techBound = '1';
+    const open = () => {
+      if (!gallery.hidden) return;
+      gallery.hidden = false;
+      requestAnimationFrame(() => gallery.classList.add('is-open'));
+      trigger.setAttribute('aria-expanded', 'true');
+      requestAnimationFrame(() => gallery.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    };
+    trigger.addEventListener('mouseenter', open);
+    trigger.addEventListener('click', open);
+    const thumbs = Array.from(gallery.querySelectorAll('[data-tech-word-set]')) as HTMLElement[];
+    const pick = (el: HTMLElement) => {
+      if (word) word.textContent = el.getAttribute('data-tech-word-set') || '';
+      thumbs.forEach((t) => t.classList.toggle('is-active', t === el));
+    };
+    thumbs.forEach((el) => {
+      el.addEventListener('mouseenter', () => pick(el));
+      el.addEventListener('click', () => pick(el));
+    });
+  }
+  initTechGallery();
+  document.addEventListener('astro:page-load', initTechGallery);
 </script>
