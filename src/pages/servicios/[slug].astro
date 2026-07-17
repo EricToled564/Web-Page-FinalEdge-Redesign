@@ -1092,6 +1092,21 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     };
     for (const ev of ['play', 'pause', 'volumechange']) vid.addEventListener(ev, syncIcons);
 
+    /* DIAGNÓSTICO EN PANTALLA (2026-07-17): si tras dar Play el video no
+       avanza, se muestra el estado real del <video> (error/readyState/
+       networkState) en una esquina — para saber QUÉ falla en el navegador
+       del usuario en vez de adivinar. Se oculta solo si el video avanza. */
+    const diag = document.createElement('div');
+    diag.setAttribute('data-svc-diag', '');
+    diag.style.cssText = 'position:absolute;left:14px;bottom:14px;z-index:5;font-family:ui-monospace,monospace;font-size:14px;color:#A0A0A8;background:rgba(8,8,10,0.8);padding:4px 8px;display:none;pointer-events:none;';
+    frame?.appendChild(diag);
+    const showDiag = () => {
+      const e = vid.error;
+      diag.textContent = `err:${e ? e.code : '-'} rs:${vid.readyState} ns:${vid.networkState} t:${vid.currentTime.toFixed(2)}`;
+      diag.style.display = 'block';
+    };
+    const hideDiag = () => { diag.style.display = 'none'; };
+
     /* play blindado: reintenta y, si el navegador bloquea el audio sin
        gesto, revierte a mudo y sigue corriendo. */
     const playVid = (wantSound: boolean) => {
@@ -1102,7 +1117,37 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       });
     };
     const pauseVid = () => { vid.pause(); syncIcons(); };
-    const toggleVid = () => { if (vid.paused) playVid(soundWanted); else pauseVid(); };
+
+    /* VIGILANTE (2026-07-17): el mismo mecanismo probado del video del
+       hero, aplicado al reel. Tras pedir reproducción, revisa cada 500ms:
+       si el video no avanza, lo re-patea; si a los 2.5s sigue clavado,
+       muestra el diagnóstico, hace load() de rescate y rearranca al estar
+       listo. Se apaga solo cuando el video avanza de verdad. */
+    let watch = 0;
+    const startWatch = () => {
+      clearInterval(watch);
+      const t0 = Date.now();
+      const startT = vid.currentTime;
+      let reloaded = false;
+      watch = window.setInterval(() => {
+        if (!vid.isConnected || sec.dataset.reel !== 'live') { clearInterval(watch); return; }
+        if (vid.currentTime > startT + 0.4) { clearInterval(watch); hideDiag(); return; }
+        if (vid.paused) vid.play().catch(() => {});
+        if (!reloaded && Date.now() - t0 > 2500) {
+          reloaded = true;
+          showDiag();
+          try { vid.load(); } catch (_) {}
+          vid.addEventListener('canplay', () => {
+            if (sec.dataset.reel === 'live') { vid.muted = true; soundWanted = false; vid.play().catch(() => {}); }
+          }, { once: true });
+        }
+        if (Date.now() - t0 > 20000) { showDiag(); clearInterval(watch); }
+      }, 500);
+    };
+    const toggleVid = () => {
+      if (vid.paused) { playVid(soundWanted); startWatch(); }
+      else pauseVid();
+    };
 
     /* estados del reel (pedido 2026-07-16):
        data-state = idle | expanded  → escala del marco (expandido al fijarse)
@@ -1112,8 +1157,11 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     const goLive = () => {
       sec.dataset.reel = 'live';        // se va el PLAY grande, entran controles
       playVid(soundWanted);
+      startWatch();
     };
     const resetReel = () => {
+      clearInterval(watch);
+      hideDiag();
       vid.pause();
       try { vid.currentTime = 0; } catch (_) {}   // reinicia desde el principio
       soundWanted = false; vid.muted = true;
