@@ -286,16 +286,15 @@ const TECHS = featureVideo
          premium con frames reales de los videos. */}
       <div class="reel-video-detail" id="video-detail" data-video-detail hidden>
         <div class="phase-band">
-          <canvas class="phase-band-bg" data-blue-edge aria-hidden="true"></canvas>
           <div class="phase-band-inner">
             <p class="phase-band-title">
               <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
-              5 fases
+              del concepto a la producción final en días
             </p>
             <div class="phase-grid">
               {PHASES_5.map((f) => (
                 <button class="phase-card" type="button" data-phase-card>
-                  <span class="phase-card-title">{f.title}</span>
+                  <span class="phase-card-title">{f.title === 'Postproducción' ? (<>Post<br />producción</>) : f.title}</span>
                   <span class="phase-card-desc">{f.desc}</span>
                 </button>
               ))}
@@ -706,32 +705,17 @@ const TECHS = featureVideo
     transform: translateY(10px);
   }
   .reel-detail-title svg { width: clamp(22px, 2.6vw, 30px); height: clamp(22px, 2.6vw, 30px); color: var(--pc, var(--accent)); flex: none; }
-  /* --- BANDA de las 5 fases: CALCADA de .presion-band del home (misma
-     construcción, mismo título, misma retícula hairline), en el color
-     del servicio. Celdas transparentes: el efecto se ve a través. --- */
-  .phase-band {
-    position: relative;
-    overflow: hidden;
-    background: var(--void-deep);
-    background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
-  }
-  .phase-band-bg {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    pointer-events: none;
-  }
+  /* --- BANDA de las 5 fases (rediseño 2026-07-17 con video de
+     referencia del cliente): SIN fondo de efecto — sobre el fondo de la
+     página, retícula hairline. El encendido es un RELLENO del color de
+     fase que SUBE desde la base de la tarjeta (como el video); el título
+     vive clavado al centro (no se mueve) y la explicación aparece
+     debajo. --- */
+  .phase-band { position: relative; }
   .phase-band-inner {
-    position: relative;
-    z-index: 1;
     max-width: 1180px;
     margin: 0 auto;
-    padding: 72px 48px 80px;
-    /* misma sombra ligera aprobada de la banda del home */
-    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
-                 0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
+    padding: 24px 0 8px;
   }
   /* mismo título que .presion-h2 del home: >_ plateado horneado + texto */
   .phase-band-title {
@@ -746,56 +730,72 @@ const TECHS = featureVideo
     color: var(--fg);
   }
   .phase-band-prompt-img { height: 0.78em; width: auto; display: block; }
-  /* misma retícula que .presion-facts: celdas transparentes + hairlines */
   .phase-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    margin-top: 56px;
-    border: 1px solid color-mix(in srgb, var(--fg) 30%, transparent);
+    margin-top: 44px;
+    border: 1px solid var(--hairline);
   }
   .phase-card {
+    position: relative;
+    overflow: hidden;
     background: transparent;
     border: none;
-    border-inline-start: 1px solid color-mix(in srgb, var(--fg) 30%, transparent);
-    min-height: 240px;
-    padding: 40px 24px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
+    border-inline-start: 1px solid var(--hairline);
+    min-height: 268px;
+    padding: 0;
     color: var(--fg);
     font: inherit;
     cursor: pointer;
-    transition: background var(--t-ui) var(--ease);
   }
   .phase-card:first-child { border-inline-start: none; }
-  /* reposo: SOLO el nombre — 17px, peso normal, blanco */
+  /* el relleno que sube desde abajo (video de referencia) */
+  .phase-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--pc, var(--accent));
+    transform: translateY(101%);
+    transition: transform 340ms var(--ease);
+    z-index: 0;
+  }
+  .phase-card:hover::before,
+  .phase-card.is-open::before { transform: translateY(0); }
+  /* título CLAVADO al centro de la celda: jamás se mueve */
   .phase-card-title {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1;
+    text-align: center;
     font-family: var(--font-ui);
     font-weight: 400;
     font-size: 17px;
     letter-spacing: 0.2px;
+    line-height: 1.25;
     color: var(--fg);
-    transition: color var(--t-hover) var(--ease);
+    transition: color var(--t-ui) var(--ease);
   }
-  /* hover/click: velo tenue del color de fase, nombre en color de fase,
-     y la explicación aparece debajo (peso normal, como el home) */
+  /* la explicación aparece DEBAJO del título, sin moverlo */
   .phase-card-desc {
-    margin-top: 14px;
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    top: calc(50% + 32px);
+    z-index: 1;
+    text-align: center;
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.5;
-    max-width: 24ch;
-    color: color-mix(in srgb, var(--fg) 78%, transparent);
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--void-deep) 85%, transparent);
     opacity: 0;
     transform: translateY(6px);
-    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+    transition: opacity var(--t-ui) var(--ease) 120ms, transform var(--t-ui) var(--ease) 120ms;
   }
-  .phase-card:hover,
-  .phase-card.is-open { background: color-mix(in srgb, var(--pc, var(--accent)) 10%, transparent); }
   .phase-card:hover .phase-card-title,
-  .phase-card.is-open .phase-card-title { color: var(--pc, var(--accent)); }
+  .phase-card.is-open .phase-card-title { color: var(--void-deep); }
   .phase-card:hover .phase-card-desc,
   .phase-card.is-open .phase-card-desc { opacity: 1; transform: none; }
   /* galería de técnicas: frase central que cambia + miniaturas */
@@ -956,12 +956,10 @@ const TECHS = featureVideo
     .tech-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .tech-videos-group { grid-template-columns: 1fr; }
     /* banda de fases apilada en móvil */
-    .phase-band-inner { padding: 36px 20px 40px; }
+    .phase-band-inner { padding: 16px 0 8px; }
     .phase-grid { grid-template-columns: 1fr; }
-    .phase-card { border-left: none; border-top: 1px solid color-mix(in srgb, var(--fg) 22%, transparent); min-height: 0; padding: 22px 18px; }
+    .phase-card { border-inline-start: none; border-top: 1px solid var(--hairline); min-height: 150px; }
     .phase-card:first-child { border-top: none; }
-    .phase-card-desc { display: none; }
-    .phase-card.is-open .phase-card-desc { display: block; }
   }
   .reel-video-detail.is-open .reel-detail-title {
     opacity: 1;
