@@ -982,21 +982,6 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
       applyWarmSrc(n);
       n.play().catch(() => {});
     }
-    /* MISMO rescate para el video del REEL (fix 2026-07-17, causa del
-       "trabado solo al llegar navegando"): los <video> que entran por el
-       swap SPA del ClientRouter no arrancan su algoritmo de carga — quedan
-       muertos en readyState 0 mostrando el póster. Con refresh directo el
-       parser sí los carga (por eso el bug solo aparecía navegando desde el
-       home/engine). Reconstruir el elemento en el documento vivo, como ya
-       se hace con el hero, restaura la carga normal. */
-    const f = document.querySelector('[data-svc-feature-video]') as HTMLVideoElement | null;
-    if (f) {
-      const nf = f.cloneNode(false) as HTMLVideoElement;
-      nf.muted = true;
-      nf.defaultMuted = true;
-      f.replaceWith(nf);
-      try { nf.load(); } catch (_) {}
-    }
   });
 
   let svcWatch = 0;
@@ -1068,33 +1053,38 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
        inicial, así que sin esto los listeners se registran dos veces. */
     if (sec.dataset.featureInit === '1') return;
     sec.dataset.featureInit = '1';
-    const vid = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
+    /* VIDEO CREADO DESDE JS (reconstrucción de cero 2026-07-17, pedido
+       explícito tras el ciclo de trabas): un <video> creado con
+       document.createElement en el documento vivo SIEMPRE arranca su
+       carga, llegue la página por refresh directo o por navegación SPA
+       (los <video> del HTML servido, al entrar por el swap del
+       ClientRouter, se quedan en readyState 0 mostrando el póster — esa
+       era la traba al llegar desde home → engine → creative). UN SOLO
+       camino de código: streaming progresivo normal. Sin precarga a
+       memoria, sin rescates asíncronos que compitan con el Play del
+       usuario (el rescate anterior podía resetear el src en plena
+       arrancada y dejar el video pausado en el póster). */
+    const seed = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
+    const vid = document.createElement('video');
+    vid.className = seed.className;
+    vid.setAttribute('data-svc-feature-video', '');
+    vid.setAttribute('aria-hidden', 'true');
+    vid.setAttribute('playsinline', '');
+    vid.playsInline = true;
+    vid.muted = true;
+    vid.defaultMuted = true;
+    vid.loop = true;
+    vid.preload = 'auto';
+    vid.poster = seed.getAttribute('poster') || '';
+    vid.src = seed.getAttribute('src') || '';
+    seed.replaceWith(vid);
+    try { vid.load(); } catch (_) {}
+
     const frame = sec.querySelector('[data-svc-frame]') as HTMLElement | null;
     const playBtn = sec.querySelector('[data-svc-play]') as HTMLElement | null;
     const soundBtn = sec.querySelector('[data-svc-sound]') as HTMLElement | null;
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     let soundWanted = false;
-
-    /* PRECARGA A MEMORIA + RESCATE (fix 2026-07-17 "se traba en el primer
-       frame y se arregla y luego se traba"): el <video> hace streaming de un
-       archivo grande desde Vercel y se queda pegado antes de bufferear. Aquí
-       bajamos el clip COMPLETO a un blob en RAM y reproducimos DESDE MEMORIA.
-       CLAVE del bug anterior: si el usuario ya dio Play y el video quedó
-       TRABADO (no avanzó), antes NO lo tocábamos; ahora igual cambiamos al
-       blob y REANUDAMOS desde memoria. Solo se respeta si ya iba corriendo
-       de verdad (avanzó > 0.6s). */
-    (() => {
-      const rsrc = vid.getAttribute('src');
-      if (!rsrc) return;
-      fetch(rsrc).then((r) => (r.ok ? r.blob() : null)).then((blob) => {
-        if (!blob || vid.dataset.warmed === '1') return;
-        if (!vid.paused && vid.currentTime > 0.6) return;   // ya corre bien: no tocar
-        vid.dataset.warmed = '1';
-        const live = sec.dataset.reel === 'live';
-        try { vid.src = URL.createObjectURL(blob); vid.load(); } catch (_) { return; }
-        if (live) playVid(soundWanted);                     // rescatar el trabado desde memoria
-      }).catch(() => {});
-    })();
 
     const syncIcons = () => {
       if (playBtn) playBtn.dataset.playing = vid.paused ? '0' : '1';
