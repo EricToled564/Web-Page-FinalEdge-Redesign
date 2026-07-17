@@ -768,6 +768,11 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
 </style>
 
 <script>
+  /* Fondo Blue Edge del manifiesto (mismo del landing de fase). Se importa
+     DENTRO de este script único (no como <script> aparte): Astro deduplica
+     los <script> idénticos entre páginas y lo dejaba fuera del bundle de
+     servicios — por eso el efecto no cargaba aquí. */
+  import '../../scripts/blue-edge-bg.js';
   /* Arranque del video del hero de servicio — MISMO patrón blindado que
      el video del hero del home (index.astro), duplicado a propósito: el
      del home está verificado con reproducción real y congelado; una
@@ -1034,7 +1039,3 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   initReelManifesto();
   document.addEventListener('astro:page-load', initReelManifesto);
 </script>
-
-<!-- Efecto Blue Edge para el fondo del manifiesto (mismo del landing de
-     fase). Boot propio + re-boot en astro:page-load; no-op si no hay canvas. -->
-<script>import '../../scripts/blue-edge-bg.js';</script>
