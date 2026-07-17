@@ -151,7 +151,11 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   )}
 
   {featureVideo && (
-    <section class="svc-feature" data-svc-feature data-state="idle" data-reel="ready" style={`--pc:${phase.color}`}>
+    <!-- REEL REHECHO DE CERO (2026-07-17, pedido explícito): reproductor
+         NATIVO del navegador — controls estándar con play, línea de tiempo
+         y volumen. Cero JS de reproducción propio. Póster negro sólido:
+         no se ve ningún frame del video hasta dar play. -->
+    <section class="svc-feature" data-svc-feature data-state="idle" style={`--pc:${phase.color}`}>
       <div class="svc-feature-stage">
         <p class="svc-feature-label" aria-hidden="true">Conoce lo que podemos hacer:</p>
         <div class="svc-feature-frame" data-svc-frame>
@@ -159,33 +163,12 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
             class="svc-feature-video"
             data-svc-feature-video
             src={featureVideo.src}
-            poster={featureVideo.poster}
-            muted
+            poster="/assets/video/reel-poster-black.jpg"
+            controls
             loop
             playsinline
-            preload="auto"
-            aria-hidden="true"
+            preload="metadata"
           ></video>
-          <!-- Cubierta negra: tapa el primer frame del video hasta que se
-               da play (pedido 2026-07-16). Se desvanece al reproducir. -->
-          <div class="svc-feature-cover" data-svc-cover aria-hidden="true"></div>
-          <!-- Botón PLAY grande (pedido 2026-07-16): entra deslizándose,
-               visible, desde FUERA del marco por la izquierda hasta quedar
-               dentro; desaparece al reproducir y reaparece al volver. -->
-          <button class="svc-feature-play" data-svc-bigplay type="button" aria-label="Reproducir el video">Play</button>
-          <!-- Controles DENTRO del video (pedido 2026-07-15): play/pausa y
-               volumen; visibles solo cuando la pantalla está expandida.
-               En la esquina inferior derecha para no chocar con subtítulos. -->
-          <div class="svc-feature-controls" data-svc-controls>
-            <button class="svc-ctl" data-svc-play data-playing="0" type="button" aria-label="Reproducir o pausar el video">
-              <svg class="svc-ctl-play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="8 5 19 12 8 19 8 5"></polygon></svg>
-              <svg class="svc-ctl-pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.4" height="14"></rect><rect x="13.6" y="5" width="3.4" height="14"></rect></svg>
-            </button>
-            <button class="svc-ctl svc-sound" data-svc-sound data-sound="off" type="button" aria-label="Activar o silenciar el sonido del video">
-              <svg class="svc-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><path d="M15.5 8.5a5 5 0 0 1 0 7"></path><path d="M18.5 5.5a9 9 0 0 1 0 13"></path></svg>
-              <svg class="svc-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" stroke="none"></polygon><line x1="15" y1="9" x2="21" y2="15"></line><line x1="21" y1="9" x2="15" y2="15"></line></svg>
-            </button>
-          </div>
         </div>
         <!-- CTA bajo la pantalla (pedido 2026-07-16): baja a la lámina de
              manifiesto donde las palabras se iluminan al hacer scroll. -->
@@ -449,14 +432,15 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   .svc-feature-frame {
     position: relative;
     display: block;
-    width: min(1180px, 84vw);
+    /* 16:9 SIEMPRE: el ancho también se limita por la altura disponible,
+       para que el marco no quede más ancho que el video nativo */
+    width: min(1180px, 84vw, calc((100vh - 250px) * 16 / 9));
     aspect-ratio: 16 / 9;
     max-height: calc(100vh - 250px);
     transform: scale(0.92);
     transform-origin: center;
     opacity: 0.5;
-    overflow: hidden;              /* el PLAY entra desde fuera del marco */
-    cursor: pointer;
+    overflow: hidden;
     /* marco 3D minimalista premium (rediseño 2026-07-16): un bisel oscuro
        maquinado (padding con degradado iluminado desde arriba-izq), una
        línea de fase finísima al borde interior de la "pantalla", y una
@@ -705,87 +689,6 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     height: 100%;
     object-fit: cover;
   }
-  /* cubierta negra sobre la pantalla (no sobre el bisel): tapa el primer
-     frame del video hasta que se da play. inset = padding del marco. */
-  .svc-feature-cover {
-    position: absolute;
-    inset: 12px;
-    z-index: 2;
-    background: var(--void-deep);
-    opacity: 1;
-    pointer-events: none;
-    transition: opacity var(--t-ui) var(--ease);
-  }
-  .svc-feature[data-reel='live'] .svc-feature-cover { opacity: 0; }
-  /* PLAY grande a la izquierda (pedido 2026-07-16): empieza FUERA del marco
-     (recortado por overflow:hidden) y entra deslizándose, VISIBLE, hasta
-     quedar dentro al expandir; se va al reproducir. */
-  .svc-feature-play {
-    position: absolute;
-    top: 50%;
-    left: 8%;
-    transform: translate(-190%, -50%);   /* fuera del marco, por la izquierda */
-    z-index: 4;
-    margin: 0;
-    padding: 0;
-    background: none;
-    border: none;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-size: clamp(56px, 9vw, 136px);
-    font-weight: 600;
-    letter-spacing: 2px;
-    line-height: 1;
-    color: var(--fg);
-    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video) */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
-    opacity: 0;
-    pointer-events: none;
-    cursor: pointer;
-    /* opacity casi instantánea: se vuelve visible mientras aún está fuera
-       (recortada) para que se PERCIBA entrar deslizándose, no aparecer. */
-    transition: transform var(--t-enter) var(--ease), opacity 120ms var(--ease);
-  }
-  .svc-feature[data-state='expanded'][data-reel='ready'] .svc-feature-play {
-    transform: translate(0, -50%);       /* dentro del marco */
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .svc-feature-play:hover { color: var(--pc, var(--accent)); }
-  /* controles DENTRO del video (pedido 2026-07-15): visibles solo al
-     expandir. En la esquina inferior derecha (pedido 2026-07-16) para no
-     chocar con los subtítulos. Sin sombras: chips con hairline. */
-  .svc-feature-controls {
-    position: absolute;
-    bottom: 18px;
-    right: 18px;
-    z-index: 3;
-    display: flex;
-    gap: 12px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity var(--t-ui) var(--ease);
-  }
-  .svc-feature[data-state='expanded'][data-reel='live'] .svc-feature-controls {
-    opacity: 1;
-    pointer-events: auto;
-  }
-  .svc-ctl {
-    width: 52px;
-    height: 52px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--fg);
-    background: color-mix(in srgb, var(--panel) 82%, transparent);
-    border: 1px solid var(--hairline);
-    cursor: pointer;
-    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
-  }
-  .svc-ctl:hover { background: var(--fg); color: var(--bg); }
-  .svc-ctl svg { width: 22px; height: 22px; }
-  .svc-ctl[data-playing='1'] .svc-ctl-play { display: none; }
-  .svc-ctl[data-playing='0'] .svc-ctl-pause { display: none; }
-  .svc-sound[data-sound='on'] .svc-sound-off { display: none; }
-  .svc-sound[data-sound='off'] .svc-sound-on { display: none; }
 
   /* con movimiento reducido no hay scroll-lock: el video se muestra
      completo y los controles siempre visibles. */
@@ -793,8 +696,6 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     .svc-feature { height: auto; margin-top: 0; }
     .svc-feature-stage { position: static; height: auto; padding: 96px 24px; }
     .svc-feature-frame { transform: none; opacity: 1; }
-    .svc-feature-controls { opacity: 1; pointer-events: auto; }
-    .svc-feature-play { display: none; }
     .svc-feature-label { display: none; }
   }
 
@@ -928,14 +829,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
     /* las flechas son un par compacto de 52px: se quedan ancladas al
        borde inferior también en móvil (el padding de 84px del hero les
        reserva la franja bajo el contenido centrado). */
-    /* el PLAY grande se achica en pantallas angostas para caber dentro
-       del marco sin encimarse con el video. */
-    .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
     .svc-feature-frame { padding: 8px; }
-    .svc-feature-cover { inset: 8px; }
-    .svc-feature-controls { bottom: 12px; right: 12px; gap: 8px; }
-    .svc-ctl { width: 44px; height: 44px; }
-    .svc-ctl svg { width: 19px; height: 19px; }
   }
 </style>
 
@@ -1037,204 +931,73 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
   initSvcMore();
   document.addEventListener('astro:page-load', initSvcMore);
 
-  /* Sección de reel (rediseño 2026-07-16, pedido explícito): al fijarse
-     la lámina llenando el visor, el marco 3D se agranda al 100% y entra
-     por la derecha un PLAY grande. Al hacer click (en el PLAY o en la
-     pantalla) el video arranca desde el inicio, el PLAY desaparece y
-     quedan los controles de play/pausa y volumen en la esquina inferior
-     derecha. Al hacer scroll (arriba o abajo) fuera de la zona, el video
-     se pausa y se reinicia a 0, y el PLAY reaparece al volver. Sin
-     secuestro de scroll. Bajo prefers-reduced-motion el CSS deja el video
-     completo con controles y sin el PLAY grande. */
+  /* Sección de reel — REHECHA DE CERO (2026-07-17, pedido explícito):
+     el video usa los controles NATIVOS del navegador (play, línea de
+     tiempo, volumen). Aquí solo queda lo visual y defensivo:
+     1) el <video> se recrea con createElement en cada llegada — los
+        <video> del HTML servido, al entrar por el swap SPA del
+        ClientRouter, no arrancan su carga (readyState 0, póster fijo);
+     2) escala del marco al fijarse la lámina (data-state);
+     3) pausa al salir del visor;
+     4) si el elemento reporta un error real, muestra su código en una
+        esquina para diagnóstico en el navegador del usuario. */
   function initSvcFeature() {
     const sec = document.querySelector('[data-svc-feature]') as HTMLElement | null;
     if (!sec) return;
-    /* guardia de init ÚNICA: astro:page-load también dispara en la carga
-       inicial, así que sin esto los listeners se registran dos veces. */
     if (sec.dataset.featureInit === '1') return;
     sec.dataset.featureInit = '1';
-    /* VIDEO CREADO DESDE JS (reconstrucción de cero 2026-07-17, pedido
-       explícito tras el ciclo de trabas): un <video> creado con
-       document.createElement en el documento vivo SIEMPRE arranca su
-       carga, llegue la página por refresh directo o por navegación SPA
-       (los <video> del HTML servido, al entrar por el swap del
-       ClientRouter, se quedan en readyState 0 mostrando el póster — esa
-       era la traba al llegar desde home → engine → creative). UN SOLO
-       camino de código: streaming progresivo normal. Sin precarga a
-       memoria, sin rescates asíncronos que compitan con el Play del
-       usuario (el rescate anterior podía resetear el src en plena
-       arrancada y dejar el video pausado en el póster). */
+    const frame = sec.querySelector('[data-svc-frame]') as HTMLElement | null;
+
+    /* cloneNode (no createElement): el clon conserva TODOS los atributos,
+       incluido el data-astro-cid del scope de estilos — con createElement
+       el video quedaba SIN estilos (tamaño natural, desbordado). El clon
+       nuevo en el documento vivo + load() re-arranca la carga que el swap
+       SPA deja muerta. */
     const seed = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
-    const vid = document.createElement('video');
-    vid.className = seed.className;
-    vid.setAttribute('data-svc-feature-video', '');
-    vid.setAttribute('aria-hidden', 'true');
-    vid.setAttribute('playsinline', '');
-    vid.playsInline = true;
-    vid.muted = true;
-    vid.defaultMuted = true;
-    vid.loop = true;
-    vid.preload = 'auto';
-    vid.poster = seed.getAttribute('poster') || '';
-    vid.src = seed.getAttribute('src') || '';
+    const vid = seed.cloneNode(false) as HTMLVideoElement;
     seed.replaceWith(vid);
     try { vid.load(); } catch (_) {}
 
-    const frame = sec.querySelector('[data-svc-frame]') as HTMLElement | null;
-    const playBtn = sec.querySelector('[data-svc-play]') as HTMLElement | null;
-    const soundBtn = sec.querySelector('[data-svc-sound]') as HTMLElement | null;
-    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let soundWanted = false;
-
-    const syncIcons = () => {
-      if (playBtn) playBtn.dataset.playing = vid.paused ? '0' : '1';
-      if (soundBtn) soundBtn.dataset.sound = (!vid.muted && !vid.paused) ? 'on' : 'off';
-    };
-    for (const ev of ['play', 'pause', 'volumechange']) vid.addEventListener(ev, syncIcons);
-
-    /* DIAGNÓSTICO EN PANTALLA (2026-07-17): si tras dar Play el video no
-       avanza, se muestra el estado real del <video> (error/readyState/
-       networkState) en una esquina — para saber QUÉ falla en el navegador
-       del usuario en vez de adivinar. Se oculta solo si el video avanza. */
-    const diag = document.createElement('div');
-    diag.setAttribute('data-svc-diag', '');
-    diag.style.cssText = 'position:absolute;left:14px;bottom:14px;z-index:5;font-family:ui-monospace,monospace;font-size:14px;color:#A0A0A8;background:rgba(8,8,10,0.8);padding:4px 8px;display:none;pointer-events:none;';
-    frame?.appendChild(diag);
-    const showDiag = () => {
-      const e = vid.error;
-      diag.textContent = `err:${e ? e.code : '-'} rs:${vid.readyState} ns:${vid.networkState} t:${vid.currentTime.toFixed(2)}`;
-      diag.style.display = 'block';
-    };
-    const hideDiag = () => { diag.style.display = 'none'; };
-
-    /* play blindado: reintenta y, si el navegador bloquea el audio sin
-       gesto, revierte a mudo y sigue corriendo. */
-    const playVid = (wantSound: boolean) => {
-      vid.muted = !wantSound;
-      vid.play().then(syncIcons).catch(() => {
-        if (wantSound) { soundWanted = false; vid.muted = true; vid.play().catch(() => {}); }
-        syncIcons();
-      });
-    };
-    const pauseVid = () => { vid.pause(); syncIcons(); };
-
-    /* VIGILANTE (2026-07-17): el mismo mecanismo probado del video del
-       hero, aplicado al reel. Tras pedir reproducción, revisa cada 500ms:
-       si el video no avanza, lo re-patea; si a los 2.5s sigue clavado,
-       muestra el diagnóstico, hace load() de rescate y rearranca al estar
-       listo. Se apaga solo cuando el video avanza de verdad. */
-    let watch = 0;
-    const startWatch = () => {
-      clearInterval(watch);
-      const t0 = Date.now();
-      const startT = vid.currentTime;
-      let reloaded = false;
-      watch = window.setInterval(() => {
-        if (!vid.isConnected || sec.dataset.reel !== 'live') { clearInterval(watch); return; }
-        if (vid.currentTime > startT + 0.4) { clearInterval(watch); hideDiag(); return; }
-        if (vid.paused) vid.play().catch(() => {});
-        if (!reloaded && Date.now() - t0 > 2500) {
-          reloaded = true;
-          showDiag();
-          try { vid.load(); } catch (_) {}
-          vid.addEventListener('canplay', () => {
-            if (sec.dataset.reel === 'live') { vid.muted = true; soundWanted = false; vid.play().catch(() => {}); }
-          }, { once: true });
-        }
-        if (Date.now() - t0 > 20000) { showDiag(); clearInterval(watch); }
-      }, 500);
-    };
-    const toggleVid = () => {
-      if (vid.paused) { playVid(soundWanted); startWatch(); }
-      else pauseVid();
-    };
-
-    /* estados del reel (pedido 2026-07-16):
-       data-state = idle | expanded  → escala del marco (expandido al fijarse)
-       data-reel  = ready | live     → ready muestra el PLAY grande; live
-                                       muestra los controles (pausa/volumen). */
-    const bigPlay = sec.querySelector('[data-svc-bigplay]') as HTMLElement | null;
-    const goLive = () => {
-      sec.dataset.reel = 'live';        // se va el PLAY grande, entran controles
-      playVid(soundWanted);
-      startWatch();
-    };
-    const resetReel = () => {
-      clearInterval(watch);
-      hideDiag();
-      vid.pause();
-      try { vid.currentTime = 0; } catch (_) {}   // reinicia desde el principio
-      soundWanted = false; vid.muted = true;
-      sec.dataset.reel = 'ready';        // el PLAY grande vuelve a aparecer
-      syncIcons();
-    };
-
-    /* CLICK en la pantalla: si aún no arranca, iniciar (= PLAY); si ya está
-       en vivo, alternar play/pausa. Los clics en controles/PLAY no cuentan. */
-    frame?.addEventListener('click', (e) => {
-      const t = e.target as HTMLElement;
-      if (t.closest('[data-svc-controls]') || t.closest('[data-svc-bigplay]')) return;
-      if (sec.dataset.reel !== 'live') goLive(); else toggleVid();
+    /* diagnóstico SOLO ante un error real del elemento */
+    vid.addEventListener('error', () => {
+      if (!frame) return;
+      const d = document.createElement('div');
+      d.style.cssText = 'position:absolute;left:14px;top:14px;z-index:5;font-family:ui-monospace,monospace;font-size:14px;color:#A0A0A8;background:rgba(8,8,10,0.8);padding:4px 8px;pointer-events:none;';
+      d.textContent = `video err:${vid.error ? vid.error.code : '?'}`;
+      frame.appendChild(d);
     });
-    bigPlay?.addEventListener('click', (e) => { e.stopPropagation(); goLive(); });
-    playBtn?.addEventListener('click', (e) => { e.stopPropagation(); toggleVid(); });
-    soundBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (vid.muted) { soundWanted = true; vid.muted = false; if (vid.paused) playVid(true); }
-      else { soundWanted = false; vid.muted = true; }
-      syncIcons();
-    });
+
+    /* pausa al salir del visor (no toca la carga ni el arranque) */
+    new IntersectionObserver((es) => {
+      if (!es[es.length - 1].isIntersecting && !vid.paused) vid.pause();
+    }, { threshold: 0.15 }).observe(vid);
 
     const vh = () => innerHeight || 800;
 
+    /* escala del marco al fijarse la lámina + ocultar el chip del
+       asistente mientras el reel llena el visor */
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) {
-      /* movimiento reducido: sin fijado ni reinicio por scroll. El marco se
-         ve completo; el usuario toca PLAY para ver el reel. */
       sec.dataset.state = 'expanded';
-      (sec as any)._openReel = () => sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
+    } else {
+      let inZone = false, raf = 0;
+      const evalZone = () => {
+        raf = 0;
+        const r = sec.getBoundingClientRect();
+        const c = r.top <= 96 && r.bottom >= vh() - 4;
+        if (c === inZone) return;
+        inZone = c;
+        sec.dataset.state = c ? 'expanded' : 'idle';
+        document.body.classList.toggle('reel-open', c);
+      };
+      const onScroll = () => { if (!raf) raf = requestAnimationFrame(evalZone); };
+      addEventListener('scroll', onScroll, { passive: true });
+      addEventListener('resize', onScroll, { passive: true });
+      evalZone();
     }
 
-    /* --- modelo por scroll (sin secuestro de scroll): cuando la lámina se
-       fija llenando el visor, se expande el marco y entra el PLAY; al salir
-       de esa zona (scroll hacia arriba o hacia abajo) se pausa, se reinicia
-       a 0 y el PLAY reaparece para la próxima visita. --- */
-    const centered = () => {
-      const r = sec.getBoundingClientRect();
-      return r.top <= 96 && r.bottom >= vh() - 4;
-    };
-    let inZone = false, raf = 0;
-    const evalZone = () => {
-      raf = 0;
-      const c = centered();
-      if (c === inZone) return;
-      inZone = c;
-      if (c) {
-        sec.dataset.state = 'expanded';   // marco a tamaño completo + entra PLAY
-        document.body.classList.add('reel-open');   // oculta el chip del asistente
-      } else {
-        sec.dataset.state = 'idle';
-        document.body.classList.remove('reel-open');
-        resetReel();                      // pausa + reinicia + PLAY reaparece
-      }
-    };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(evalZone); };
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', onScroll, { passive: true });
-    evalZone();
-
-    /* barra espaciadora: iniciar / alternar mientras la lámina está fijada */
-    addEventListener('keydown', (e) => {
-      if (!inZone || e.key !== ' ') return;
-      e.preventDefault();
-      if (sec.dataset.reel !== 'live') goLive(); else toggleVid();
-    });
-
-    /* abrir el reel directo (botón "Conoce lo que podemos hacer"): llevar la
-       lámina a la zona de fijado; el PLAY entra listo para reproducir. */
+    /* botón "Conoce lo que podemos hacer": llevar la lámina al visor */
     (sec as any)._openReel = () => {
-      /* posición absoluta robusta (offsetTop falla si hay offsetParent
-         posicionado); dejar la lámina fijada llenando el visor */
       const absTop = sec.getBoundingClientRect().top + window.scrollY;
       window.scrollTo({ top: Math.round(absTop + vh() * 0.35), behavior: 'smooth' });
     };
