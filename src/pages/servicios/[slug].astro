@@ -974,13 +974,29 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
 
   document.addEventListener('astro:after-swap', () => {
     const v = document.querySelector('[data-svc-hero-video]') as HTMLVideoElement | null;
-    if (!v) return;
-    const n = v.cloneNode(false) as HTMLVideoElement;
-    n.muted = true;
-    n.defaultMuted = true;
-    v.replaceWith(n);
-    applyWarmSrc(n);
-    n.play().catch(() => {});
+    if (v) {
+      const n = v.cloneNode(false) as HTMLVideoElement;
+      n.muted = true;
+      n.defaultMuted = true;
+      v.replaceWith(n);
+      applyWarmSrc(n);
+      n.play().catch(() => {});
+    }
+    /* MISMO rescate para el video del REEL (fix 2026-07-17, causa del
+       "trabado solo al llegar navegando"): los <video> que entran por el
+       swap SPA del ClientRouter no arrancan su algoritmo de carga — quedan
+       muertos en readyState 0 mostrando el póster. Con refresh directo el
+       parser sí los carga (por eso el bug solo aparecía navegando desde el
+       home/engine). Reconstruir el elemento en el documento vivo, como ya
+       se hace con el hero, restaura la carga normal. */
+    const f = document.querySelector('[data-svc-feature-video]') as HTMLVideoElement | null;
+    if (f) {
+      const nf = f.cloneNode(false) as HTMLVideoElement;
+      nf.muted = true;
+      nf.defaultMuted = true;
+      f.replaceWith(nf);
+      try { nf.load(); } catch (_) {}
+    }
   });
 
   let svcWatch = 0;
