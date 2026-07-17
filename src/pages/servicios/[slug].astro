@@ -78,7 +78,7 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
    /assets/work/v/ (quedaron a medias al pausar el trabajo 2026-07-17):
    con true, el click en una técnica despliega sus tarjetas de video y
    cada tarjeta abre la pantalla con el reproductor nativo. */
-const WORK_VIDEOS_READY = false;
+const WORK_VIDEOS_READY = true;
 /* Las 5 fases del proceso de video (banda al dar click en "Video",
    2026-07-17). Copy editorial propia — el cliente ajusta lo que quiera. */
 const PHASES_5 = [
@@ -302,19 +302,19 @@ const TECHS = featureVideo
           </div>
         </div>
 
-        {/* técnicas: tarjetas premium con frame real; hover cambia la
-           palabra de la frase; click desplegará sus videos */}
-        <div class="tech-gallery is-open" id="tech-gallery" data-tech-gallery>
-          <p class="tech-phrase">Inteligencia artificial<br /><span class="tech-word" data-tech-word>Documental</span> real</p>
-          <div class="tech-grid">
-            {TECHS.map((t, i) => (
-              <button class={`tech-thumb${i === 0 ? ' is-active' : ''}`} type="button" data-tech-word-set={t.word} data-tech-key={t.key}>
-                <span class="tech-thumb-media"><img src={`/assets/gallery/tech2/${t.key}.jpg`} alt={t.label} width="600" height="800" loading="lazy" /></span>
-                <span class="tech-thumb-label">{t.label}</span>
-              </button>
+        {/* técnicas al estilo del menú de la rueda del home (pedido
+           2026-07-17): título >_ + menú de chips; hover o click en una
+           técnica muestra las tarjetas de sus videos */}
+        <div class="tech-gallery" id="tech-gallery" data-tech-gallery>
+          <p class="phase-band-title tech-title">
+            <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
+            Dominamos todas las técnicas
+          </p>
+          <nav class="tech-menu" aria-label="Técnicas" data-tech-menu>
+            {TECHS.map((t) => (
+              <button class="tech-menu-item" type="button" data-tech-key={t.key}>{t.label}</button>
             ))}
-          </div>
-          {/* tarjetas de videos por técnica (se muestran al hacer click) */}
+          </nav>
           {WORK_VIDEOS_READY && (
             <div class="tech-videos" data-tech-videos hidden>
               {TECHS.map((t) => (
@@ -800,80 +800,34 @@ const TECHS = featureVideo
   .phase-card.is-open .phase-card-desc { opacity: 1; transform: none; }
   /* galería de técnicas: frase central que cambia + miniaturas */
   .tech-gallery {
-    margin-top: 44px;
+    margin-top: 56px;
   }
-  .tech-gallery[hidden] { display: none; }
-  .tech-gallery.is-open {
-    opacity: 1;
-    transform: none;
-    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+  .tech-title { margin-bottom: 0; }
+  /* menú de técnicas: chips CALCADOS de .engine-menu-item del home */
+  .tech-menu {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
   }
-  .tech-phrase {
-    margin: 0 0 34px;
-    text-align: center;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-weight: 600;
-    font-size: clamp(28px, 5vw, 62px);
-    line-height: 1.08;
-    letter-spacing: -0.4px;
+  .tech-menu-item {
+    display: inline-block;
+    font-family: var(--font-ui);
+    font-size: clamp(14px, 1.3vw, 16px);
+    font-weight: 500;
+    letter-spacing: normal;
     color: var(--fg);
-  }
-  .tech-word { color: var(--pc, var(--accent)); transition: color var(--t-hover) var(--ease); }
-  .tech-grid {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 14px;
-  }
-  .tech-thumb {
-    position: relative;
-    display: block;
-    background: none;
+    background: var(--panel);
     border: 1px solid var(--hairline);
-    padding: 0;
+    padding: 9px 18px;
     cursor: pointer;
-    color: var(--fg);
-    font: inherit;
-    overflow: hidden;
-    transition: border-color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
+    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
   }
-  .tech-thumb:hover,
-  .tech-thumb.is-active { border-color: var(--pc, var(--accent)); transform: translateY(-4px); }
-  .tech-thumb-media {
-    display: block;
-    aspect-ratio: 3 / 4;
-    overflow: hidden;
-  }
-  .tech-thumb-media img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    filter: grayscale(0.35) brightness(0.8);
-    transition: filter var(--t-ui) var(--ease), transform var(--t-enter) var(--ease);
-  }
-  .tech-thumb:hover .tech-thumb-media img,
-  .tech-thumb.is-active .tech-thumb-media img { filter: none; transform: scale(1.06); }
-  /* degradado inferior para que el nombre viva DENTRO de la imagen */
-  .tech-thumb::after {
-    content: '';
-    position: absolute;
-    inset: auto 0 0 0;
-    height: 46%;
-    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--void-deep) 88%, transparent) 100%);
-    pointer-events: none;
-  }
-  .tech-thumb-label {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 11px;
-    z-index: 2;
-    text-align: left;
-    font-family: 'Geist Mono', ui-monospace, monospace;
-    font-weight: 600;
-    font-size: 14px;
-    letter-spacing: 0.04em;
-    color: var(--fg);
+  .tech-menu-item:hover,
+  .tech-menu-item.is-active {
+    background: var(--fg);
+    color: var(--bg);
+    border-color: var(--fg);
   }
   /* tarjetas de videos de la técnica elegida */
   .tech-videos { margin-top: 34px; }
@@ -953,7 +907,6 @@ const TECHS = featureVideo
   }
   .work-player-close:hover { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
-    .tech-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .tech-videos-group { grid-template-columns: 1fr; }
     /* banda de fases apilada en móvil */
     .phase-band-inner { padding: 16px 0 8px; }
@@ -1374,12 +1327,11 @@ const TECHS = featureVideo
   initVideoDetail();
   document.addEventListener('astro:page-load', initVideoDetail);
 
-  /* Galería de técnicas (pedido 2026-07-17): el título 1 la abre (hover o
-     click); al pasar/hacer click en una miniatura, la palabra central
-     cambia por el nombre de esa técnica. */
+  /* Galería de técnicas al estilo del menú de la rueda (2026-07-17):
+     hover o click en un chip del menú → aparecen las tarjetas de los
+     videos de esa técnica. También enciende las tarjetas de las 5 fases. */
   function initTechGallery() {
     const gallery = document.querySelector('[data-tech-gallery]') as HTMLElement | null;
-    const word = document.querySelector('[data-tech-word]') as HTMLElement | null;
     if (!gallery || gallery.dataset.techBound === '1') return;
     gallery.dataset.techBound = '1';
     /* tarjetas de las 5 fases: hover enciende; click fija/apaga (móvil) */
@@ -1391,24 +1343,22 @@ const TECHS = featureVideo
         if (!on) c.classList.add('is-open');
       });
     });
-    const thumbs = Array.from(gallery.querySelectorAll('[data-tech-word-set]')) as HTMLElement[];
+    const items = Array.from(gallery.querySelectorAll('[data-tech-key]')) as HTMLElement[];
     const videosWrap = gallery.querySelector('[data-tech-videos]') as HTMLElement | null;
     const groups = videosWrap ? (Array.from(videosWrap.querySelectorAll('[data-tech-group]')) as HTMLElement[]) : [];
-    const pick = (el: HTMLElement) => {
-      if (word) word.textContent = el.getAttribute('data-tech-word-set') || '';
-      thumbs.forEach((t) => t.classList.toggle('is-active', t === el));
-    };
-    /* CLICK: además de la palabra, despliega las tarjetas de esa técnica */
     const openVideos = (el: HTMLElement) => {
       const key = el.getAttribute('data-tech-key');
       if (!videosWrap || !key) return;
+      items.forEach((i) => i.classList.toggle('is-active', i === el));
       videosWrap.hidden = false;
       groups.forEach((g) => { g.hidden = g.getAttribute('data-tech-group') !== key; });
-      requestAnimationFrame(() => videosWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
     };
-    thumbs.forEach((el) => {
-      el.addEventListener('mouseenter', () => pick(el));
-      el.addEventListener('click', () => { pick(el); openVideos(el); });
+    items.forEach((el) => {
+      el.addEventListener('mouseenter', () => openVideos(el));
+      el.addEventListener('click', () => {
+        openVideos(el);
+        requestAnimationFrame(() => videosWrap?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+      });
     });
   }
   initTechGallery();
