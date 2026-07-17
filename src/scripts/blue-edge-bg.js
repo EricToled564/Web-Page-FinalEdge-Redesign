@@ -363,6 +363,9 @@ function initBlueEdgeGL(canvas) {
     }
     requestAnimationFrame(loop);
     if (!visible || document.hidden) return;
+    /* el canvas pudo nacer con el host oculto (display:none → rect 0 →
+       1x1): al hacerse visible se re-dimensiona solo */
+    if (canvas.width <= 2 || canvas.height <= 2) resize();
     render(now);
   }
   requestAnimationFrame(loop);
@@ -591,6 +594,7 @@ function initBlueEdge2D(canvas) {
     if (!canvas.isConnected) return; // la página navegó: el bucle muere solo
     requestAnimationFrame(loop);
     if (!visible || document.hidden) return;
+    if (canvas.width <= 2 || canvas.height <= 2) resize(); // nacido oculto
     if (now - lastFrame < 1000 / CONFIG.fps) return;
     lastFrame = now;
     paint(now * 0.001 * CONFIG.speed);
