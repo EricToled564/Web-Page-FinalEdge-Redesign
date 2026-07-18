@@ -46,7 +46,7 @@ const videoHero = VIDEO_HEROES[edge.id]
   ? {
       ...VIDEO_HEROES[edge.id],
       src: `/assets/video/svc-${edge.id}-hero.mp4`,
-      poster: `/assets/video/svc-${edge.id}-hero-poster.jpg`,
+      poster: `/assets/video/svc-${edge.id}-hero-poster.webp`,
       logo: `/assets/logos/logo-${edge.id}.png`,
       plate: `/assets/logos/logo-${edge.id}-plate.png`,
     }
@@ -67,7 +67,7 @@ const FEATURE_VIDEOS = {
        invalida TODAS las capas de caché. Si se sustituye el video, subir
        el número de versión. */
     src: '/assets/video/svc-creative-feature-v2.mp4',
-    poster: '/assets/video/svc-creative-feature-poster.jpg',
+    poster: '/assets/video/svc-creative-feature-poster.webp',
   },
 };
 const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
@@ -104,9 +104,9 @@ const IMG_TECHS = featureVideo
             ...t,
             variants: t.variants
               .filter((v) => v.n > 0)
-              .map((v) => ({ ...v, images: Array.from({ length: v.n }, (_, i) => `/assets/gallery/img/${t.key}/${v.key}/${String(i + 1).padStart(2, '0')}.jpg`) })),
+              .map((v) => ({ ...v, images: Array.from({ length: v.n }, (_, i) => `/assets/gallery/img/${t.key}/${v.key}/${String(i + 1).padStart(2, '0')}.webp`) })),
           }
-        : { ...t, images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.jpg`) }
+        : { ...t, images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.webp`) }
     )
   : [];
 /* Estilos de música (galería al dar click en "Música", pedido
@@ -294,7 +294,7 @@ const TECHS = featureVideo
             class="svc-feature-video"
             data-svc-feature-video
             src={featureVideo.src}
-            poster="/assets/video/reel-poster-black.jpg"
+            poster="/assets/video/reel-poster-black.webp"
             controls
             loop
             playsinline
@@ -348,15 +348,15 @@ const TECHS = featureVideo
            su galería; Imágenes abre la suya (collages); Música va a
            valoración por ahora. TODA el área de la tarjeta es el botón. */}
         <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
-          <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.jpg" alt="Video" width="1080" height="1920" loading="lazy" /></span>
+          <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.webp" alt="Video" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Video</span>
         </button>
         <button class="reel-card" type="button" data-img-toggle aria-expanded="false" aria-controls="img-detail">
-          <span class="reel-card-media"><img src="/assets/gallery/gal-imagenes-v.jpg" alt="Imágenes" width="1080" height="1920" loading="lazy" /></span>
+          <span class="reel-card-media"><img src="/assets/gallery/gal-imagenes-v.webp" alt="Imágenes" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Imágenes</span>
         </button>
         <button class="reel-card" type="button" data-music-toggle aria-expanded="false" aria-controls="music-detail">
-          <span class="reel-card-media"><img src="/assets/gallery/gal-musica-v.jpg" alt="Música" width="1080" height="1920" loading="lazy" /></span>
+          <span class="reel-card-media"><img src="/assets/gallery/gal-musica-v.webp" alt="Música" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Música</span>
         </button>
       </div>
@@ -454,7 +454,7 @@ const TECHS = featureVideo
                   <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
                     {t.videos.map((v, j) => (
                       <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-hls={`/assets/stream/v1/${v.slug}/master.m3u8`} data-video-title={v.title} data-video-num={String(j + 1).padStart(2, '0')}>
-                        <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg?v=2`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
+                        <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.webp`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
                         <span class="work-card-title"><span class="work-card-num">{String(j + 1).padStart(2, '0')}</span>{v.title}</span>
                       </button>
                     ))}
