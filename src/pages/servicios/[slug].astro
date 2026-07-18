@@ -1579,11 +1579,23 @@ const TECHS = featureVideo
   /* la lista, cuando se abre, cae flotando SOBRE la pantalla (no
      empuja el layout) — así "vuelve a la pantalla" se siente literal
      al elegir una pista y que la lista se cierre */
+  /* dropdown FLOTANTE anclado al toggle (fix 2026-07-18: "no sirve el
+     colapsable si no se puede ver las pistas haciendo scroll" — el
+     panel vivía en el flujo normal de la página y su borde inferior
+     quedaba MÁS ABAJO del viewport; el scroll de la propia lista solo
+     tenía unos px de sobra y el scroll de la página quedaba mezclado
+     con el de la lista, confuso. Ahora es position:fixed, JS calcula
+     top/left/ancho contra el toggle y el alto MÁXIMO contra el espacio
+     real que queda hasta el borde de la ventana — así SIEMPRE cabe
+     entera en pantalla y su overflow-y:auto es el único scroll que
+     hace falta, nunca compite con el de la página). */
   #music-tracklist {
-    position: relative;
-    margin-top: 10px;
-    max-height: min(50vh, 420px);
+    position: fixed;
+    z-index: 40;
     overflow-y: auto;
+    padding: 10px;
+    background: var(--panel);
+    border: 1px solid var(--hairline);
   }
   #music-tracklist[hidden] { display: none; }
   /* pantalla de reproducción: overlay oscuro con el player nativo */
@@ -1793,15 +1805,16 @@ const TECHS = featureVideo
   @media (max-width: 980px) {
     .svc-hero { padding: 120px 24px 64px; }
     .svc-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 40px; }
-    /* MÓVIL (auditoría 2026-07-14): los botones anclados al fondo se
-       encimaban con el statement centrado (creative, medido en captura
-       390×844) y el segundo se recortaba bajo el chip del asistente.
-       En pantallas angostas vuelven al flujo, apilados y centrados
-       bajo el texto. */
-    .svc-vhero { padding: 32px 20px 84px; gap: 24px; }
-    /* las flechas son un par compacto de 52px: se quedan ancladas al
-       borde inferior también en móvil (el padding de 84px del hero les
-       reserva la franja bajo el contenido centrado). */
+    /* MÓVIL (auditoría 2026-07-14, corregida 2026-07-18 — el fix
+       anterior quedó solo en el comentario, nunca se codificó: las
+       flechas seguían ancladas al fondo y la de "siguiente servicio"
+       quedaba REALMENTE tapada por el chip del asistente, medido en
+       390×844: flecha 203-255px / chip 196-378px, se pisaban 52px en
+       ambos ejes). Las flechas vuelven al flujo NORMAL del documento
+       en vez de flotar sobre el borde inferior — así nunca compiten
+       con el chip fijo, sin importar la altura de pantalla. */
+    .svc-vhero { padding: 32px 20px 40px; gap: 24px; }
+    .svc-vhero-actions { position: static; margin-top: 8px; max-width: 100%; }
     .svc-feature-frame { padding: 8px; }
     .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
   }
@@ -2408,12 +2421,60 @@ const TECHS = featureVideo
       listPanel.hidden = true;
       listToggle.setAttribute('aria-expanded', 'false');
     };
+    /* posiciona el dropdown FLOTANTE contra el toggle en coordenadas de
+       VIEWPORT (position:fixed) — el alto máximo se calcula contra el
+       espacio real que queda hasta el borde inferior de la ventana, así
+       la lista completa (con TODAS las pistas) siempre cabe entera y su
+       scroll interno es el único que hace falta. Se recalcula cada vez
+       que se abre por si la ventana cambió de tamaño mientras tanto. */
+    const positionList = () => {
+      if (!listPanel || !listToggle) return;
+      const r = listToggle.getBoundingClientRect();
+      const gap = 8, margin = 20;
+      const spaceBelow = innerHeight - r.bottom - gap - margin;
+      const spaceAbove = r.top - gap - margin;
+      listPanel.style.left = `${Math.round(r.left)}px`;
+      listPanel.style.width = `${Math.round(r.width)}px`;
+      if (spaceBelow >= 160 || spaceBelow >= spaceAbove) {
+        /* caso normal: abre hacia abajo */
+        listPanel.style.top = `${Math.round(r.bottom + gap)}px`;
+        listPanel.style.bottom = 'auto';
+        listPanel.style.maxHeight = `${Math.max(120, Math.round(spaceBelow))}px`;
+      } else {
+        /* viewport corto (móvil) con el toggle muy abajo: se voltea y
+           abre hacia ARRIBA, ancla el fondo del panel justo encima del
+           toggle — sin esto el panel se salía por debajo de la
+           pantalla en celulares (reporte 2026-07-18, revisión móvil) */
+        listPanel.style.top = 'auto';
+        listPanel.style.bottom = `${Math.round(innerHeight - r.top + gap)}px`;
+        listPanel.style.maxHeight = `${Math.max(120, Math.round(spaceAbove))}px`;
+      }
+    };
     const expandList = () => {
       if (!listPanel || !listToggle) return;
+      positionList();
       listPanel.hidden = false;
       listToggle.setAttribute('aria-expanded', 'true');
     };
     listToggle?.addEventListener('click', () => { if (listPanel?.hidden) expandList(); else collapseList(); });
+    /* cierra el dropdown al hacer scroll de la PÁGINA (no el suyo
+       propio — 'scroll' no burbujea, así que un listener con capture
+       en window también recibe el scroll INTERNO del panel; sin
+       excluirlo, intentar desplazar la lista la cerraba de inmediato,
+       justo el bug reportado 2026-07-18), resize, click afuera o
+       Escape — como cualquier menú flotante anclado. */
+    addEventListener('scroll', (e) => {
+      if (!listPanel || listPanel.hidden) return;
+      if (e.target === listPanel || (e.target instanceof Node && listPanel.contains(e.target))) return;
+      collapseList();
+    }, { passive: true, capture: true });
+    addEventListener('resize', () => { if (listPanel && !listPanel.hidden) collapseList(); });
+    document.addEventListener('click', (e) => {
+      if (!listPanel || listPanel.hidden) return;
+      const t = e.target as HTMLElement;
+      if (!listPanel.contains(t) && t !== listToggle && !listToggle?.contains(t)) collapseList();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && listPanel && !listPanel.hidden) collapseList(); });
     setListLabel();
 
     const playTrack = (card: HTMLElement) => {
