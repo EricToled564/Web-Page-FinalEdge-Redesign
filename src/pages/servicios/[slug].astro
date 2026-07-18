@@ -85,7 +85,7 @@ const WORK_VIDEOS_READY = true;
    marcas de agua del generador. */
 const IMG_TECHS = featureVideo
   ? [
-      { key: 'paisaje', label: 'Paisaje', n: 5 },
+      { key: 'manglares', label: 'Manglares', n: 4 },
       { key: 'luxury-resorts', label: 'Luxury resorts', n: 4 },
       { key: 'yoga', label: 'Yoga por la mañana', n: 5 },
       { key: 'bar', label: 'Bar', n: 5 },
@@ -425,7 +425,7 @@ const TECHS = featureVideo
             </div>
             <div class="img-collages">
               {IMG_TECHS.map((t, i) => (
-                <div class="img-collage" data-imgtech-group={t.key} hidden={i !== 0}>
+                <div class="img-collage" data-imgtech-group={t.key} data-n={t.images.length} hidden={i !== 0}>
                   {t.images.map((src, j) => (
                     <button class="collage-item" type="button" data-lightbox-src={src} aria-label={`${t.label} ${j + 1}`}>
                       <img src={src} alt={`${t.label} ${String(j + 1).padStart(2, '0')}`} loading="lazy" />
@@ -1096,34 +1096,57 @@ const TECHS = featureVideo
   }
   .tech-back:hover { color: var(--pc, var(--accent)); }
   .tech-back svg { width: 16px; height: 16px; }
-  /* COLLAGE en tonos mate (pedido 2026-07-17): mosaico tipo masonry que
-     respeta la proporción de cada foto; acabado mate en reposo (color y
-     contraste contenidos) que despierta al hover; click = se agranda */
+  /* COLLAGE de verdad (corrección 2026-07-17): las piezas ensambladas
+     borde con borde llenando UN solo lienzo — retícula empacada con
+     costuras de 6px, cada foto RECORTA (cover) para llenar su celda
+     exacta, la primera manda como pieza grande. Acabado MATE en reposo
+     que despierta al hover; click = se agranda. El layout se elige por
+     número de piezas (data-n) para que el lienzo cierre sin huecos. */
   .img-collage {
-    columns: 3;
-    column-gap: 10px;
+    display: grid;
+    gap: 6px;
+    grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: minmax(190px, 29vh);
   }
   .img-collage[hidden] { display: none; }
+  .img-collage[data-n='2'] { grid-template-areas: 'a a b b'; }
+  .img-collage[data-n='3'] { grid-template-areas: 'a a b b' 'a a c c'; }
+  .img-collage[data-n='4'] { grid-template-areas: 'a a b c' 'a a d d'; }
+  .img-collage[data-n='5'] { grid-template-areas: 'a a b c' 'a a d e'; }
+  .img-collage[data-n='6'] { grid-template-areas: 'a a b c' 'a a d e' 'f f f f'; }
+  .collage-item:nth-child(1) { grid-area: a; }
+  .collage-item:nth-child(2) { grid-area: b; }
+  .collage-item:nth-child(3) { grid-area: c; }
+  .collage-item:nth-child(4) { grid-area: d; }
+  .collage-item:nth-child(5) { grid-area: e; }
+  .collage-item:nth-child(6) { grid-area: f; }
+  /* pieza única (New Year's Eve): protagonista entera, sin recorte.
+     :not([hidden]) — sin él, este display:block le ganaba al [hidden]
+     (misma especificidad, regla posterior) y la pieza se veía SIEMPRE */
+  .img-collage[data-n='1']:not([hidden]) { display: block; }
+  .img-collage[data-n='1'] .collage-item { max-width: min(100%, 76vh); }
+  .img-collage[data-n='1'] .collage-item img { height: auto; }
   .collage-item {
     display: block;
     width: 100%;
-    margin: 0 0 10px;
+    height: 100%;
+    margin: 0;
     padding: 0;
     border: 1px solid var(--hairline);
     background: var(--panel);
     cursor: zoom-in;
     overflow: hidden;
-    break-inside: avoid;
   }
   .collage-item img {
     display: block;
     width: 100%;
-    height: auto;
+    height: 100%;
+    object-fit: cover;
     /* acabado MATE: saturación y contraste contenidos, negros levantados */
     filter: saturate(0.78) contrast(0.92) brightness(1.02);
     transition: filter var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
   }
-  .collage-item:hover img { filter: saturate(0.95) contrast(0.98); transform: scale(1.02); }
+  .collage-item:hover img { filter: saturate(0.95) contrast(0.98); transform: scale(1.03); }
   /* lightbox: la imagen agrandada sobre velo oscuro */
   .img-lightbox {
     position: fixed;
@@ -1145,7 +1168,13 @@ const TECHS = featureVideo
   }
   .img-lightbox .work-player-close { position: absolute; top: 18px; right: 18px; }
   @media (max-width: 860px) {
-    .img-collage { columns: 2; }
+    /* en móvil el lienzo se reempaca a 2 columnas, siempre sin huecos */
+    .img-collage { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(150px, 24vh); }
+    .img-collage[data-n='2'] { grid-template-areas: 'a a' 'b b'; }
+    .img-collage[data-n='3'] { grid-template-areas: 'a a' 'b c'; }
+    .img-collage[data-n='4'] { grid-template-areas: 'a a' 'b c' 'd d'; }
+    .img-collage[data-n='5'] { grid-template-areas: 'a a' 'b c' 'd e'; }
+    .img-collage[data-n='6'] { grid-template-areas: 'a a' 'b c' 'd e' 'f f'; }
   }
   /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
      en COLUMNA vertical como en el slide de la rueda */
