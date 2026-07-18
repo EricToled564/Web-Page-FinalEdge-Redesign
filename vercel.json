@@ -11,6 +11,20 @@
       ]
     },
     {
+      "source": "/assets/stream/(.*).m3u8",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" },
+        { "key": "Content-Type", "value": "application/vnd.apple.mpegurl" }
+      ]
+    },
+    {
+      "source": "/assets/stream/(.*).m4s",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=604800" },
+        { "key": "Content-Type", "value": "video/iso.segment" }
+      ]
+    },
+    {
       "source": "/assets/(.*)",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=604800" }

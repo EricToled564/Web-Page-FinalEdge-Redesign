@@ -336,7 +336,7 @@ const TECHS = featureVideo
               {TECHS.map((t, i) => (
                 <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
                   {t.videos.map((v) => (
-                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-title={v.title}>
+                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-hls={`/assets/stream/v1/${v.slug}/master.m3u8`} data-video-title={v.title}>
                       <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg?v=2`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
                       <span class="work-card-title">{v.title}</span>
                     </button>
@@ -1319,6 +1319,60 @@ const TECHS = featureVideo
   initSvcMore();
   document.addEventListener('astro:page-load', initSvcMore);
 
+  /* ---- STREAMING ADAPTATIVO (2026-07-17, reporte "los videos no
+     corren instantáneamente y se traban"): un MP4 progresivo de tasa
+     fija se traba en cuanto el ancho de banda real baja de esa tasa —
+     no existe una tasa "segura". Todos los videos pasan a HLS: cada
+     pieza en segmentos de 4s en varias calidades, y el reproductor
+     (hls.js, auto-hospedado) cambia de calidad al vuelo en lugar de
+     congelarse, arrancando por la calidad que la conexión aguanta.
+     Safari reproduce el m3u8 nativo; si nada de eso existe, se cae al
+     MP4 progresivo de siempre. */
+  function loadHls(): Promise<any> {
+    const w = window as any;
+    if (w.Hls) return Promise.resolve(w.Hls);
+    if (!w.__hlsLoading) {
+      w.__hlsLoading = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = '/assets/js/hls.min.js';
+        s.onload = () => res(w.Hls);
+        s.onerror = () => { w.__hlsLoading = null; rej(new Error('hls.js')); };
+        document.head.appendChild(s);
+      });
+    }
+    return w.__hlsLoading;
+  }
+  async function attachStream(vid: HTMLVideoElement, m3u8: string, mp4: string): Promise<any> {
+    try {
+      /* Safari (macOS/iOS): HLS nativo del elemento */
+      if (vid.canPlayType('application/vnd.apple.mpegurl')) {
+        vid.src = m3u8;
+        return null;
+      }
+      const Hls = await loadHls();
+      if (Hls && Hls.isSupported()) {
+        vid.removeAttribute('src');
+        const h = new Hls({
+          maxBufferLength: 30,
+          maxBufferSize: 60 * 1000 * 1000,
+          backBufferLength: 30,
+          enableWorker: true,
+        });
+        h.loadSource(m3u8);
+        h.attachMedia(vid);
+        h.on(Hls.Events.ERROR, (_e: any, data: any) => {
+          if (!data || !data.fatal) return;
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) h.startLoad();
+          else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) h.recoverMediaError();
+          else { try { h.destroy(); } catch (_) {} if (mp4) vid.src = mp4; }
+        });
+        return h;
+      }
+    } catch (_) {}
+    if (mp4) vid.src = mp4;
+    return null;
+  }
+
   /* Sección de reel — REHECHA DE CERO (2026-07-17, pedido explícito):
      el video usa los controles NATIVOS del navegador (play, línea de
      tiempo, volumen). Aquí solo queda lo visual y defensivo:
@@ -1344,7 +1398,16 @@ const TECHS = featureVideo
     const seed = sec.querySelector('[data-svc-feature-video]') as HTMLVideoElement;
     const vid = seed.cloneNode(false) as HTMLVideoElement;
     seed.replaceWith(vid);
-    try { vid.load(); } catch (_) {}
+    /* el reel entra por HLS adaptativo y empieza a amortiguar DESDE YA
+       (hls.js llena el búfer aunque esté en pausa): para cuando el
+       usuario llega a la lámina y da play, el arranque es instantáneo
+       y la calidad se ajusta sola a su conexión. El src MP4 del markup
+       queda como último recurso. */
+    const reelMp4 = vid.getAttribute('src') || '';
+    const w = window as any;
+    try { w.__reelHls?.destroy?.(); } catch (_) {}
+    w.__reelHls = null;
+    attachStream(vid, '/assets/stream/v1/reel/master.m3u8', reelMp4).then((h) => { w.__reelHls = h; });
 
     /* diagnóstico SOLO ante un error real del elemento */
     vid.addEventListener('error', () => {
@@ -1405,8 +1468,14 @@ const TECHS = featureVideo
   }
   initSvcFeature();
   document.addEventListener('astro:page-load', initSvcFeature);
-  /* al navegar fuera (SPA), restaurar el chip del asistente */
-  document.addEventListener('astro:before-swap', () => document.body.classList.remove('reel-open'));
+  /* al navegar fuera (SPA): restaurar el chip del asistente y soltar el
+     stream del reel (el elemento muere con el swap; su Hls no) */
+  document.addEventListener('astro:before-swap', () => {
+    document.body.classList.remove('reel-open');
+    const w = window as any;
+    try { w.__reelHls?.destroy?.(); } catch (_) {}
+    w.__reelHls = null;
+  });
 
   /* CTA "Conoce nuestro trabajo": baja a la lámina de manifiesto */
   function initSvcNext() {
@@ -1547,6 +1616,9 @@ const TECHS = featureVideo
       const ov = document.querySelector('[data-work-player]') as HTMLElement | null;
       if (!ov || ov.hidden) return;
       const v = ov.querySelector('[data-work-video]') as HTMLVideoElement | null;
+      const w = window as any;
+      try { w.__workHls?.destroy?.(); } catch (_) {}
+      w.__workHls = null;
       if (v) { v.pause(); v.removeAttribute('src'); try { v.load(); } catch (_) {} }
       ov.hidden = true;
     };
@@ -1559,9 +1631,18 @@ const TECHS = featureVideo
         const title = ov?.querySelector('[data-work-title]') as HTMLElement | null;
         if (!ov || !v) return;
         if (title) title.textContent = card.getAttribute('data-video-title') || '';
-        v.src = card.getAttribute('data-video-src') || '';
+        const mp4 = card.getAttribute('data-video-src') || '';
+        const hlsUrl = card.getAttribute('data-video-hls') || '';
         ov.hidden = false;
-        v.play().catch(() => {});
+        const w = window as any;
+        try { w.__workHls?.destroy?.(); } catch (_) {}
+        w.__workHls = null;
+        if (hlsUrl) {
+          attachStream(v, hlsUrl, mp4).then((h) => { w.__workHls = h; v.play().catch(() => {}); });
+        } else {
+          v.src = mp4;
+          v.play().catch(() => {});
+        }
         return;
       }
       if (t.closest('[data-work-close]')) { closePlayer(); return; }
@@ -1570,6 +1651,22 @@ const TECHS = featureVideo
     });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePlayer(); });
     document.addEventListener('astro:before-swap', closePlayer);
+    /* precalentamiento por INTENCIÓN: al posar el puntero sobre una
+       tarjeta, se bajan el manifiesto y el primer segmento de la calidad
+       de arranque (~300KB) — quedan en la caché del navegador y del
+       borde CDN, y el play del click es instantáneo. También se
+       precalienta el runtime hls.js. */
+    document.addEventListener('pointerover', (e) => {
+      const card = (e.target as HTMLElement | null)?.closest?.('[data-video-hls]') as HTMLElement | null;
+      if (!card || card.dataset.warmed === '1') return;
+      card.dataset.warmed = '1';
+      const base = (card.getAttribute('data-video-hls') || '').replace(/master\.m3u8$/, '');
+      if (!base) return;
+      loadHls().catch(() => {});
+      for (const f of ['master.m3u8', '432/index.m3u8', '432/init.mp4', '432/s000.m4s']) {
+        fetch(base + f).catch(() => {});
+      }
+    }, { passive: true });
   }
   initWorkPlayer();
 </script>
