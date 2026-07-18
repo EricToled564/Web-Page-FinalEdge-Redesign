@@ -2532,21 +2532,38 @@ const TECHS = featureVideo
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && listPanel && !listPanel.hidden) collapseList(); });
     setListLabel();
 
+    /* reintento de arranque (reporte 2026-07-18 "tardo 15 segundos en
+       cargar la primera pista"): el primer click de la sesión puede caer
+       ANTES de que el iframe termine de cargar Three.js — antes esto
+       simplemente abortaba sin reintentar, así que el click se perdía y
+       el usuario tenía que volver a hacer click a ciegas. Ahora reintenta
+       cada 200ms (hasta 15s) y arranca solo apenas dustPlay exista. */
+    let playRetry: number | null = null;
     const playTrack = (card: HTMLElement) => {
       const src = card.getAttribute('data-music-src') || '';
       const title = card.getAttribute('data-music-title') || '';
       if (!src || !frame) return;
-      const win = frame.contentWindow as any;
-      if (!win || typeof win.dustPlay !== 'function') { setState('cargando el efecto…'); return; }
+      if (playRetry !== null) { clearInterval(playRetry); playRetry = null; }
       currentSrc = src;
       activeCard?.classList.remove('is-active');
       card.classList.add('is-active');
       activeCard = card;
       if (titleEl) titleEl.textContent = title;
-      setState('▸ cargando…');
       stage?.classList.add('is-playing');
-      win.dustPlay(src);
       collapseList();
+      const attempt = () => {
+        const win = frame?.contentWindow as any;
+        if (!win || typeof win.dustPlay !== 'function') return false;
+        setState('▸ cargando…');
+        win.dustPlay(src);
+        return true;
+      };
+      if (attempt()) return;
+      setState('cargando el efecto…');
+      let tries = 0;
+      playRetry = window.setInterval(() => {
+        if (attempt() || ++tries > 75) { if (playRetry !== null) clearInterval(playRetry); playRetry = null; if (tries > 75) setState('no se pudo cargar el efecto'); }
+      }, 200);
     };
 
     /* click en CUALQUIER punto de la tarjeta reproduce (delegación, ya

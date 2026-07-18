@@ -274,7 +274,7 @@ scene.add(points);
    segundos, igual que cualquier reproductor de streaming, y el resto
    sigue bajando en paralelo mientras suena. */
 let actx = null, analyser = null, freq = null;
-let audioEl = null, mediaSource = null;
+let audioEl = null, currentSrcNode = null;
 let silentAudio = null;
 let playToken = 0; // descarta un dustPlay viejo si llega uno nuevo antes de que arranque
 const prevSpec = new Float32Array(80);
@@ -313,7 +313,16 @@ window.dustPlay = async function dustPlay(url) {
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.5;
       freq = new Uint8Array(analyser.frequencyBinCount);
+      analyser.connect(actx.destination);
     }
+    /* fuga de memoria (reporte 2026-07-18 "sigue colapsando el
+       navegador"): cada pista crea un <audio> + MediaElementSourceNode
+       NUEVO, y el nodo de la pista anterior se quedaba conectado al
+       grafo para siempre — WebAudio no libera un nodo mientras siga
+       alcanzable desde destination, así que cada cambio de pista sumaba
+       un <audio> muerto permanente. Se desconecta el nodo anterior
+       antes de crear el nuevo. */
+    if (currentSrcNode) { try { currentSrcNode.disconnect(); } catch (_) {} currentSrcNode = null; }
 
     const el = new Audio();
     el.crossOrigin = 'anonymous';
@@ -323,8 +332,8 @@ window.dustPlay = async function dustPlay(url) {
        elemento — cada pista usa un <audio> nuevo, así que siempre es
        la primera vez. */
     const srcNode = actx.createMediaElementSource(el);
+    currentSrcNode = srcNode;
     srcNode.connect(analyser);
-    analyser.connect(actx.destination);
     el.addEventListener('ended', () => {
       if (myToken !== playToken) return;
       audioEl = null;
@@ -351,6 +360,7 @@ window.dustPlay = async function dustPlay(url) {
 window.dustStop = function dustStop() {
   playToken++; // invalida cualquier dustPlay en vuelo para que no arranque después de este stop
   if (audioEl) { try { audioEl.pause(); audioEl.onended = null; audioEl.src = ''; } catch (_) {} audioEl = null; }
+  if (currentSrcNode) { try { currentSrcNode.disconnect(); } catch (_) {} currentSrcNode = null; }
   if (silentAudio) { try { silentAudio.pause(); } catch (_) {} }
 };
 
