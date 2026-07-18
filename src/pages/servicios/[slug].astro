@@ -1079,7 +1079,11 @@ const TECHS = featureVideo
   .tech-stage {
     position: relative;
     display: block;
-    width: 100%;
+    /* la pantalla CEDE tamaño para que la tira de miniaturas SIEMPRE
+       quepa debajo dentro del visor (reporte 2026-07-17 "se corta"):
+       ancho tope = el que produce una altura de visor menos nav (92px)
+       menos la reserva de la tira (~250px) a 16:9 */
+    width: min(100%, calc((100vh - 342px) * 16 / 9));
     aspect-ratio: 16 / 9;
     background: var(--void-deep);
     border: 1px solid var(--hairline);
@@ -1127,8 +1131,9 @@ const TECHS = featureVideo
   }
   .tech-stage:hover .tech-stage-cta { color: var(--pc, var(--accent)); }
   .tech-stage-cta svg { width: 14px; height: 14px; }
-  /* tira numerada bajo la pantalla */
-  .tech-strip { margin-top: 14px; }
+  /* tira numerada bajo la pantalla — mismo ancho tope que la pantalla
+     para que sus bordes queden alineados */
+  .tech-strip { margin-top: 14px; width: min(100%, calc((100vh - 342px) * 16 / 9)); }
   .tech-videos-group {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
