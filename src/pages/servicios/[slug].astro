@@ -1786,9 +1786,14 @@ const TECHS = featureVideo
         else if (stageVid.paused) stageVid.play().catch(() => {});
       }, { threshold: 0.1 }).observe(stageVid);
     }
+    /* el CLICK FIJA la técnica (pedido 2026-07-17): a partir de ahí el
+       hover ya no cambia la selección — sin esto era imposible dejarla
+       quieta en una. Antes del primer click, el hover navega libre. */
+    let pinned = false;
     items.forEach((el) => {
-      el.addEventListener('mouseenter', () => openVideos(el));
+      el.addEventListener('mouseenter', () => { if (!pinned) openVideos(el); });
       el.addEventListener('click', () => {
+        pinned = true;
         openVideos(el);
         requestAnimationFrame(() => videosWrap?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
       });
