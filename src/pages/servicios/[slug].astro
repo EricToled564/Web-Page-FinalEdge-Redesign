@@ -79,6 +79,22 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
    con true, el click en una técnica despliega sus tarjetas de video y
    cada tarjeta abre la pantalla con el reproductor nativo. */
 const WORK_VIDEOS_READY = true;
+/* Técnicas de IMAGEN (galería de collages — contenidos y nombres del
+   cliente 2026-07-17; "Paisaje" y "New Year's Eve" nombrados a pedido).
+   Los archivos viven en /assets/gallery/img/<key>/NN.jpg, ya limpios de
+   marcas de agua del generador. */
+const IMG_TECHS = featureVideo
+  ? [
+      { key: 'paisaje', label: 'Paisaje', n: 5 },
+      { key: 'luxury-resorts', label: 'Luxury resorts', n: 4 },
+      { key: 'yoga', label: 'Yoga por la mañana', n: 5 },
+      { key: 'bar', label: 'Bar', n: 5 },
+      { key: 'new-years-eve', label: "New Year's Eve", n: 1 },
+    ].map((t) => ({
+      ...t,
+      images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.jpg`),
+    }))
+  : [];
 /* Las fases del proceso de video (banda al dar click en "Video") —
    copy DICTADO por el cliente 2026-07-17, no se edita sin su visto. */
 const PHASES_BAND = [
@@ -261,20 +277,20 @@ const TECHS = featureVideo
       <div class="reel-gallery-grid reveal">
         {/* Tarjetas 9:16 (pedido 2026-07-17): imagen a sangre completa,
            SOLO el título dentro, >_ en el color del servicio. Video abre
-           el detalle; las otras dos van a valoración. */}
+           su galería; Imágenes abre la suya (collages); Música va a
+           valoración por ahora. TODA el área de la tarjeta es el botón. */}
         <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
           <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.jpg" alt="Video" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Video</span>
         </button>
-        {[
-          { label: 'Imágenes', img: '/assets/gallery/gal-imagenes-v.jpg' },
-          { label: 'Música', img: '/assets/gallery/gal-musica-v.jpg' },
-        ].map((c) => (
-          <a class="reel-card" href="/#valoracion" aria-label={c.label}>
-            <span class="reel-card-media"><img src={c.img} alt={c.label} width="1080" height="1920" loading="lazy" /></span>
-            <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>{c.label}</span>
-          </a>
-        ))}
+        <button class="reel-card" type="button" data-img-toggle aria-expanded="false" aria-controls="img-detail">
+          <span class="reel-card-media"><img src="/assets/gallery/gal-imagenes-v.jpg" alt="Imágenes" width="1080" height="1920" loading="lazy" /></span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Imágenes</span>
+        </button>
+        <a class="reel-card" href="/#valoracion" aria-label="Música">
+          <span class="reel-card-media"><img src="/assets/gallery/gal-musica-v.jpg" alt="Música" width="1080" height="1920" loading="lazy" /></span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Música</span>
+        </a>
       </div>
       {/* Al dar click en la tarjeta de Video (rediseño 2026-07-17, con
          banda de referencia del cliente): banda en el color del servicio
@@ -381,7 +397,54 @@ const TECHS = featureVideo
           )}
         </div>
       </div>
+
+      {/* Al dar click en la tarjeta de IMÁGENES (pedido 2026-07-17):
+         galería hermana de la de video — mismo esqueleto de la rueda,
+         técnicas a la izquierda y COLLAGE en tonos mate a la derecha;
+         click en una imagen la agranda (lightbox). */}
+      {IMG_TECHS.length > 0 && (
+        <div class="reel-video-detail" id="img-detail" data-img-detail hidden>
+          <div class="tech-gallery" data-img-gallery>
+            <div class="tech-col-text">
+              <header class="tech-head">
+                <p class="tech-lockup">
+                  <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
+                  <span class="tech-lockup-text">dominamos todas las técnicas</span>
+                </p>
+                <hr />
+              </header>
+              <nav class="tech-menu" aria-label="Técnicas de imagen" data-imgtech-menu>
+                {IMG_TECHS.map((t, i) => (
+                  <button class={`tech-menu-item${i === 0 ? ' is-active' : ''}`} type="button" data-imgtech-key={t.key}>{t.label}</button>
+                ))}
+              </nav>
+              <button class="tech-back" type="button" data-img-back>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
+                Nuestro trabajo
+              </button>
+            </div>
+            <div class="img-collages">
+              {IMG_TECHS.map((t, i) => (
+                <div class="img-collage" data-imgtech-group={t.key} hidden={i !== 0}>
+                  {t.images.map((src, j) => (
+                    <button class="collage-item" type="button" data-lightbox-src={src} aria-label={`${t.label} ${j + 1}`}>
+                      <img src={src} alt={`${t.label} ${String(j + 1).padStart(2, '0')}`} loading="lazy" />
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
+  )}
+
+  {IMG_TECHS.length > 0 && (
+    <div class="img-lightbox" data-img-lightbox hidden>
+      <button class="work-player-close" data-lightbox-close type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="width:20px;height:20px"><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg></button>
+      <img class="img-lightbox-img" data-lightbox-img alt="" />
+    </div>
   )}
 
   {featureVideo && (
@@ -1033,6 +1096,57 @@ const TECHS = featureVideo
   }
   .tech-back:hover { color: var(--pc, var(--accent)); }
   .tech-back svg { width: 16px; height: 16px; }
+  /* COLLAGE en tonos mate (pedido 2026-07-17): mosaico tipo masonry que
+     respeta la proporción de cada foto; acabado mate en reposo (color y
+     contraste contenidos) que despierta al hover; click = se agranda */
+  .img-collage {
+    columns: 3;
+    column-gap: 10px;
+  }
+  .img-collage[hidden] { display: none; }
+  .collage-item {
+    display: block;
+    width: 100%;
+    margin: 0 0 10px;
+    padding: 0;
+    border: 1px solid var(--hairline);
+    background: var(--panel);
+    cursor: zoom-in;
+    overflow: hidden;
+    break-inside: avoid;
+  }
+  .collage-item img {
+    display: block;
+    width: 100%;
+    height: auto;
+    /* acabado MATE: saturación y contraste contenidos, negros levantados */
+    filter: saturate(0.78) contrast(0.92) brightness(1.02);
+    transition: filter var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+  }
+  .collage-item:hover img { filter: saturate(0.95) contrast(0.98); transform: scale(1.02); }
+  /* lightbox: la imagen agrandada sobre velo oscuro */
+  .img-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 220;
+    background: color-mix(in srgb, var(--void-deep) 94%, transparent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+  }
+  .img-lightbox[hidden] { display: none; }
+  .img-lightbox-img {
+    max-width: min(92vw, 1600px);
+    max-height: 86vh;
+    width: auto;
+    height: auto;
+    border: 1px solid var(--hairline);
+  }
+  .img-lightbox .work-player-close { position: absolute; top: 18px; right: 18px; }
+  @media (max-width: 860px) {
+    .img-collage { columns: 2; }
+  }
   /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
      en COLUMNA vertical como en el slide de la rueda */
   .tech-menu {
@@ -1696,27 +1810,44 @@ const TECHS = featureVideo
   initReelManifesto();
   document.addEventListener('astro:page-load', initReelManifesto);
 
-  /* Tarjeta de Video: despliega/oculta los 3 títulos (pedido 2026-07-17) */
+  /* Tarjetas de Video e Imágenes: cada una abre SU galería. Exclusión
+     mutua (reporte 2026-07-17 "el recuadro magenta no se apaga"): abrir
+     una cierra la otra al instante y le apaga el aria-expanded (el
+     borde magenta vive de ese atributo). El botón es la tarjeta ENTERA. */
   function initVideoDetail() {
-    const btn = document.querySelector('[data-video-toggle]') as HTMLElement | null;
-    const panel = document.querySelector('[data-video-detail]') as HTMLElement | null;
-    if (!btn || !panel || btn.dataset.bound === '1') return;
-    btn.dataset.bound = '1';
-    btn.addEventListener('click', () => {
-      if (panel.hidden) {
-        panel.hidden = false;
-        requestAnimationFrame(() => panel.classList.add('is-open'));
-        btn.setAttribute('aria-expanded', 'true');
-        /* pantalla propia: la banda arranca justo bajo el nav y la
-           galería queda fuera del visor (scroll-margin-top de 92px) */
-        const screen = panel.querySelector('[data-phase-screen]') || panel;
-        requestAnimationFrame(() => screen.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-      } else {
-        panel.classList.remove('is-open');
-        btn.setAttribute('aria-expanded', 'false');
-        setTimeout(() => { if (!panel.classList.contains('is-open')) panel.hidden = true; }, 340);
-      }
-    });
+    const closeNow = (btnSel: string, panelSel: string) => {
+      const b = document.querySelector(btnSel) as HTMLElement | null;
+      const p = document.querySelector(panelSel) as HTMLElement | null;
+      if (!p || p.hidden) return;
+      p.classList.remove('is-open');
+      p.hidden = true;
+      b?.setAttribute('aria-expanded', 'false');
+      (p.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
+    };
+    const wire = (btnSel: string, panelSel: string, otherBtnSel: string, otherPanelSel: string) => {
+      const btn = document.querySelector(btnSel) as HTMLElement | null;
+      const panel = document.querySelector(panelSel) as HTMLElement | null;
+      if (!btn || !panel || btn.dataset.bound === '1') return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', () => {
+        if (panel.hidden) {
+          closeNow(otherBtnSel, otherPanelSel);
+          panel.hidden = false;
+          requestAnimationFrame(() => panel.classList.add('is-open'));
+          btn.setAttribute('aria-expanded', 'true');
+          /* pantalla propia: arranca justo bajo el nav */
+          const screen = panel.querySelector('[data-phase-screen]') || panel;
+          requestAnimationFrame(() => screen.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+        } else {
+          panel.classList.remove('is-open');
+          btn.setAttribute('aria-expanded', 'false');
+          (panel.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
+          setTimeout(() => { if (!panel.classList.contains('is-open')) panel.hidden = true; }, 340);
+        }
+      });
+    };
+    wire('[data-video-toggle]', '[data-video-detail]', '[data-img-toggle]', '[data-img-detail]');
+    wire('[data-img-toggle]', '[data-img-detail]', '[data-video-toggle]', '[data-video-detail]');
   }
   initVideoDetail();
   document.addEventListener('astro:page-load', initVideoDetail);
@@ -1807,9 +1938,14 @@ const TECHS = featureVideo
     /* CTA "Visita nuestra galería": click o UN scroll hacia abajo con la
        banda a la vista → la galería entra llenando la pantalla. Listener
        pasivo: asiste el scroll, nunca lo secuestra. */
-    /* regreso al menú de Video/Imágenes/Música (pedido 2026-07-17) */
+    /* regreso al menú de Video/Imágenes/Música (pedido 2026-07-17): al
+       volver, TODA la sección de video desaparece (se colapsa vía el
+       mismo toggle de la tarjeta) y el scroll aterriza en el menú */
     const back = gallery.querySelector('[data-tech-back]') as HTMLElement | null;
     back?.addEventListener('click', () => {
+      const toggle = document.querySelector('[data-video-toggle]') as HTMLElement | null;
+      const panel = document.querySelector('[data-video-detail]') as HTMLElement | null;
+      if (panel && !panel.hidden) toggle?.click();
       document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     });
 
@@ -1836,6 +1972,72 @@ const TECHS = featureVideo
   }
   initTechGallery();
   document.addEventListener('astro:page-load', initTechGallery);
+
+  /* Galería de IMÁGENES (2026-07-17): técnicas a la izquierda (hover
+     libre hasta que el click fija, como en videos) y collage mate a la
+     derecha; click en una imagen la agranda en el lightbox. */
+  function initImgGallery() {
+    const gallery = document.querySelector('[data-img-gallery]') as HTMLElement | null;
+    if (!gallery || gallery.dataset.bound === '1') return;
+    gallery.dataset.bound = '1';
+    const chips = Array.from(gallery.querySelectorAll('[data-imgtech-key]')) as HTMLElement[];
+    const groups = Array.from(gallery.querySelectorAll('[data-imgtech-group]')) as HTMLElement[];
+    const openTech = (el: HTMLElement) => {
+      const key = el.getAttribute('data-imgtech-key');
+      if (!key) return;
+      chips.forEach((c) => c.classList.toggle('is-active', c === el));
+      groups.forEach((g) => { g.hidden = g.getAttribute('data-imgtech-group') !== key; });
+    };
+    let pinned = false;
+    chips.forEach((el) => {
+      el.addEventListener('mouseenter', () => { if (!pinned) openTech(el); });
+      el.addEventListener('click', () => { pinned = true; openTech(el); });
+    });
+    /* volver: colapsa TODA la sección de imágenes y regresa al menú */
+    const back = gallery.querySelector('[data-img-back]') as HTMLElement | null;
+    back?.addEventListener('click', () => {
+      const toggle = document.querySelector('[data-img-toggle]') as HTMLElement | null;
+      const panel = document.querySelector('[data-img-detail]') as HTMLElement | null;
+      if (panel && !panel.hidden) toggle?.click();
+      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+  initImgGallery();
+  document.addEventListener('astro:page-load', initImgGallery);
+
+  /* Lightbox de imágenes: delegación a nivel documento, atada UNA sola
+     vez (los elementos se buscan al momento del click — sobrevive los
+     swaps SPA sin duplicar listeners ni quedarse con nodos muertos). */
+  let imgLightboxBound = false;
+  function initImgLightbox() {
+    if (imgLightboxBound) return;
+    imgLightboxBound = true;
+    const closeLb = () => {
+      const lb = document.querySelector('[data-img-lightbox]') as HTMLElement | null;
+      const im = lb?.querySelector('[data-lightbox-img]') as HTMLImageElement | null;
+      if (!lb || lb.hidden) return;
+      lb.hidden = true;
+      im?.removeAttribute('src');
+    };
+    document.addEventListener('click', (e) => {
+      const t = e.target as HTMLElement;
+      const item = t.closest('[data-lightbox-src]');
+      if (item) {
+        const lb = document.querySelector('[data-img-lightbox]') as HTMLElement | null;
+        const im = lb?.querySelector('[data-lightbox-img]') as HTMLImageElement | null;
+        if (!lb || !im) return;
+        im.src = item.getAttribute('data-lightbox-src') || '';
+        lb.hidden = false;
+        return;
+      }
+      if (t.closest('[data-lightbox-close]')) { closeLb(); return; }
+      const lb = t.closest('[data-img-lightbox]');
+      if (lb && t === lb) closeLb();
+    });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLb(); });
+    document.addEventListener('astro:before-swap', closeLb);
+  }
+  initImgLightbox();
 
   /* Pantalla de reproducción (2026-07-17): al hacer click en una tarjeta
      de video se abre el overlay con el reproductor NATIVO (línea de
