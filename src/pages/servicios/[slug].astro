@@ -133,6 +133,11 @@ const MUSIC_STYLES = featureVideo
         { title: 'Corazón Satelital', slug: 'corazon-satelital' },
         { title: 'Polvo de Estrellas — V1', slug: 'polvo-de-estrellas-v1' },
         { title: 'Polvo de Estrellas — V2', slug: 'polvo-de-estrellas-v2' },
+        { title: 'Not Your Last Correction — V1', slug: 'not-your-last-correction-v1' },
+        { title: 'Se Prendió sin Aviso', slug: 'se-prendio-sin-aviso' },
+      ] },
+      { key: 'reggaeton', label: 'Reggaeton', tracks: [
+        { title: 'Not Your Last Correction — V2', slug: 'not-your-last-correction-v2' },
       ] },
       { key: 'urban', label: 'Urban', tracks: [
         { title: 'Full con el Team', slug: 'full-con-el-team' },
@@ -1322,15 +1327,22 @@ const TECHS = featureVideo
     transition: transform var(--t-ui) var(--ease);
   }
   .collage-item:hover img { transform: scale(1.03); }
-  /* fix cabezas cortadas en móvil (reporte 2026-07-18): la celda grande
-     "a" es 2x1 en el layout móvil (retrato forzado a horizontal) — el
-     recorte centrado por default cortaba la cabeza en 3 fotos de
-     cuerpo completo. object-position:top ancla la parte de ARRIBA de
-     la foto (conserva cabeza y torso) y recorta piernas/pies en vez de
-     la cabeza — nunca al revés. */
-  [data-imgtech-group='yoga'] .collage-item:first-child img,
-  [data-variant-group='femenino'] .collage-item:first-child img,
-  [data-variant-group='masculino'] .collage-item:first-child img {
+  /* fix cabezas cortadas (reporte 2026-07-18, corregido de nuevo tras
+     encontrar más casos): CUALQUIER celda del collage puede volverse
+     ancha-horizontal según el viewport (la "a" siempre; la "d" TAMBIÉN
+     se ensancha, pero SOLO por debajo de 860px — por eso el primer fix,
+     limitado a :first-child, se veía bien en escritorio y seguía
+     cortando cabezas en tablet/móvil en la 4ª foto). En vez de
+     perseguir celda por celda, se ancla arriba TODA foto de persona en
+     las técnicas donde el sujeto llena el encuadre — conserva cabeza y
+     torso siempre, recorta piernas/pies si hace falta, nunca al revés.
+     No se aplica a Bar (retratos de bebidas/comida, un anclaje superior
+     ciego cortaría composiciones donde el objeto importa abajo). */
+  [data-imgtech-group='couture'] .collage-item img,
+  [data-imgtech-group='sports-world'] .collage-item img,
+  [data-imgtech-group='yoga'] .collage-item img,
+  [data-variant-group='femenino'] .collage-item img,
+  [data-variant-group='masculino'] .collage-item img {
     object-position: top;
   }
   /* lightbox: la imagen agrandada sobre velo oscuro */
@@ -2147,6 +2159,13 @@ const TECHS = featureVideo
      una cierra la otra al instante y le apaga el aria-expanded (el
      borde magenta vive de ese atributo). El botón es la tarjeta ENTERA. */
   function initVideoDetail() {
+    /* el efecto de polvo (WebGL en iframe) sigue renderizando en segundo
+       plano aunque el panel de Música se oculte con display:none — eso
+       colapsaba otras pestañas del navegador (reporte 2026-07-18). Se
+       pausa/reanuda explícitamente desde el propio iframe. */
+    const dustFrame = () => document.querySelector('[data-music-frame]') as HTMLIFrameElement | null;
+    const dustPause = () => { try { (dustFrame()?.contentWindow as any)?.dustPause?.(); } catch (_) {} };
+    const dustResume = () => { try { (dustFrame()?.contentWindow as any)?.dustResume?.(); } catch (_) {} };
     const closeNow = (btnSel: string, panelSel: string) => {
       const b = document.querySelector(btnSel) as HTMLElement | null;
       const p = document.querySelector(panelSel) as HTMLElement | null;
@@ -2155,6 +2174,7 @@ const TECHS = featureVideo
       p.hidden = true;
       b?.setAttribute('aria-expanded', 'false');
       (p.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
+      if (panelSel === '[data-music-detail]') dustPause();
     };
     /* wire acepta una lista de "otros" — con 3 tarjetas (Video/Imágenes/
        Música) abrir una debe cerrar las OTRAS DOS, no solo una */
@@ -2163,12 +2183,14 @@ const TECHS = featureVideo
       const panel = document.querySelector(panelSel) as HTMLElement | null;
       if (!btn || !panel || btn.dataset.bound === '1') return;
       btn.dataset.bound = '1';
+      const isMusic = panelSel === '[data-music-detail]';
       btn.addEventListener('click', () => {
         if (panel.hidden) {
           others.forEach(([ob, op]) => closeNow(ob, op));
           panel.hidden = false;
           requestAnimationFrame(() => panel.classList.add('is-open'));
           btn.setAttribute('aria-expanded', 'true');
+          if (isMusic) dustResume();
           /* pantalla propia: arranca justo bajo el nav */
           const screen = panel.querySelector('[data-phase-screen]') || panel;
           requestAnimationFrame(() => screen.scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -2176,6 +2198,7 @@ const TECHS = featureVideo
           panel.classList.remove('is-open');
           btn.setAttribute('aria-expanded', 'false');
           (panel.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
+          if (isMusic) dustPause();
           setTimeout(() => { if (!panel.classList.contains('is-open')) panel.hidden = true; }, 340);
         }
       });
@@ -2574,6 +2597,7 @@ const TECHS = featureVideo
   document.addEventListener('astro:before-swap', () => {
     const frame = document.querySelector('[data-music-frame]') as HTMLIFrameElement | null;
     try { (frame?.contentWindow as any)?.dustStop?.(); } catch (_) {}
+    try { (frame?.contentWindow as any)?.dustPause?.(); } catch (_) {}
   });
 
   /* Pantalla de reproducción (2026-07-17): al hacer click en una tarjeta

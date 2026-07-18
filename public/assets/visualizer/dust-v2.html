@@ -262,9 +262,18 @@ const points = new THREE.Points(geo, mat);
 scene.add(points);
 
 // -------- Audio --------
-let actx = null, analyser = null, freq = null, source = null;
+/* STREAMING, no descarga completa (fix 2026-07-18: "las pistas tardan
+   siglos en cargar" — la versión anterior bajaba el mp3 ENTERO con
+   fetch() y lo decodificaba completo con decodeAudioData() ANTES de
+   poder arrancar; para un archivo de 5-7MB eso son varios segundos de
+   nada. Un <audio> real + MediaElementAudioSourceNode reproduce
+   PROGRESIVO — el navegador arranca en cuanto bufferea los primeros
+   segundos, igual que cualquier reproductor de streaming, y el resto
+   sigue bajando en paralelo mientras suena. */
+let actx = null, analyser = null, freq = null;
+let audioEl = null, mediaSource = null;
 let silentAudio = null;
-let playToken = 0; // descarta respuestas de fetch/decode que llegan tarde (ver dustPlay)
+let playToken = 0; // descarta un dustPlay viejo si llega uno nuevo antes de que arranque
 const prevSpec = new Float32Array(80);
 let fluxAvg = 0;
 let beatPulse = 0;
@@ -276,8 +285,8 @@ const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAE
 /* dustPlay(url) — llamada SÍNCRONA desde el click de la página madre
    (mismo-origen: window.frames[...].dustPlay(url)) para conservar el
    gesto del usuario que requieren AudioContext/HTMLMediaElement en
-   navegadores móviles. Decodifica, arranca el efecto Y el audio a la
-   vez, y avisa 'dust-started'/'dust-ended'/'dust-error' al padre. */
+   navegadores móviles. Arranca el audio EN STREAMING y avisa
+   'dust-started'/'dust-ended'/'dust-error' al padre. */
 window.dustPlay = async function dustPlay(url) {
   try {
     if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
@@ -288,27 +297,13 @@ window.dustPlay = async function dustPlay(url) {
       silentAudio.setAttribute('playsinline', 'true');
       silentAudio.setAttribute('webkit-playsinline', 'true');
     }
-    /* corta la pista actual DE INMEDIATO, antes de bajar/decodificar la
-       nueva (bug 2026-07-18: "le doy play a otra pista y no para, sigue
-       hasta que termina la anterior" — antes el stop() ocurría recién
-       DESPUÉS del fetch+decode de la nueva, que puede tardar segundos;
-       si esa descarga era lenta la vieja seguía sonando de más). */
-    if (source) { try { source.onended = null; source.stop(); } catch (_) {} try { source.disconnect(); } catch (_) {} source = null; }
+    /* corta la pista actual DE INMEDIATO (bug 2026-07-18: "no para,
+       sigue hasta que termina la anterior") */
+    if (audioEl) { try { audioEl.pause(); audioEl.onended = null; audioEl.src = ''; } catch (_) {} audioEl = null; }
     const myToken = ++playToken;
 
     silentAudio.play().catch(() => {});
     if (actx.state === 'suspended') await actx.resume();
-
-    const res = await fetch(url);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const ab = await res.arrayBuffer();
-    const buffer = await new Promise((resolve, reject) => actx.decodeAudioData(ab.slice(0), resolve, reject));
-
-    /* mientras esta pista bajaba/decodificaba, el usuario pudo haber
-       elegido OTRA (que ya paró esta llamada arriba y avanzó su propio
-       token) — descartar esta respuesta tardía en vez de pisar la más
-       nueva. */
-    if (myToken !== playToken) return;
 
     if (!analyser) {
       analyser = actx.createAnalyser();
@@ -316,21 +311,43 @@ window.dustPlay = async function dustPlay(url) {
       analyser.smoothingTimeConstant = 0.5;
       freq = new Uint8Array(analyser.frequencyBinCount);
     }
-    source = actx.createBufferSource();
-    source.buffer = buffer;
-    source.connect(analyser);
+
+    const el = new Audio();
+    el.crossOrigin = 'anonymous';
+    el.preload = 'auto';
+    el.src = url;
+    /* createMediaElementSource SOLO se puede llamar una vez por
+       elemento — cada pista usa un <audio> nuevo, así que siempre es
+       la primera vez. */
+    const srcNode = actx.createMediaElementSource(el);
+    srcNode.connect(analyser);
     analyser.connect(actx.destination);
-    source.onended = () => { source = null; notifyParent({ type: 'dust-ended' }); };
-    source.start(0);
-    notifyParent({ type: 'dust-started', duration: buffer.duration });
+    el.addEventListener('ended', () => {
+      if (myToken !== playToken) return;
+      audioEl = null;
+      notifyParent({ type: 'dust-ended' });
+    });
+    el.addEventListener('error', () => {
+      if (myToken !== playToken) return;
+      notifyParent({ type: 'dust-error', message: 'no se pudo cargar el audio' });
+    });
+    /* 'canplay' dispara en cuanto hay suficiente buffer para arrancar
+       sin cortes — no espera el archivo completo. */
+    el.addEventListener('canplay', () => {
+      if (myToken !== playToken) return; // el usuario ya eligió otra pista mientras esta cargaba
+      audioEl = el;
+      el.play().catch(() => {});
+      notifyParent({ type: 'dust-started', duration: el.duration });
+    }, { once: true });
+    el.load();
   } catch (e) {
     notifyParent({ type: 'dust-error', message: String(e && e.message || e) });
   }
 };
 
 window.dustStop = function dustStop() {
-  playToken++; // invalida cualquier dustPlay en vuelo (fetch/decode) para que no arranque después de este stop
-  if (source) { try { source.onended = null; source.stop(); } catch (_) {} try { source.disconnect(); } catch (_) {} source = null; }
+  playToken++; // invalida cualquier dustPlay en vuelo para que no arranque después de este stop
+  if (audioEl) { try { audioEl.pause(); audioEl.onended = null; audioEl.src = ''; } catch (_) {} audioEl = null; }
   if (silentAudio) { try { silentAudio.pause(); } catch (_) {} }
 };
 
@@ -339,8 +356,34 @@ const t0 = performance.now();
 let camAngle = 0;
 let lastFrameMs = t0;
 let flowTime = 0;
+/* PAUSA REAL del loop (fix 2026-07-18: "cuando está corriendo empieza a
+   colapsar todas las otras pestañas del browser" — el <iframe> queda
+   SIEMPRE en el DOM aunque la página madre oculte el panel de música
+   con CSS display:none, y display:none en un ancestro NO detiene el
+   requestAnimationFrame del iframe: seguía renderizando 22k partículas
+   a 60fps en segundo plano indefinidamente, sin que el usuario lo
+   viera, consumiendo GPU sin parar mientras dure la visita a la
+   página. dustPause()/dustResume() los llama la página madre al
+   cerrar/abrir el panel; document.hidden autopausa si se cambia de
+   pestaña del navegador, por si algo se le escapa a la página madre. */
+let rafId = null;
+let paused = false;
+window.dustPause = function dustPause() {
+  if (paused) return;
+  paused = true;
+  if (rafId !== null) { cancelAnimationFrame(rafId); rafId = null; }
+};
+window.dustResume = function dustResume() {
+  if (!paused) return;
+  paused = false;
+  lastFrameMs = performance.now();
+  rafId = requestAnimationFrame(tick);
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) window.dustPause(); else window.dustResume();
+});
 function tick(){
-  requestAnimationFrame(tick);
+  rafId = requestAnimationFrame(tick);
   const now = performance.now();
   const tSec = (now - t0) / 1000;
   const dt = Math.min(0.05, Math.max(0, (now - lastFrameMs) / 1000));
