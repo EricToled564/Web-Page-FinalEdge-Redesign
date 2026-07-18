@@ -539,9 +539,11 @@ const TECHS = featureVideo
      a la derecha un efecto de partículas reactivo al audio (Three.js,
      código del cliente) que llena la pantalla dominante. El efecto
      arranca EXACTAMENTE cuando empieza la pista y termina con ella
-     (ver dustPlay/onended en /assets/visualizer/dust-v2.html — el "-v2"
-     es cache-bust: /assets/ cachea 1 semana y el navegador podía seguir
-     sirviendo la versión vieja en azul fijo tras el fix de color). */}
+     (ver dustPlay/onended en /assets/visualizer/dust-v3.html — el sufijo
+     de versión es cache-bust: /assets/ cachea 1 semana, así que cada vez
+     que se edita el contenido del iframe hay que subir el número o el
+     navegador sigue sirviendo la versión vieja indefinidamente. v2→v3
+     el 2026-07-18 por el cambio de orientación horizontal). */}
   {MUSIC_STYLES.length > 0 && (
     /* --pc directo en este div (fuera de <section class="reel-gallery">
        en el DOM, así que no hereda su --pc): sin esto el >_ y el efecto
@@ -574,7 +576,7 @@ const TECHS = featureVideo
              postMessage: la llamada directa preserva el gesto del
              usuario que exige AudioContext en móvil). */}
           <div class="tech-stage music-stage" data-music-stage>
-            <iframe class="music-stage-frame" data-music-frame src="/assets/visualizer/dust-v2.html" title="Efecto reactivo" loading="lazy" allow="autoplay"></iframe>
+            <iframe class="music-stage-frame" data-music-frame src="/assets/visualizer/dust-v3.html" title="Efecto reactivo" loading="lazy" allow="autoplay"></iframe>
             <button class="tech-stage-overlay" type="button" data-music-overlay aria-label="Reproducir">
               <span class="music-overlay-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
@@ -1472,6 +1474,10 @@ const TECHS = featureVideo
     transition: color var(--t-hover) var(--ease);
   }
   .tech-stage:hover .tech-stage-cta { color: var(--pc, var(--accent)); }
+  /* "En vivo" en magenta apenas arranca la reproducción (pedido
+     2026-07-18) — color fijo, no --pc, para que sea SIEMPRE magenta sin
+     importar el color de fase del servicio */
+  .tech-stage-cta.is-live { color: #E15CDB; }
   .tech-stage-cta svg { width: 14px; height: 14px; }
   /* tira numerada bajo la pantalla — mismo ancho tope que la pantalla
      para que sus bordes queden alineados */
@@ -2435,7 +2441,11 @@ const TECHS = featureVideo
     let activeCard: HTMLElement | null = null;
     let currentSrc = '';
 
-    const setState = (label: string) => { if (stateEl) stateEl.textContent = label; };
+    const setState = (label: string, live = false) => {
+      if (!stateEl) return;
+      stateEl.textContent = label;
+      stateEl.classList.toggle('is-live', live);
+    };
 
     /* color del servicio → el efecto de partículas (pedido 2026-07-18):
        llamado apenas el iframe expone dustSetColor, con reintento breve
@@ -2579,7 +2589,7 @@ const TECHS = featureVideo
       window.addEventListener('message', (e) => {
         const data = e.data as any;
         if (!data || typeof data.type !== 'string' || !data.type.startsWith('dust-')) return;
-        if (data.type === 'dust-started') setState('▸ en vivo');
+        if (data.type === 'dust-started') setState('▸ en vivo', true);
         else if (data.type === 'dust-ended') {
           setState('▸ terminó — elige otra pista');
           stage?.classList.remove('is-playing');
