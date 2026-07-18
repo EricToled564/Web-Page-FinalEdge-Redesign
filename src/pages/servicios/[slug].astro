@@ -321,36 +321,62 @@ const TECHS = featureVideo
              texto con el menú VERTICAL a la izquierda, gráfico (las
              tarjetas de videos) a la derecha */}
           <div class="tech-col-text">
-            {/* sobre fondo oscuro el >_ SIEMPRE va en el color del
-               servicio (regla del cliente 2026-07-17) y alineado a la
-               PRIMERA línea del título, no centrado entre las dos */}
-            <p class="phase-band-title tech-title">
-              <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
-              Dominamos todas las técnicas
-            </p>
+            {/* título CALCADO del slide de la rueda del home (pedido
+               2026-07-17): misma anatomía que el lockup >_ final edge
+               [ENGINE] — >_ 35px/700 en el color del servicio (fondo
+               oscuro), texto 28px/600 alineado por línea base, hairline
+               debajo como .section-head */}
+            <header class="tech-head">
+              <p class="tech-lockup">
+                <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
+                <span class="tech-lockup-text">Dominamos todas las técnicas</span>
+              </p>
+              <hr />
+            </header>
             <nav class="tech-menu" aria-label="Técnicas" data-tech-menu>
               {TECHS.map((t, i) => (
                 <button class={`tech-menu-item${i === 0 ? ' is-active' : ''}`} type="button" data-tech-key={t.key}>{t.label}</button>
               ))}
             </nav>
-            {/* regreso al menú de Video / Imágenes / Música */}
+            {/* regreso al menú de Video / Imágenes / Música (el scroll
+               hacia arriba también regresa: nada se secuestra) */}
             <button class="tech-back" type="button" data-tech-back>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
-              Volver a Video · Imágenes · Música
+              Nuestro trabajo
             </button>
           </div>
           {WORK_VIDEOS_READY && (
             <div class="tech-videos" data-tech-videos>
-              {TECHS.map((t, i) => (
-                <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
-                  {t.videos.map((v) => (
-                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-hls={`/assets/stream/v1/${v.slug}/master.m3u8`} data-video-title={v.title}>
-                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg?v=2`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
-                      <span class="work-card-title">{v.title}</span>
-                    </button>
-                  ))}
-                </div>
-              ))}
+              {/* PANTALLA dominante (misma jerarquía que la rueda en el
+                 slide del home): el video elegido se proyecta ENORME a
+                 todo el ancho, reproduciéndose mudo en loop como preview
+                 vivo por HLS. Click = se abre con sonido y controles
+                 (mismo overlay). Debajo, la tira numerada con el resto
+                 de los videos de la técnica: hover = pasa a la pantalla
+                 grande, click = abre directo. */}
+              <button class="tech-stage" type="button" data-tech-stage data-video-title="">
+                <video class="tech-stage-video" data-stage-video muted loop playsinline preload="metadata" aria-hidden="true"></video>
+                <span class="tech-stage-bar">
+                  <span class="tech-stage-num" data-stage-num>01</span>
+                  <span class="tech-stage-title" data-stage-title></span>
+                  <span class="tech-stage-cta">
+                    Ver con sonido
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M6 4l14 8-14 8z" /></svg>
+                  </span>
+                </span>
+              </button>
+              <div class="tech-strip">
+                {TECHS.map((t, i) => (
+                  <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
+                    {t.videos.map((v, j) => (
+                      <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-hls={`/assets/stream/v1/${v.slug}/master.m3u8`} data-video-title={v.title} data-video-num={String(j + 1).padStart(2, '0')}>
+                        <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg?v=2`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
+                        <span class="work-card-title"><span class="work-card-num">{String(j + 1).padStart(2, '0')}</span>{v.title}</span>
+                      </button>
+                    ))}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -946,8 +972,14 @@ const TECHS = featureVideo
     min-height: calc(100vh - 92px);
     scroll-margin-top: 92px;
     align-content: start;
-    /* mismo esqueleto que .engine-split del home: texto/menú izquierda,
-       gráfico derecha */
+    /* mismo esqueleto Y MISMO ANCHO que .engine-split del home: rompe el
+       contenedor de 1080px y usa el viewport completo, con los mismos
+       pisos laterales (izquierda alineada a la cuadrícula de 1180px,
+       derecha sangrando hacia el borde como la rueda) */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    padding-left: max(72px, calc(50vw - 590px));
+    padding-right: max(40px, calc(50vw - 910px));
     display: grid;
     grid-template-columns: minmax(260px, 360px) 1fr;
     gap: 32px;
@@ -955,8 +987,32 @@ const TECHS = featureVideo
   }
   /* el título envuelve en 2 líneas: el >_ se ancla a la PRIMERA línea
      (flex-start), en el color del servicio por ir sobre fondo oscuro */
-  .tech-title { margin-bottom: 0; align-items: flex-start; }
-  .tech-title-prompt { color: var(--pc, var(--accent)); }
+  /* encabezado CALCADO del slide de la rueda (.section-head + lockup):
+     >_ 35px/700 en el color del servicio (fondo oscuro), texto 28px/600
+     por línea base, hairline debajo — mismos números que .brand-lockup */
+  .tech-head { margin: 0; }
+  .tech-lockup {
+    margin: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+  }
+  .tech-title-prompt {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 35px;
+    line-height: 1;
+    color: var(--pc, var(--accent));
+  }
+  .tech-lockup-text {
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 28px;
+    letter-spacing: -.02em;
+    line-height: 1.18;
+    color: var(--fg);
+  }
+  .tech-head hr { border: 0; border-top: 1px solid var(--hairline); margin: 14px 0 0; }
   /* botón de regreso al menú de Video/Imágenes/Música: misma voz que el
      CTA de la galería, alineado a la columna del menú */
   .tech-back {
@@ -980,20 +1036,30 @@ const TECHS = featureVideo
   /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
      en COLUMNA vertical como en el slide de la rueda */
   .tech-menu {
-    margin-top: 28px;
+    /* mismo respiro que .engine-menu del home (24px tras el hairline) */
+    margin-top: 24px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    /* recuadros TODOS del mismo tamaño (pedido): estiran al ancho de la
+       columna en lugar de medir cada uno su texto */
+    align-items: stretch;
     gap: 10px;
   }
   .tech-menu-item {
-    display: inline-block;
+    display: block;
+    width: 100%;
+    text-align: left;
     font-family: var(--font-ui);
     font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 500;
     letter-spacing: normal;
     color: var(--fg);
-    background: var(--panel);
+    /* vidrio translúcido con luz superior, como las tarjetas de fase */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--fg) 10%, transparent) 0%,
+      color-mix(in srgb, var(--fg) 4%, transparent) 45%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
+    backdrop-filter: blur(4px);
     border: 1px solid var(--hairline);
     padding: 9px 18px;
     cursor: pointer;
@@ -1008,16 +1074,74 @@ const TECHS = featureVideo
   /* tarjetas de videos de la técnica elegida (columna derecha) */
   .tech-videos { margin-top: 0; }
   .tech-videos[hidden] { display: none; }
+  /* pantalla dominante: el video elegido proyectado a todo el ancho de
+     la columna, como la rueda domina su columna en el home */
+  .tech-stage {
+    position: relative;
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background: var(--void-deep);
+    border: 1px solid var(--hairline);
+    padding: 0;
+    overflow: hidden;
+    cursor: pointer;
+    font: inherit;
+  }
+  .tech-stage-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  /* video vertical: entero (contain) sobre fondo void, sin recorte brutal */
+  .tech-stage.is-vertical .tech-stage-video { object-fit: contain; }
+  .tech-stage-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 30px 22px 16px;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--void-deep) 85%, transparent) 100%);
+    font-family: var(--font-ui);
+    text-align: left;
+  }
+  .tech-stage-num { color: var(--pc, var(--accent)); font-weight: 700; font-size: 14px; letter-spacing: .08em; }
+  .tech-stage-title { color: var(--fg); font-weight: 600; font-size: clamp(15px, 1.4vw, 18px); letter-spacing: .02em; }
+  .tech-stage-cta {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg-muted);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .06em;
+    transition: color var(--t-hover) var(--ease);
+  }
+  .tech-stage:hover .tech-stage-cta { color: var(--pc, var(--accent)); }
+  .tech-stage-cta svg { width: 14px; height: 14px; }
+  /* tira numerada bajo la pantalla */
+  .tech-strip { margin-top: 14px; }
   .tech-videos-group {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
   }
   .tech-videos-group[hidden] { display: none; }
   .work-card {
     display: flex;
     flex-direction: column;
-    background: var(--panel);
+    /* vidrio translúcido, como las tarjetas de fase */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--fg) 8%, transparent) 0%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
     border: 1px solid var(--hairline);
     padding: 0;
     cursor: pointer;
@@ -1031,12 +1155,21 @@ const TECHS = featureVideo
   .work-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-enter) var(--ease); }
   .work-card:hover .work-card-media img { transform: scale(1.05); }
   .work-card-title {
-    padding: 12px 14px 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 10px 12px 12px;
     font-family: 'Geist Mono', ui-monospace, monospace;
-    font-weight: 600;
-    font-size: 15px;
-    letter-spacing: 0.4px;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+    /* dos líneas de reserva SIEMPRE: todas las tarjetas de la tira miden
+       lo mismo aunque un título envuelva y otro no */
+    min-height: calc(2.8em + 22px);
   }
+  .work-card-num { color: var(--pc, var(--accent)); font-weight: 700; font-size: 14px; }
+  .work-card:hover { border-color: color-mix(in srgb, var(--pc, var(--accent)) 55%, var(--hairline)); }
   /* pantalla de reproducción: overlay oscuro con el player nativo */
   .work-player {
     position: fixed;
@@ -1084,8 +1217,9 @@ const TECHS = featureVideo
   .work-player-close:hover { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
     .tech-videos-group { grid-template-columns: 1fr; }
-    .tech-gallery { grid-template-columns: 1fr; }
+    .tech-gallery { grid-template-columns: 1fr; padding-left: 24px; padding-right: 24px; }
     .tech-menu { flex-direction: row; flex-wrap: wrap; }
+    .tech-menu-item { width: auto; }
     /* banda de fases apilada en móvil: en columna única la celda es más
        baja y el texto cabe con las alturas fijas reducidas */
     .phase-band-inner { padding: 24px 20px 36px; }
@@ -1511,6 +1645,8 @@ const TECHS = featureVideo
     const w = window as any;
     try { w.__reelHls?.destroy?.(); } catch (_) {}
     w.__reelHls = null;
+    try { w.__stageHls?.destroy?.(); } catch (_) {}
+    w.__stageHls = null;
   });
 
   /* CTA "Conoce nuestro trabajo": baja a la lámina de manifiesto */
@@ -1599,13 +1735,57 @@ const TECHS = featureVideo
     const items = Array.from(gallery.querySelectorAll('[data-tech-key]')) as HTMLElement[];
     const videosWrap = gallery.querySelector('[data-tech-videos]') as HTMLElement | null;
     const groups = videosWrap ? (Array.from(videosWrap.querySelectorAll('[data-tech-group]')) as HTMLElement[]) : [];
+
+    /* pantalla dominante: proyecta el video de una tarjeta como preview
+       MUDO en loop por HLS adaptativo. El click en la pantalla abre el
+       overlay con sonido a través de la delegación global de
+       [data-video-src] (la pantalla lleva esos atributos al día). */
+    const stage = gallery.querySelector('[data-tech-stage]') as HTMLElement | null;
+    const stageVid = gallery.querySelector('[data-stage-video]') as HTMLVideoElement | null;
+    const stageTitle = gallery.querySelector('[data-stage-title]') as HTMLElement | null;
+    const stageNum = gallery.querySelector('[data-stage-num]') as HTMLElement | null;
+    const wAny = window as any;
+    const setStage = (card: HTMLElement | null) => {
+      if (!stage || !stageVid || !card) return;
+      const mp4 = card.getAttribute('data-video-src') || '';
+      const hlsUrl = card.getAttribute('data-video-hls') || '';
+      if (!mp4 || stage.getAttribute('data-video-src') === mp4) return;
+      stage.setAttribute('data-video-src', mp4);
+      stage.setAttribute('data-video-hls', hlsUrl);
+      stage.setAttribute('data-video-title', card.getAttribute('data-video-title') || '');
+      if (stageTitle) stageTitle.textContent = card.getAttribute('data-video-title') || '';
+      if (stageNum) stageNum.textContent = card.getAttribute('data-video-num') || '01';
+      try { wAny.__stageHls?.destroy?.(); } catch (_) {}
+      wAny.__stageHls = null;
+      stageVid.muted = true;
+      stageVid.onloadedmetadata = () => stage.classList.toggle('is-vertical', stageVid.videoHeight > stageVid.videoWidth);
+      attachStream(stageVid, hlsUrl, mp4).then((h) => { wAny.__stageHls = h; stageVid.play().catch(() => {}); });
+    };
+    const firstVisibleCard = () => videosWrap?.querySelector('[data-tech-group]:not([hidden]) .work-card') as HTMLElement | null;
+
     const openVideos = (el: HTMLElement) => {
       const key = el.getAttribute('data-tech-key');
       if (!videosWrap || !key) return;
       items.forEach((i) => i.classList.toggle('is-active', i === el));
       videosWrap.hidden = false;
       groups.forEach((g) => { g.hidden = g.getAttribute('data-tech-group') !== key; });
+      setStage(firstVisibleCard());
     };
+    /* arranque: el primer video de la primera técnica ya proyectado */
+    setStage(firstVisibleCard());
+    /* hover en una miniatura de la tira → pasa a la pantalla grande */
+    videosWrap?.addEventListener('pointerover', (e) => {
+      const card = (e.target as HTMLElement | null)?.closest?.('.work-card') as HTMLElement | null;
+      if (card) setStage(card);
+    }, { passive: true });
+    /* fuera del visor la pantalla se pausa; al volver, sigue */
+    if (stageVid) {
+      new IntersectionObserver((es) => {
+        const on = es[es.length - 1].isIntersecting;
+        if (!on) stageVid.pause();
+        else if (stageVid.paused) stageVid.play().catch(() => {});
+      }, { threshold: 0.1 }).observe(stageVid);
+    }
     items.forEach((el) => {
       el.addEventListener('mouseenter', () => openVideos(el));
       el.addEventListener('click', () => {
@@ -1663,6 +1843,8 @@ const TECHS = featureVideo
       w.__workHls = null;
       if (v) { v.pause(); v.removeAttribute('src'); try { v.load(); } catch (_) {} }
       ov.hidden = true;
+      /* la pantalla de preview retoma su loop mudo */
+      (document.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.play().catch(() => {});
     };
     document.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
@@ -1672,9 +1854,12 @@ const TECHS = featureVideo
         const v = ov?.querySelector('[data-work-video]') as HTMLVideoElement | null;
         const title = ov?.querySelector('[data-work-title]') as HTMLElement | null;
         if (!ov || !v) return;
-        if (title) title.textContent = card.getAttribute('data-video-title') || '';
         const mp4 = card.getAttribute('data-video-src') || '';
         const hlsUrl = card.getAttribute('data-video-hls') || '';
+        if (!mp4 && !hlsUrl) return;
+        if (title) title.textContent = card.getAttribute('data-video-title') || '';
+        /* la pantalla de preview calla mientras el overlay suena */
+        (document.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
         ov.hidden = false;
         const w = window as any;
         try { w.__workHls?.destroy?.(); } catch (_) {}
@@ -1701,9 +1886,9 @@ const TECHS = featureVideo
     document.addEventListener('pointerover', (e) => {
       const card = (e.target as HTMLElement | null)?.closest?.('[data-video-hls]') as HTMLElement | null;
       if (!card || card.dataset.warmed === '1') return;
-      card.dataset.warmed = '1';
       const base = (card.getAttribute('data-video-hls') || '').replace(/master\.m3u8$/, '');
       if (!base) return;
+      card.dataset.warmed = '1';
       loadHls().catch(() => {});
       for (const f of ['master.m3u8', '432/index.m3u8', '432/init.mp4', '432/s000.m4s']) {
         fetch(base + f).catch(() => {});

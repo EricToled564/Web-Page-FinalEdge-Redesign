@@ -430,7 +430,15 @@ const MENU_ITEMS = [
   }
   .presion-fact + .presion-fact { border-inline-start: 1px solid color-mix(in srgb, var(--on-accent) 30%, transparent); }
   .presion-fact {
-    background: transparent;
+    position: relative;
+    overflow: hidden;
+    /* mismo tratamiento que las tarjetas de fase de creative (pedido
+       2026-07-17): vidrio translúcido con luz superior en reposo… */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--on-accent) 10%, transparent) 0%,
+      color-mix(in srgb, var(--on-accent) 4%, transparent) 45%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
+    backdrop-filter: blur(4px);
     padding: 40px 28px;
     min-height: 240px;
     display: flex;
@@ -438,7 +446,23 @@ const MENU_ITEMS = [
     align-items: center;
     justify-content: center;
     text-align: center;
+    transition: transform var(--t-ui) var(--ease);
   }
+  /* …y al encender: levantamiento sutil + relleno profundo del acento
+     que sube desde abajo, tipografía en blanco intacta */
+  .presion-fact::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--accent) 72%, var(--void-deep)) 0%,
+      color-mix(in srgb, var(--accent) 38%, var(--void-deep)) 100%);
+    transform: translateY(101%);
+    transition: transform 340ms var(--ease);
+  }
+  .presion-fact:hover { transform: translateY(-4px); z-index: 2; }
+  .presion-fact:hover::before { transform: translateY(0); }
+  .presion-fact > * { position: relative; z-index: 1; }
   .presion-fact-num { font-size: clamp(28px, 3.2vw, 44px); font-weight: 600; letter-spacing: -.03em; color: var(--on-accent); white-space: nowrap; }
   .presion-fact-unit { font-size: 0.55em; }
   .presion-fact-arrow { display: inline-block; margin: 0 .2em; font-weight: 400; font-size: .7em; }
@@ -500,16 +524,26 @@ const MENU_ITEMS = [
     margin-top: 24px;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
+    /* recuadros TODOS del mismo tamaño (pedido 2026-07-17): estiran al
+       ancho de la columna en vez de medir cada uno su texto */
+    align-items: stretch;
     gap: 10px;
   }
   .engine-menu-item {
-    display: inline-block;
+    display: block;
+    width: 100%;
+    text-align: left;
     font-size: clamp(14px, 1.3vw, 16px);
     font-weight: 500;
     letter-spacing: normal;
     color: var(--fg);
-    background: var(--panel);
+    /* vidrio translúcido con luz superior, como las tarjetas de fase
+       de creative (pedido 2026-07-17) */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--fg) 10%, transparent) 0%,
+      color-mix(in srgb, var(--fg) 4%, transparent) 45%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
+    backdrop-filter: blur(4px);
     border: 1px solid var(--hairline);
     padding: 9px 18px;
     transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
@@ -591,7 +625,7 @@ const MENU_ITEMS = [
       margin-inline: calc(50% - 50vw);
       padding-inline: 24px;
     }
-    .engine-menu-item { padding: 8px 12px; white-space: nowrap; flex: 0 0 auto; }
+    .engine-menu-item { padding: 8px 12px; white-space: nowrap; flex: 0 0 auto; width: auto; }
     .engine-col-text { padding-right: 0; }
     /* rueda a sangre completa en móvil (pedido 2026-07-15: ≥30% mayor):
        la columna ignora el padding lateral de la sección — combinada
