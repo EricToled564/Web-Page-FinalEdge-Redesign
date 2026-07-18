@@ -398,25 +398,30 @@ const TECHS = featureVideo
     </section>
   )}
 
-  <section class="section" style="padding-top:0">
-    <header class="section-head reveal">
-      <p class="eyebrow"><span class="prompt">&gt;_</span>entregables reales</p>
-      <hr />
-    </header>
-    <div class="hairline-grid grid-2 reveal">
-      {edge.proof.map(([t, d]) => (
-        <div>
-          <p class="svc-use-title">{t}</p>
-          <p class="svc-use-desc">{d}</p>
-        </div>
-      ))}
-    </div>
-    <p class="svc-closing reveal">{edge.closing}</p>
-    <div class="svc-actions reveal" style="margin-top:40px">
-      <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
-      <a class="btn btn--ghost" href={phase.slug}>Volver a {phase.name}</a>
-    </div>
-  </section>
+  {/* "entregables reales" también fuera de creative (pedido 2026-07-17,
+     tercera lámina genérica eliminada): el trabajo real ya se muestra en
+     la galería de técnicas con los videos */}
+  {!featureVideo && (
+    <section class="section" style="padding-top:0">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="prompt">&gt;_</span>entregables reales</p>
+        <hr />
+      </header>
+      <div class="hairline-grid grid-2 reveal">
+        {edge.proof.map(([t, d]) => (
+          <div>
+            <p class="svc-use-title">{t}</p>
+            <p class="svc-use-desc">{d}</p>
+          </div>
+        ))}
+      </div>
+      <p class="svc-closing reveal">{edge.closing}</p>
+      <div class="svc-actions reveal" style="margin-top:40px">
+        <a class="btn" href="/#valoracion">Agenda tu reunión de valoración</a>
+        <a class="btn btn--ghost" href={phase.slug}>Volver a {phase.name}</a>
+      </div>
+    </section>
+  )}
 </Base>
 
 <style>
