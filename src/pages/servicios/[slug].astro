@@ -108,6 +108,55 @@ const IMG_TECHS = featureVideo
         : { ...t, images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.jpg`) }
     )
   : [];
+/* Estilos de música (galería al dar click en "Música", pedido
+   2026-07-18): índice de estilos a la izquierda, efecto reactivo de
+   partículas (Three.js) grande en la pantalla — arranca y termina
+   exactamente con la pista elegida. Track list y estilos dictados por
+   el cliente. */
+const MUSIC_STYLES = featureVideo
+  ? [
+      { key: 'branded', label: 'Branded', tracks: [
+        { title: 'At Vlu I Come Alive', slug: 'at-vlu-i-come-alive' },
+        { title: 'Cinco Siglos de Secretos', slug: 'cinco-siglos-de-secretos' },
+        { title: '48 Horas — Navidad 2025', slug: '48-horas-navidad-2025' },
+        { title: '48 Horas — Adventure', slug: '48-horas-adventure' },
+        { title: '48 Horas — Wellness', slug: '48-horas-wellness' },
+        { title: 'Forty Eight Hours', slug: 'forty-eight-hours' },
+        { title: 'Epic Tonight', slug: 'epic-tonight' },
+      ] },
+      { key: 'sports-world', label: 'Sports World', tracks: [
+        { title: 'No es Verlo, es Jugarlo', slug: 'no-es-verlo-es-jugarlo' },
+        { title: 'No es Verlo, es Jugarlo (Techno)', slug: 'no-es-verlo-es-jugarlo-techno' },
+      ] },
+      { key: 'pop', label: 'Pop', tracks: [
+        { title: 'Corazón Satelital', slug: 'corazon-satelital' },
+        { title: 'Polvo de Estrellas — V1', slug: 'polvo-de-estrellas-v1' },
+        { title: 'Polvo de Estrellas — V2', slug: 'polvo-de-estrellas-v2' },
+      ] },
+      { key: 'urban', label: 'Urban', tracks: [
+        { title: 'Full con el Team', slug: 'full-con-el-team' },
+        { title: 'No es Depresión', slug: 'no-es-depresion' },
+        { title: 'Solo Contra el Mundo', slug: 'solo-contra-el-mundo' },
+      ] },
+      { key: 'tradicional-mexicana', label: 'Tradicional Mexicana', tracks: [
+        { title: 'Furia y Calma — V1', slug: 'furia-y-calma-v1' },
+        { title: 'Furia y Calma — V2', slug: 'furia-y-calma-v2' },
+      ] },
+      { key: 'corrido-tumbado', label: 'Corrido Tumbado', tracks: [
+        { title: 'La Herida que no Cierra', slug: 'la-herida-que-no-cierra' },
+      ] },
+      { key: 'bolero', label: 'Bolero', tracks: [
+        { title: 'Solo por Ti — V1', slug: 'solo-por-ti-v1' },
+        { title: 'Solo por Ti — V2', slug: 'solo-por-ti-v2' },
+      ] },
+      { key: 'heavy-metal', label: 'Heavy Metal', tracks: [
+        { title: 'Un Alma en la Calle', slug: 'un-alma-en-la-calle' },
+      ] },
+      { key: 'instrumental', label: 'Instrumental', tracks: [
+        { title: 'Turn Off the Phone', slug: 'turn-off-the-phone' },
+      ] },
+    ].map((s) => ({ ...s, tracks: s.tracks.map((t) => ({ ...t, src: `/assets/music/${s.key}/${t.slug}.mp3` })) }))
+  : [];
 /* Las fases del proceso de video (banda al dar click en "Video") —
    copy DICTADO por el cliente 2026-07-17, no se edita sin su visto. */
 const PHASES_BAND = [
@@ -300,10 +349,10 @@ const TECHS = featureVideo
           <span class="reel-card-media"><img src="/assets/gallery/gal-imagenes-v.jpg" alt="Imágenes" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Imágenes</span>
         </button>
-        <a class="reel-card" href="/#valoracion" aria-label="Música">
+        <button class="reel-card" type="button" data-music-toggle aria-expanded="false" aria-controls="music-detail">
           <span class="reel-card-media"><img src="/assets/gallery/gal-musica-v.jpg" alt="Música" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Música</span>
-        </a>
+        </button>
       </div>
       {/* Al dar click en la tarjeta de Video (rediseño 2026-07-17, con
          banda de referencia del cliente): banda en el color del servicio
@@ -476,6 +525,71 @@ const TECHS = featureVideo
     <div class="img-lightbox" data-img-lightbox hidden>
       <button class="work-player-close" data-lightbox-close type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="width:20px;height:20px"><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg></button>
       <img class="img-lightbox-img" data-lightbox-img alt="" />
+    </div>
+  )}
+
+  {/* Al dar click en la tarjeta de MÚSICA (pedido 2026-07-18): mismo
+     esqueleto de la rueda que Video/Imágenes — estilos a la izquierda,
+     a la derecha un efecto de partículas reactivo al audio (Three.js,
+     código del cliente) que llena la pantalla dominante. El efecto
+     arranca EXACTAMENTE cuando empieza la pista y termina con ella
+     (ver dustPlay/onended en /assets/visualizer/dust.html). */}
+  {MUSIC_STYLES.length > 0 && (
+    <div class="reel-video-detail" id="music-detail" data-music-detail hidden>
+      <div class="tech-gallery" data-music-gallery>
+        <div class="tech-col-text">
+          <header class="tech-head">
+            <p class="tech-lockup">
+              <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
+              <span class="tech-lockup-text">dominamos todas las técnicas</span>
+            </p>
+            <hr />
+          </header>
+          <nav class="tech-menu" aria-label="Estilos de música" data-music-menu>
+            {MUSIC_STYLES.map((s, i) => (
+              <button class={`tech-menu-item${i === 0 ? ' is-active' : ''}`} type="button" data-music-key={s.key}>{s.label}</button>
+            ))}
+          </nav>
+          <button class="tech-back" type="button" data-music-back>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
+            Nuestro trabajo
+          </button>
+        </div>
+        <div class="tech-videos" data-music-tracks>
+          {/* PANTALLA dominante: el efecto de partículas vive en un
+             <iframe> MISMO-ORIGEN — se controla llamando directo
+             frame.contentWindow.dustPlay(url)/dustStop() (no
+             postMessage: la llamada directa preserva el gesto del
+             usuario que exige AudioContext en móvil). */}
+          <div class="tech-stage music-stage" data-music-stage>
+            <iframe class="music-stage-frame" data-music-frame src="/assets/visualizer/dust.html" title="Efecto reactivo" loading="lazy" allow="autoplay"></iframe>
+            <button class="tech-stage-overlay" type="button" data-music-overlay aria-label="Reproducir">
+              <span class="music-overlay-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              </span>
+            </button>
+            <span class="tech-stage-bar">
+              <span class="tech-stage-title" data-music-title>Elige una pista</span>
+              <span class="tech-stage-cta" data-music-state>▸ En vivo</span>
+            </span>
+          </div>
+          <div class="tech-strip">
+            {MUSIC_STYLES.map((s, i) => (
+              <div class="music-track-group" data-music-group={s.key} hidden={i !== 0}>
+                {s.tracks.map((t, j) => (
+                  <button class="work-card music-track" type="button" data-music-src={t.src} data-music-title={t.title}>
+                    <span class="music-track-num">{String(j + 1).padStart(2, '0')}</span>
+                    <span class="music-track-title">{t.title}</span>
+                    <span class="music-track-play" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   )}
 
@@ -1183,11 +1297,12 @@ const TECHS = featureVideo
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* acabado MATE: saturación y contraste contenidos, negros levantados */
-    filter: saturate(0.78) contrast(0.92) brightness(1.02);
-    transition: filter var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+    /* colores reales, sin desaturar (reporte 2026-07-18: se veían
+       apagados) — el único acabado "mate" ahora es la ausencia de
+       brillo/reflejo forzado, no un filtro sobre el color */
+    transition: transform var(--t-ui) var(--ease);
   }
-  .collage-item:hover img { filter: saturate(0.95) contrast(0.98); transform: scale(1.03); }
+  .collage-item:hover img { transform: scale(1.03); }
   /* lightbox: la imagen agrandada sobre velo oscuro */
   .img-lightbox {
     position: fixed;
@@ -1360,6 +1475,65 @@ const TECHS = featureVideo
   }
   .work-card-num { color: var(--pc, var(--accent)); font-weight: 700; font-size: 14px; }
   .work-card:hover { border-color: color-mix(in srgb, var(--pc, var(--accent)) 55%, var(--hairline)); }
+  /* pantalla de música: el efecto de partículas vive en un iframe
+     mismo-origen (dust.html) que llena la pantalla dominante */
+  .music-stage { background: var(--void-deep); }
+  .music-stage-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
+  /* overlay de play: visible hasta el primer click de cada pista — el
+     efecto reactivo empieza negro y quieto sin audio, así que sin este
+     botón la pantalla se vería como si estuviera rota */
+  .tech-stage-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .music-stage.is-playing .tech-stage-overlay { display: none; }
+  .music-overlay-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--void-deep) 55%, transparent);
+    border: 1px solid color-mix(in srgb, var(--fg) 45%, transparent);
+    color: var(--fg);
+    transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
+  }
+  .tech-stage-overlay:hover .music-overlay-icon { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); transform: scale(1.06); }
+  .music-overlay-icon svg { width: 26px; height: 26px; margin-left: 3px; }
+  /* tarjeta de pista: número + título + ícono de play, misma voz que
+     .work-card pero en fila (no hay miniatura de imagen que mostrar) */
+  .music-track {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    min-height: 0;
+  }
+  .music-track-num { color: var(--pc, var(--accent)); font-weight: 700; font-size: 14px; flex: 0 0 auto; }
+  .music-track-title {
+    flex: 1 1 auto;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+  }
+  .music-track-play { flex: 0 0 auto; width: 16px; height: 16px; color: var(--fg-muted); transition: color var(--t-hover) var(--ease); }
+  .music-track-play svg { width: 100%; height: 100%; }
+  .music-track:hover .music-track-play,
+  .music-track.is-active .music-track-play { color: var(--pc, var(--accent)); }
+  .music-track.is-active { border-color: var(--pc, var(--accent)); }
+  /* lista de pistas: columna vertical (no hay miniatura 16:9 que
+     acomodar en grid, como en video) — hereda el ancho tope de .tech-strip */
+  .music-track-group { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 460px); overflow-y: auto; }
+  .music-track-group[hidden] { display: none; }
   /* pantalla de reproducción: overlay oscuro con el player nativo */
   .work-player {
     position: fixed;
@@ -1895,14 +2069,16 @@ const TECHS = featureVideo
       b?.setAttribute('aria-expanded', 'false');
       (p.querySelector('[data-stage-video]') as HTMLVideoElement | null)?.pause();
     };
-    const wire = (btnSel: string, panelSel: string, otherBtnSel: string, otherPanelSel: string) => {
+    /* wire acepta una lista de "otros" — con 3 tarjetas (Video/Imágenes/
+       Música) abrir una debe cerrar las OTRAS DOS, no solo una */
+    const wire = (btnSel: string, panelSel: string, others: [string, string][]) => {
       const btn = document.querySelector(btnSel) as HTMLElement | null;
       const panel = document.querySelector(panelSel) as HTMLElement | null;
       if (!btn || !panel || btn.dataset.bound === '1') return;
       btn.dataset.bound = '1';
       btn.addEventListener('click', () => {
         if (panel.hidden) {
-          closeNow(otherBtnSel, otherPanelSel);
+          others.forEach(([ob, op]) => closeNow(ob, op));
           panel.hidden = false;
           requestAnimationFrame(() => panel.classList.add('is-open'));
           btn.setAttribute('aria-expanded', 'true');
@@ -1917,8 +2093,9 @@ const TECHS = featureVideo
         }
       });
     };
-    wire('[data-video-toggle]', '[data-video-detail]', '[data-img-toggle]', '[data-img-detail]');
-    wire('[data-img-toggle]', '[data-img-detail]', '[data-video-toggle]', '[data-video-detail]');
+    wire('[data-video-toggle]', '[data-video-detail]', [['[data-img-toggle]', '[data-img-detail]'], ['[data-music-toggle]', '[data-music-detail]']]);
+    wire('[data-img-toggle]', '[data-img-detail]', [['[data-video-toggle]', '[data-video-detail]'], ['[data-music-toggle]', '[data-music-detail]']]);
+    wire('[data-music-toggle]', '[data-music-detail]', [['[data-video-toggle]', '[data-video-detail]'], ['[data-img-toggle]', '[data-img-detail]']]);
   }
   initVideoDetail();
   document.addEventListener('astro:page-load', initVideoDetail);
@@ -2120,6 +2297,107 @@ const TECHS = featureVideo
     document.addEventListener('astro:before-swap', closeLb);
   }
   initImgLightbox();
+
+  /* Galería de MÚSICA (2026-07-18): estilos a la izquierda (hover
+     libre hasta que el click fija, como en videos e imágenes) y el
+     efecto de partículas reactivo a la derecha, dentro de un iframe
+     MISMO-ORIGEN que expone dustPlay(url)/dustStop() en su window.
+     El arranque/fin del efecto quedan atados 1:1 a la pista: dustPlay
+     inicia audio+efecto juntos, y el iframe avisa 'dust-ended' por
+     postMessage exactamente cuando el audio termina — sin loop, sin
+     desincronía. La llamada a dustPlay ocurre SÍNCRONA dentro del
+     click handler (no tras un postMessage) para conservar el gesto
+     del usuario que exige AudioContext.resume() en Safari/iOS. */
+  let musicMsgBound = false;
+  function initMusicGallery() {
+    const gallery = document.querySelector('[data-music-gallery]') as HTMLElement | null;
+    if (!gallery || gallery.dataset.bound === '1') return;
+    gallery.dataset.bound = '1';
+
+    const stage = gallery.querySelector('[data-music-stage]') as HTMLElement | null;
+    const frame = gallery.querySelector('[data-music-frame]') as HTMLIFrameElement | null;
+    const overlay = gallery.querySelector('[data-music-overlay]') as HTMLElement | null;
+    const titleEl = gallery.querySelector('[data-music-title]') as HTMLElement | null;
+    const stateEl = gallery.querySelector('[data-music-state]') as HTMLElement | null;
+    let activeCard: HTMLElement | null = null;
+    let currentSrc = '';
+
+    const setState = (label: string) => { if (stateEl) stateEl.textContent = label; };
+
+    const playTrack = (card: HTMLElement) => {
+      const src = card.getAttribute('data-music-src') || '';
+      const title = card.getAttribute('data-music-title') || '';
+      if (!src || !frame) return;
+      const win = frame.contentWindow as any;
+      if (!win || typeof win.dustPlay !== 'function') { setState('cargando el efecto…'); return; }
+      currentSrc = src;
+      activeCard?.classList.remove('is-active');
+      card.classList.add('is-active');
+      activeCard = card;
+      if (titleEl) titleEl.textContent = title;
+      setState('▸ cargando…');
+      stage?.classList.add('is-playing');
+      win.dustPlay(src);
+    };
+
+    /* click en CUALQUIER punto de la tarjeta reproduce (delegación, ya
+       que .music-track es un <button> con hijos) */
+    gallery.querySelector('[data-music-tracks]')?.addEventListener('click', (e) => {
+      const card = (e.target as HTMLElement | null)?.closest?.('.music-track') as HTMLElement | null;
+      if (card) playTrack(card);
+    });
+    overlay?.addEventListener('click', () => { if (activeCard) playTrack(activeCard); });
+
+    /* estilos: hover libre hasta que el click fija (como en Video/Imágenes) */
+    const chips = Array.from(gallery.querySelectorAll('[data-music-key]')) as HTMLElement[];
+    const groups = Array.from(gallery.querySelectorAll('[data-music-group]')) as HTMLElement[];
+    const openStyle = (el: HTMLElement) => {
+      const key = el.getAttribute('data-music-key');
+      if (!key) return;
+      chips.forEach((c) => c.classList.toggle('is-active', c === el));
+      groups.forEach((g) => { g.hidden = g.getAttribute('data-music-group') !== key; });
+    };
+    let pinned = false;
+    chips.forEach((el) => {
+      el.addEventListener('mouseenter', () => { if (!pinned) openStyle(el); });
+      el.addEventListener('click', () => { pinned = true; openStyle(el); });
+    });
+
+    /* volver: detiene el audio, colapsa TODA la sección y regresa al menú */
+    const back = gallery.querySelector('[data-music-back]') as HTMLElement | null;
+    back?.addEventListener('click', () => {
+      try { (frame?.contentWindow as any)?.dustStop?.(); } catch (_) {}
+      const toggle = document.querySelector('[data-music-toggle]') as HTMLElement | null;
+      const panel = document.querySelector('[data-music-detail]') as HTMLElement | null;
+      if (panel && !panel.hidden) toggle?.click();
+      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    /* estado del iframe: arranque/fin de la pista, sin loop */
+    if (!musicMsgBound) {
+      musicMsgBound = true;
+      window.addEventListener('message', (e) => {
+        const data = e.data as any;
+        if (!data || typeof data.type !== 'string' || !data.type.startsWith('dust-')) return;
+        if (data.type === 'dust-started') setState('▸ en vivo');
+        else if (data.type === 'dust-ended') {
+          setState('▸ terminó — elige otra pista');
+          stage?.classList.remove('is-playing');
+        } else if (data.type === 'dust-error') {
+          setState('no se pudo reproducir');
+          stage?.classList.remove('is-playing');
+        }
+      });
+    }
+  }
+  initMusicGallery();
+  document.addEventListener('astro:page-load', initMusicGallery);
+  /* al salir de la página (SPA): frena el audio del iframe — igual que
+     el reel y la pantalla de video detienen sus streams */
+  document.addEventListener('astro:before-swap', () => {
+    const frame = document.querySelector('[data-music-frame]') as HTMLIFrameElement | null;
+    try { (frame?.contentWindow as any)?.dustStop?.(); } catch (_) {}
+  });
 
   /* Pantalla de reproducción (2026-07-17): al hacer click en una tarjeta
      de video se abre el overlay con el reproductor NATIVO (línea de
