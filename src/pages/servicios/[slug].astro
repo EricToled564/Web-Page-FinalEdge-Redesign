@@ -535,13 +535,17 @@ const TECHS = featureVideo
      arranca EXACTAMENTE cuando empieza la pista y termina con ella
      (ver dustPlay/onended en /assets/visualizer/dust.html). */}
   {MUSIC_STYLES.length > 0 && (
-    <div class="reel-video-detail" id="music-detail" data-music-detail hidden>
-      <div class="tech-gallery" data-music-gallery>
+    /* --pc directo en este div (fuera de <section class="reel-gallery">
+       en el DOM, así que no hereda su --pc): sin esto el >_ y el efecto
+       de partículas caían al azul por defecto en vez del color del
+       servicio (reporte 2026-07-18). */
+    <div class="reel-video-detail" id="music-detail" data-music-detail hidden style={`--pc:${phase.color}`}>
+      <div class="tech-gallery" data-music-gallery data-service-color={phase.color}>
         <div class="tech-col-text">
           <header class="tech-head">
             <p class="tech-lockup">
               <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
-              <span class="tech-lockup-text">dominamos todas las técnicas</span>
+              <span class="tech-lockup-text">dominamos todos los estilos</span>
             </p>
             <hr />
           </header>
@@ -573,7 +577,16 @@ const TECHS = featureVideo
               <span class="tech-stage-cta" data-music-state>▸ En vivo</span>
             </span>
           </div>
-          <div class="tech-strip">
+          {/* menú colapsable de pistas (pedido 2026-07-18): con muchos
+             estilos con varias pistas cada uno la lista se saldría de
+             la pantalla — colapsada por default, el toggle muestra
+             cuántas trae el estilo activo; se abre, se elige UNA y
+             vuelve sola a la pantalla (colapsa de nuevo). */}
+          <button class="music-tracklist-toggle" type="button" data-tracklist-toggle aria-expanded="false" aria-controls="music-tracklist">
+            <span data-tracklist-label>Elige una pista</span>
+            <svg class="music-tracklist-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+          <div class="tech-strip" id="music-tracklist" data-tracklist hidden>
             {MUSIC_STYLES.map((s, i) => (
               <div class="music-track-group" data-music-group={s.key} hidden={i !== 0}>
                 {s.tracks.map((t, j) => (
@@ -1476,9 +1489,13 @@ const TECHS = featureVideo
   .work-card-num { color: var(--pc, var(--accent)); font-weight: 700; font-size: 14px; }
   .work-card:hover { border-color: color-mix(in srgb, var(--pc, var(--accent)) 55%, var(--hairline)); }
   /* pantalla de música: el efecto de partículas vive en un iframe
-     mismo-origen (dust.html) que llena la pantalla dominante */
-  .music-stage { background: var(--void-deep); }
-  .music-stage-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; }
+     mismo-origen (dust.html) que llena la pantalla dominante. SIN borde
+     y con el MISMO fondo que la página (--bg, no --void-deep como
+     video/imágenes): el polvo debe "flotar" directo sobre el fondo de
+     la página, sin que se note el recuadro de la pantalla (pedido
+     2026-07-18). */
+  .music-stage { background: var(--bg); border: none; }
+  .music-stage-frame { position: absolute; inset: 0; width: 100%; height: 100%; border: none; display: block; background: transparent; }
   /* overlay de play: visible hasta el primer click de cada pista — el
      efecto reactivo empieza negro y quieto sin audio, así que sin este
      botón la pantalla se vería como si estuviera rota */
@@ -1532,8 +1549,43 @@ const TECHS = featureVideo
   .music-track.is-active { border-color: var(--pc, var(--accent)); }
   /* lista de pistas: columna vertical (no hay miniatura 16:9 que
      acomodar en grid, como en video) — hereda el ancho tope de .tech-strip */
-  .music-track-group { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 460px); overflow-y: auto; }
+  .music-track-group { display: flex; flex-direction: column; gap: 10px; }
   .music-track-group[hidden] { display: none; }
+  /* toggle del menú colapsable: misma voz que .tech-back, pero como
+     recuadro completo (es el "botón" que revela la lista completa) */
+  .music-tracklist-toggle {
+    margin-top: 14px;
+    width: min(100%, calc((100vh - 342px) * 16 / 9));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 16px;
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--fg) 8%, transparent) 0%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
+    border: 1px solid var(--hairline);
+    color: var(--fg);
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    transition: border-color var(--t-hover) var(--ease);
+  }
+  .music-tracklist-toggle:hover { border-color: var(--pc, var(--accent)); }
+  .music-tracklist-chevron { width: 16px; height: 16px; flex: 0 0 auto; transition: transform var(--t-hover) var(--ease); }
+  .music-tracklist-toggle[aria-expanded='true'] .music-tracklist-chevron { transform: rotate(180deg); }
+  /* la lista, cuando se abre, cae flotando SOBRE la pantalla (no
+     empuja el layout) — así "vuelve a la pantalla" se siente literal
+     al elegir una pista y que la lista se cierre */
+  #music-tracklist {
+    position: relative;
+    margin-top: 10px;
+    max-height: min(50vh, 420px);
+    overflow-y: auto;
+  }
+  #music-tracklist[hidden] { display: none; }
   /* pantalla de reproducción: overlay oscuro con el player nativo */
   .work-player {
     position: fixed;
@@ -2319,10 +2371,50 @@ const TECHS = featureVideo
     const overlay = gallery.querySelector('[data-music-overlay]') as HTMLElement | null;
     const titleEl = gallery.querySelector('[data-music-title]') as HTMLElement | null;
     const stateEl = gallery.querySelector('[data-music-state]') as HTMLElement | null;
+    const listToggle = gallery.querySelector('[data-tracklist-toggle]') as HTMLElement | null;
+    const listLabel = gallery.querySelector('[data-tracklist-label]') as HTMLElement | null;
+    const listPanel = gallery.querySelector('[data-tracklist]') as HTMLElement | null;
     let activeCard: HTMLElement | null = null;
     let currentSrc = '';
 
     const setState = (label: string) => { if (stateEl) stateEl.textContent = label; };
+
+    /* color del servicio → el efecto de partículas (pedido 2026-07-18):
+       llamado apenas el iframe expone dustSetColor, con reintento breve
+       por si el módulo Three.js aún no terminó de cargar. */
+    const serviceColor = gallery.getAttribute('data-service-color') || '';
+    const applyColor = () => {
+      const win = frame?.contentWindow as any;
+      if (win && typeof win.dustSetColor === 'function') { win.dustSetColor(serviceColor); return true; }
+      return false;
+    };
+    if (serviceColor && frame) {
+      if (!applyColor()) {
+        let tries = 0;
+        const iv = setInterval(() => { if (applyColor() || ++tries > 40) clearInterval(iv); }, 250);
+      }
+    }
+
+    /* menú colapsable de pistas: colapsado por default, el toggle
+       muestra cuántas trae el estilo activo; elegir una pista lo
+       vuelve a cerrar ("vuelve a la pantalla", pedido 2026-07-18) */
+    const setListLabel = () => {
+      const activeGroup = gallery.querySelector('[data-music-group]:not([hidden])') as HTMLElement | null;
+      const n = activeGroup ? activeGroup.querySelectorAll('.music-track').length : 0;
+      if (listLabel) listLabel.textContent = `Ver pistas (${n})`;
+    };
+    const collapseList = () => {
+      if (!listPanel || !listToggle) return;
+      listPanel.hidden = true;
+      listToggle.setAttribute('aria-expanded', 'false');
+    };
+    const expandList = () => {
+      if (!listPanel || !listToggle) return;
+      listPanel.hidden = false;
+      listToggle.setAttribute('aria-expanded', 'true');
+    };
+    listToggle?.addEventListener('click', () => { if (listPanel?.hidden) expandList(); else collapseList(); });
+    setListLabel();
 
     const playTrack = (card: HTMLElement) => {
       const src = card.getAttribute('data-music-src') || '';
@@ -2338,6 +2430,7 @@ const TECHS = featureVideo
       setState('▸ cargando…');
       stage?.classList.add('is-playing');
       win.dustPlay(src);
+      collapseList();
     };
 
     /* click en CUALQUIER punto de la tarjeta reproduce (delegación, ya
@@ -2346,7 +2439,7 @@ const TECHS = featureVideo
       const card = (e.target as HTMLElement | null)?.closest?.('.music-track') as HTMLElement | null;
       if (card) playTrack(card);
     });
-    overlay?.addEventListener('click', () => { if (activeCard) playTrack(activeCard); });
+    overlay?.addEventListener('click', () => { if (activeCard) playTrack(activeCard); else expandList(); });
 
     /* estilos: hover libre hasta que el click fija (como en Video/Imágenes) */
     const chips = Array.from(gallery.querySelectorAll('[data-music-key]')) as HTMLElement[];
@@ -2356,6 +2449,7 @@ const TECHS = featureVideo
       if (!key) return;
       chips.forEach((c) => c.classList.toggle('is-active', c === el));
       groups.forEach((g) => { g.hidden = g.getAttribute('data-music-group') !== key; });
+      setListLabel();
     };
     let pinned = false;
     chips.forEach((el) => {

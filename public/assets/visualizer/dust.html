@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Dust Particle Visualizer</title>
 <style>
-  html, body { margin:0; padding:0; height:100%; background:#000000;
+  html, body { margin:0; padding:0; height:100%; background:#0E0E12;
     overflow:hidden; -webkit-tap-highlight-color: transparent;
   }
   #app { position:fixed; inset:0; }
@@ -49,10 +49,12 @@ const canvas = document.getElementById('cv');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setClearColor(0x000000, 1);
+/* mismo fondo que la página madre (--bg #0E0E12, pedido 2026-07-18: el
+   polvo debe flotar directo sobre el fondo, sin recuadro visible) */
+renderer.setClearColor(0x0e0e12, 1);
 
 const scene = new THREE.Scene();
-scene.fog = new THREE.FogExp2(0x000000, 0.045);
+scene.fog = new THREE.FogExp2(0x0e0e12, 0.045);
 
 const camera = new THREE.PerspectiveCamera(55, window.innerWidth/window.innerHeight, 0.1, 200);
 camera.position.set(0, 0, 8);
@@ -206,6 +208,7 @@ void main(){
 
 const FRAG = `
 precision highp float;
+uniform vec3 uColor;
 varying float vBright;
 varying float vDepth;
 
@@ -215,9 +218,13 @@ void main(){
   if (d > 0.5) discard;
   float alpha = smoothstep(0.50, 0.05, d) * 0.55;
   float depthFade = clamp(1.0 - (vDepth - 5.0) / 15.0, 0.25, 1.0);
-  vec3 baseCol = vec3(0.03, 0.10, 0.35);
-  vec3 edgeCol = vec3(0.20, 0.60, 1.00);
-  vec3 hotCol  = vec3(0.55, 0.85, 1.00);
+  /* paleta derivada del color del servicio (uColor): versión oscura →
+     el color vivo tal cual → versión pálida hacia blanco, MISMA
+     progresión tonal que el azul original (navy → edge blue → pale
+     blue), ahora agnóstica de matiz. */
+  vec3 baseCol = uColor * 0.30;
+  vec3 edgeCol = uColor;
+  vec3 hotCol  = mix(uColor, vec3(1.0), 0.55);
   float b = min(1.0, vBright);
   vec3 col = mix(baseCol, edgeCol, smoothstep(0.10, 0.75, b));
   col = mix(col, hotCol, smoothstep(0.75, 1.20, b));
@@ -233,6 +240,14 @@ const uniforms = {
   uHigh:     { value: 0 },
   uPulse:    { value: 0 },
   uPhase:    { value: 0 },
+  uColor:    { value: new THREE.Color(0x33a0ff) }, // azul de respaldo hasta que la página madre llame dustSetColor
+};
+
+/* dustSetColor(hex) — llamada por la página madre con el color del
+   servicio ('#E15CDB', etc.) apenas monta la galería, para que el
+   efecto nazca ya en el tono correcto (no solo al reproducir). */
+window.dustSetColor = function dustSetColor(hex) {
+  try { uniforms.uColor.value.set(hex); } catch (_) {}
 };
 
 const mat = new THREE.ShaderMaterial({
@@ -249,6 +264,7 @@ scene.add(points);
 // -------- Audio --------
 let actx = null, analyser = null, freq = null, source = null;
 let silentAudio = null;
+let playToken = 0; // descarta respuestas de fetch/decode que llegan tarde (ver dustPlay)
 const prevSpec = new Float32Array(80);
 let fluxAvg = 0;
 let beatPulse = 0;
@@ -272,6 +288,14 @@ window.dustPlay = async function dustPlay(url) {
       silentAudio.setAttribute('playsinline', 'true');
       silentAudio.setAttribute('webkit-playsinline', 'true');
     }
+    /* corta la pista actual DE INMEDIATO, antes de bajar/decodificar la
+       nueva (bug 2026-07-18: "le doy play a otra pista y no para, sigue
+       hasta que termina la anterior" — antes el stop() ocurría recién
+       DESPUÉS del fetch+decode de la nueva, que puede tardar segundos;
+       si esa descarga era lenta la vieja seguía sonando de más). */
+    if (source) { try { source.onended = null; source.stop(); } catch (_) {} try { source.disconnect(); } catch (_) {} source = null; }
+    const myToken = ++playToken;
+
     silentAudio.play().catch(() => {});
     if (actx.state === 'suspended') await actx.resume();
 
@@ -280,13 +304,18 @@ window.dustPlay = async function dustPlay(url) {
     const ab = await res.arrayBuffer();
     const buffer = await new Promise((resolve, reject) => actx.decodeAudioData(ab.slice(0), resolve, reject));
 
+    /* mientras esta pista bajaba/decodificaba, el usuario pudo haber
+       elegido OTRA (que ya paró esta llamada arriba y avanzó su propio
+       token) — descartar esta respuesta tardía en vez de pisar la más
+       nueva. */
+    if (myToken !== playToken) return;
+
     if (!analyser) {
       analyser = actx.createAnalyser();
       analyser.fftSize = 2048;
       analyser.smoothingTimeConstant = 0.5;
       freq = new Uint8Array(analyser.frequencyBinCount);
     }
-    if (source) { try { source.onended = null; source.stop(); } catch (_) {} source.disconnect(); }
     source = actx.createBufferSource();
     source.buffer = buffer;
     source.connect(analyser);
@@ -300,7 +329,8 @@ window.dustPlay = async function dustPlay(url) {
 };
 
 window.dustStop = function dustStop() {
-  if (source) { try { source.onended = null; source.stop(); } catch (_) {} source.disconnect(); source = null; }
+  playToken++; // invalida cualquier dustPlay en vuelo (fetch/decode) para que no arranque después de este stop
+  if (source) { try { source.onended = null; source.stop(); } catch (_) {} try { source.disconnect(); } catch (_) {} source = null; }
   if (silentAudio) { try { silentAudio.pause(); } catch (_) {} }
 };
 
