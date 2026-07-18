@@ -266,7 +266,7 @@ const TECHS = featureVideo
            SOLO el título dentro, >_ en el color del servicio. Video abre
            el detalle; las otras dos van a valoración. */}
         <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
-          <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.jpg" alt="Video" width="720" height="1280" loading="lazy" /></span>
+          <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.jpg" alt="Video" width="1080" height="1920" loading="lazy" /></span>
           <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Video</span>
         </button>
         {[
@@ -274,7 +274,7 @@ const TECHS = featureVideo
           { label: 'Música', img: '/assets/gallery/gal-musica-v.jpg' },
         ].map((c) => (
           <a class="reel-card" href="/#valoracion" aria-label={c.label}>
-            <span class="reel-card-media"><img src={c.img} alt={c.label} width="720" height="1280" loading="lazy" /></span>
+            <span class="reel-card-media"><img src={c.img} alt={c.label} width="1080" height="1920" loading="lazy" /></span>
             <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>{c.label}</span>
           </a>
         ))}
@@ -334,7 +334,7 @@ const TECHS = featureVideo
                 <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
                   {t.videos.map((v) => (
                     <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4`} data-video-title={v.title}>
-                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg`} alt={v.title} width="640" height="360" loading="lazy" /></span>
+                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
                       <span class="work-card-title">{v.title}</span>
                     </button>
                   ))}
