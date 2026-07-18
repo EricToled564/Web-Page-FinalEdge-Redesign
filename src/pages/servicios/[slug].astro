@@ -534,7 +534,9 @@ const TECHS = featureVideo
      a la derecha un efecto de partículas reactivo al audio (Three.js,
      código del cliente) que llena la pantalla dominante. El efecto
      arranca EXACTAMENTE cuando empieza la pista y termina con ella
-     (ver dustPlay/onended en /assets/visualizer/dust.html). */}
+     (ver dustPlay/onended en /assets/visualizer/dust-v2.html — el "-v2"
+     es cache-bust: /assets/ cachea 1 semana y el navegador podía seguir
+     sirviendo la versión vieja en azul fijo tras el fix de color). */}
   {MUSIC_STYLES.length > 0 && (
     /* --pc directo en este div (fuera de <section class="reel-gallery">
        en el DOM, así que no hereda su --pc): sin esto el >_ y el efecto
@@ -567,7 +569,7 @@ const TECHS = featureVideo
              postMessage: la llamada directa preserva el gesto del
              usuario que exige AudioContext en móvil). */}
           <div class="tech-stage music-stage" data-music-stage>
-            <iframe class="music-stage-frame" data-music-frame src="/assets/visualizer/dust.html" title="Efecto reactivo" loading="lazy" allow="autoplay"></iframe>
+            <iframe class="music-stage-frame" data-music-frame src="/assets/visualizer/dust-v2.html" title="Efecto reactivo" loading="lazy" allow="autoplay"></iframe>
             <button class="tech-stage-overlay" type="button" data-music-overlay aria-label="Reproducir">
               <span class="music-overlay-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
