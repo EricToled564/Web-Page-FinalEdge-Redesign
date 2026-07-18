@@ -321,8 +321,11 @@ const TECHS = featureVideo
              texto con el menú VERTICAL a la izquierda, gráfico (las
              tarjetas de videos) a la derecha */}
           <div class="tech-col-text">
+            {/* sobre fondo oscuro el >_ SIEMPRE va en el color del
+               servicio (regla del cliente 2026-07-17) y alineado a la
+               PRIMERA línea del título, no centrado entre las dos */}
             <p class="phase-band-title tech-title">
-              <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
+              <span class="tech-title-prompt" aria-hidden="true">&gt;_</span>
               Dominamos todas las técnicas
             </p>
             <nav class="tech-menu" aria-label="Técnicas" data-tech-menu>
@@ -330,6 +333,11 @@ const TECHS = featureVideo
                 <button class={`tech-menu-item${i === 0 ? ' is-active' : ''}`} type="button" data-tech-key={t.key}>{t.label}</button>
               ))}
             </nav>
+            {/* regreso al menú de Video / Imágenes / Música */}
+            <button class="tech-back" type="button" data-tech-back>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
+              Volver a Video · Imágenes · Música
+            </button>
           </div>
           {WORK_VIDEOS_READY && (
             <div class="tech-videos" data-tech-videos>
@@ -945,7 +953,30 @@ const TECHS = featureVideo
     gap: 32px;
     align-items: start;
   }
-  .tech-title { margin-bottom: 0; }
+  /* el título envuelve en 2 líneas: el >_ se ancla a la PRIMERA línea
+     (flex-start), en el color del servicio por ir sobre fondo oscuro */
+  .tech-title { margin-bottom: 0; align-items: flex-start; }
+  .tech-title-prompt { color: var(--pc, var(--accent)); }
+  /* botón de regreso al menú de Video/Imágenes/Música: misma voz que el
+     CTA de la galería, alineado a la columna del menú */
+  .tech-back {
+    margin-top: 26px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: var(--fg-muted);
+    transition: color var(--t-hover) var(--ease);
+  }
+  .tech-back:hover { color: var(--pc, var(--accent)); }
+  .tech-back svg { width: 16px; height: 16px; }
   /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
      en COLUMNA vertical como en el slide de la rueda */
   .tech-menu {
@@ -1586,6 +1617,12 @@ const TECHS = featureVideo
     /* CTA "Visita nuestra galería": click o UN scroll hacia abajo con la
        banda a la vista → la galería entra llenando la pantalla. Listener
        pasivo: asiste el scroll, nunca lo secuestra. */
+    /* regreso al menú de Video/Imágenes/Música (pedido 2026-07-17) */
+    const back = gallery.querySelector('[data-tech-back]') as HTMLElement | null;
+    back?.addEventListener('click', () => {
+      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
     const cta = document.querySelector('[data-gallery-cta]') as HTMLElement | null;
     const band = document.querySelector('.phase-band') as HTMLElement | null;
     const goGallery = () => gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
