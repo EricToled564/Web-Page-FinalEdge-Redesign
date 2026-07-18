@@ -112,6 +112,10 @@ const TECHS = featureVideo
       { key: 'control-movimiento', label: 'Control de movimiento', word: 'Control de movimiento', videos: [
         { title: 'Explosión en Hong Kong', slug: 'explosion-en-hong-kong' },
       ] },
+      { key: 'efectos-especiales', label: 'Efectos especiales', word: 'Efectos especiales', videos: [
+        { title: 'Explosión en Hong Kong', slug: 'explosion-en-hong-kong' },
+        { title: 'León de fuego', slug: 'leon-de-fuego' },
+      ] },
       { key: 'comida', label: 'Comida', word: 'Comida', videos: [
         { title: 'Buffet', slug: 'buffet' },
       ] },
@@ -258,24 +262,20 @@ const TECHS = featureVideo
         <hr />
       </header>
       <div class="reel-gallery-grid reveal">
-        {/* Video: botón que despliega abajo los 3 títulos (pedido 2026-07-17) */}
+        {/* Tarjetas 9:16 (pedido 2026-07-17): imagen a sangre completa,
+           SOLO el título dentro, >_ en el color del servicio. Video abre
+           el detalle; las otras dos van a valoración. */}
         <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
-          <span class="reel-card-media"><img src="/assets/gallery/gal-video.jpg" alt="Video" width="800" height="450" loading="lazy" /></span>
-          <span class="reel-card-body">
-            <span class="reel-card-title"><span class="prompt">&gt;_</span>Video</span>
-            <span class="reel-card-desc">Reels, comerciales y contenido en movimiento.</span>
-          </span>
+          <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.jpg" alt="Video" width="720" height="1280" loading="lazy" /></span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Video</span>
         </button>
         {[
-          { label: 'Imágenes', img: '/assets/gallery/gal-imagenes.jpg', desc: 'Fotografía y arte visual generado a medida.' },
-          { label: 'Música', img: '/assets/gallery/gal-musica.jpg', desc: 'Bandas sonoras y audio original.' },
+          { label: 'Imágenes', img: '/assets/gallery/gal-imagenes-v.jpg' },
+          { label: 'Música', img: '/assets/gallery/gal-musica-v.jpg' },
         ].map((c) => (
           <a class="reel-card" href="/#valoracion" aria-label={c.label}>
-            <span class="reel-card-media"><img src={c.img} alt={c.label} width="800" height="450" loading="lazy" /></span>
-            <span class="reel-card-body">
-              <span class="reel-card-title"><span class="prompt">&gt;_</span>{c.label}</span>
-              <span class="reel-card-desc">{c.desc}</span>
-            </span>
+            <span class="reel-card-media"><img src={c.img} alt={c.label} width="720" height="1280" loading="lazy" /></span>
+            <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>{c.label}</span>
           </a>
         ))}
       </div>
@@ -286,6 +286,7 @@ const TECHS = featureVideo
          premium con frames reales de los videos. */}
       <div class="reel-video-detail" id="video-detail" data-video-detail hidden>
         <div class="phase-band">
+          <canvas class="phase-band-bg" data-blue-edge aria-hidden="true"></canvas>
           <div class="phase-band-inner">
             <p class="phase-band-title">
               <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
@@ -302,23 +303,35 @@ const TECHS = featureVideo
           </div>
         </div>
 
+        {/* CTA bajo la banda (pedido 2026-07-17): click o UN scroll
+           hacia abajo lleva a la pantalla completa de la galería */}
+        <button class="phase-band-cta" type="button" data-gallery-cta>
+          Visita nuestra galería
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+        </button>
+
         {/* técnicas al estilo del menú de la rueda del home (pedido
            2026-07-17): título >_ + menú de chips; hover o click en una
            técnica muestra las tarjetas de sus videos */}
         <div class="tech-gallery" id="tech-gallery" data-tech-gallery>
-          <p class="phase-band-title tech-title">
-            <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
-            Dominamos todas las técnicas
-          </p>
-          <nav class="tech-menu" aria-label="Técnicas" data-tech-menu>
-            {TECHS.map((t) => (
-              <button class="tech-menu-item" type="button" data-tech-key={t.key}>{t.label}</button>
-            ))}
-          </nav>
+          {/* mismo layout que el slide de la rueda del home: columna de
+             texto con el menú VERTICAL a la izquierda, gráfico (las
+             tarjetas de videos) a la derecha */}
+          <div class="tech-col-text">
+            <p class="phase-band-title tech-title">
+              <img class="phase-band-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
+              Dominamos todas las técnicas
+            </p>
+            <nav class="tech-menu" aria-label="Técnicas" data-tech-menu>
+              {TECHS.map((t, i) => (
+                <button class={`tech-menu-item${i === 0 ? ' is-active' : ''}`} type="button" data-tech-key={t.key}>{t.label}</button>
+              ))}
+            </nav>
+          </div>
           {WORK_VIDEOS_READY && (
-            <div class="tech-videos" data-tech-videos hidden>
-              {TECHS.map((t) => (
-                <div class="tech-videos-group" data-tech-group={t.key} hidden>
+            <div class="tech-videos" data-tech-videos>
+              {TECHS.map((t, i) => (
+                <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
                   {t.videos.map((v) => (
                     <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4`} data-video-title={v.title}>
                       <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg`} alt={v.title} width="640" height="360" loading="lazy" /></span>
@@ -653,29 +666,50 @@ const TECHS = featureVideo
     gap: 24px;
   }
   .reel-card {
-    display: flex;
-    flex-direction: column;
+    position: relative;
+    display: block;
     border: 1px solid var(--hairline);
     background: var(--panel);
     color: var(--fg);
     text-decoration: none;
-    /* normaliza el <button> para que se vea igual que los <a> */
-    text-align: left;
-    font: inherit;
     padding: 0;
     width: 100%;
     cursor: pointer;
     appearance: none;
+    font: inherit;
+    overflow: hidden;
     transition: border-color var(--t-hover) var(--ease), transform var(--t-hover) var(--ease);
   }
   .reel-card:hover { border-color: var(--pc, var(--accent)); transform: translateY(-4px); }
   .reel-card[aria-expanded='true'] { border-color: var(--pc, var(--accent)); }
-  .reel-card-media { display: block; aspect-ratio: 16 / 9; overflow: hidden; border-bottom: 1px solid var(--hairline); }
+  .reel-card-media { display: block; aspect-ratio: 9 / 16; overflow: hidden; }
   .reel-card-media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform var(--t-enter) var(--ease); }
   .reel-card:hover .reel-card-media img { transform: scale(1.04); }
-  .reel-card-body { padding: 18px 20px 22px; display: flex; flex-direction: column; gap: 7px; }
-  .reel-card-title { font-family: 'Geist Mono', ui-monospace, monospace; font-weight: 600; font-size: 18px; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-  .reel-card-desc { font-size: 14px; color: var(--fg-muted); line-height: 1.42; }
+  /* degradado inferior: el título vive DENTRO de la imagen */
+  .reel-card::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 34%;
+    background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--void-deep) 88%, transparent) 100%);
+    pointer-events: none;
+  }
+  .reel-card-title {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 15px;
+    z-index: 2;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+  }
+  .reel-card-prompt { color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
     .reel-gallery-grid { grid-template-columns: 1fr; gap: 18px; }
   }
@@ -711,11 +745,29 @@ const TECHS = featureVideo
      fase que SUBE desde la base de la tarjeta (como el video); el título
      vive clavado al centro (no se mueve) y la explicación aparece
      debajo. --- */
-  .phase-band { position: relative; }
+  .phase-band {
+    position: relative;
+    overflow: hidden;
+    /* fondo con el efecto (pedido 2026-07-17): base oscura del tono de
+       fase + Blue Edge pintando encima, como los hubs */
+    background: var(--void-deep);
+    background: oklch(from var(--pc, var(--accent)) calc(l * 0.28) calc(c * 0.7) h);
+  }
+  .phase-band-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+  }
   .phase-band-inner {
+    position: relative;
+    z-index: 1;
     max-width: 1180px;
     margin: 0 auto;
-    padding: 24px 0 8px;
+    /* título más arriba (pedido): menos aire encima */
+    padding: 34px 48px 52px;
   }
   /* mismo título que .presion-h2 del home: >_ plateado horneado + texto */
   .phase-band-title {
@@ -733,16 +785,16 @@ const TECHS = featureVideo
   .phase-grid {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    margin-top: 44px;
-    border: 1px solid var(--hairline);
+    margin-top: 34px;
+    border: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
   }
   .phase-card {
     position: relative;
     overflow: hidden;
     background: transparent;
     border: none;
-    border-inline-start: 1px solid var(--hairline);
-    min-height: 268px;
+    border-inline-start: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
+    min-height: 272px;
     padding: 0;
     color: var(--fg);
     font: inherit;
@@ -772,7 +824,7 @@ const TECHS = featureVideo
     text-align: center;
     font-family: var(--font-ui);
     font-weight: 400;
-    font-size: 17px;
+    font-size: 14px;
     letter-spacing: 0.2px;
     line-height: 1.25;
     color: var(--fg);
@@ -783,12 +835,12 @@ const TECHS = featureVideo
     position: absolute;
     left: 16px;
     right: 16px;
-    top: calc(50% + 32px);
+    top: calc(50% + 28px);
     z-index: 1;
     text-align: center;
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.45;
+    line-height: 1.4;
     color: color-mix(in srgb, var(--void-deep) 85%, transparent);
     opacity: 0;
     transform: translateY(6px);
@@ -799,15 +851,46 @@ const TECHS = featureVideo
   .phase-card:hover .phase-card-desc,
   .phase-card.is-open .phase-card-desc { opacity: 1; transform: none; }
   /* galería de técnicas: frase central que cambia + miniaturas */
+  /* CTA bajo la banda: misma voz que el CTA del reel */
+  .phase-band-cta {
+    margin: 30px auto 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: 'Geist Mono', ui-monospace, monospace;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: var(--fg);
+    transition: color var(--t-hover) var(--ease);
+  }
+  .phase-band-cta:hover { color: var(--pc, var(--accent)); }
+  .phase-band-cta svg { width: 20px; height: 20px; animation: svc-bob 1.8s var(--ease) infinite; }
   .tech-gallery {
     margin-top: 56px;
+    /* pantalla entera al llegar (pedido): llena el visor */
+    min-height: calc(100vh - 92px);
+    scroll-margin-top: 92px;
+    align-content: start;
+    /* mismo esqueleto que .engine-split del home: texto/menú izquierda,
+       gráfico derecha */
+    display: grid;
+    grid-template-columns: minmax(260px, 360px) 1fr;
+    gap: 32px;
+    align-items: start;
   }
   .tech-title { margin-bottom: 0; }
-  /* menú de técnicas: chips CALCADOS de .engine-menu-item del home */
+  /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
+     en COLUMNA vertical como en el slide de la rueda */
   .tech-menu {
     margin-top: 28px;
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
     gap: 10px;
   }
   .tech-menu-item {
@@ -829,12 +912,12 @@ const TECHS = featureVideo
     color: var(--bg);
     border-color: var(--fg);
   }
-  /* tarjetas de videos de la técnica elegida */
-  .tech-videos { margin-top: 34px; }
+  /* tarjetas de videos de la técnica elegida (columna derecha) */
+  .tech-videos { margin-top: 0; }
   .tech-videos[hidden] { display: none; }
   .tech-videos-group {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
   }
   .tech-videos-group[hidden] { display: none; }
@@ -908,8 +991,10 @@ const TECHS = featureVideo
   .work-player-close:hover { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
     .tech-videos-group { grid-template-columns: 1fr; }
+    .tech-gallery { grid-template-columns: 1fr; }
+    .tech-menu { flex-direction: row; flex-wrap: wrap; }
     /* banda de fases apilada en móvil */
-    .phase-band-inner { padding: 16px 0 8px; }
+    .phase-band-inner { padding: 24px 20px 36px; }
     .phase-grid { grid-template-columns: 1fr; }
     .phase-card { border-inline-start: none; border-top: 1px solid var(--hairline); min-height: 150px; }
     .phase-card:first-child { border-top: none; }
@@ -1360,6 +1445,30 @@ const TECHS = featureVideo
         requestAnimationFrame(() => videosWrap?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
       });
     });
+
+    /* CTA "Visita nuestra galería": click o UN scroll hacia abajo con la
+       banda a la vista → la galería entra llenando la pantalla. Listener
+       pasivo: asiste el scroll, nunca lo secuestra. */
+    const cta = document.querySelector('[data-gallery-cta]') as HTMLElement | null;
+    const band = document.querySelector('.phase-band') as HTMLElement | null;
+    const goGallery = () => gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    cta?.addEventListener('click', goGallery);
+    if (band) {
+      let armed = false;
+      new IntersectionObserver((es) => {
+        const on = es[es.length - 1].isIntersecting;
+        if (on) armed = true;          // se re-arma cada vez que la banda entra
+      }, { threshold: 0.5 }).observe(band);
+      addEventListener('wheel', (e) => {
+        if (!armed || e.deltaY <= 6) return;
+        const r = band.getBoundingClientRect();
+        const vh = innerHeight || 800;
+        if (r.top < vh * 0.6 && r.bottom > vh * 0.25) {   // banda a la vista
+          armed = false;
+          goGallery();
+        }
+      }, { passive: true });
+    }
   }
   initTechGallery();
   document.addEventListener('astro:page-load', initTechGallery);
