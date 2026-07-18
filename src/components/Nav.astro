@@ -6,6 +6,12 @@ import LockupMark from './LockupMark.astro';
     <img src="/assets/logos/logo-finaledge.png" alt="final edge [AI]" width="180" height="49" />
   </a>
   <div class="nav-ctas">
+    <!-- "Servicios" (pedido 2026-07-18): en móvil el botón del lockup
+         de abajo se oculta por falta de espacio y no quedaba NINGÚN
+         acceso visible a la rueda de servicios desde el nav — este
+         chip solo aparece en esa franja angosta (ver media query) y
+         lleva directo a la rueda. -->
+    <a class="btn btn--ghost nav-cta nav-cta--services" href="/#engine">Servicios</a>
     <a class="btn nav-cta" href="/#valoracion">
       <span class="nav-cta-full">Exploremos tus necesidades</span>
       <span class="nav-cta-short">Valoración</span>
@@ -59,6 +65,9 @@ import LockupMark from './LockupMark.astro';
      vea igual que en cualquier otro lugar del sitio, nunca distorsionado
      por el estilo del botón. */
   .nav-cta--lockup { display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
+  /* "Servicios" solo vive en la franja móvil (ver @media 900px abajo):
+     en escritorio ya está el lockup completo, sobraría duplicado */
+  .nav-cta--services { display: none; }
   /* pedido explícito: el lockup ENGINE del nav al MISMO tamaño que el
      logo [AI] de la izquierda. La equivalencia se midió contra el PNG
      real (logo-finaledge.png segmentado por alfa): la palabra "final
@@ -86,6 +95,7 @@ import LockupMark from './LockupMark.astro';
     .nav { padding: 0 16px; }
     .nav-lang { display: none; }
     .nav-cta--lockup { display: none; }
+    .nav-cta--services { display: inline-block; }
   }
   /* "Exploremos tus necesidades" no cabe en una fila junto al logo y el
      padding del nav en pantallas angostas — se reemplaza por el label

@@ -162,7 +162,11 @@ const { compact = false, fitHeight = false } = Astro.props;
      (.engine-h2: clamp(14px, 1.3vw, 16px)) — pedido 2026-07-15 sobre
      "los botones de [la sección] tu ventaja competitiva". El tracking
      baja proporcional (20→16 = ×0.8). */
-  .wl-band { font-size: clamp(14px, 1.3vw, 16px); letter-spacing: 2.1px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 4px 10px; white-space: nowrap; }
+  /* +25% (pedido 2026-07-18: "los nombres de las fases están demasiado
+     pequeños") — mismo criterio que el crecimiento anterior de esta
+     etiqueta: solo el tamaño de fuente y el padding que lo acompaña,
+     el posicionamiento centrado (translate -50%,-50%) no se mueve. */
+  .wl-band { font-size: clamp(17px, 1.7vw, 20px); letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 5px 13px; white-space: nowrap; }
   /* En el hub de fase (modo 'phase') la banda dice "Conoce más:" sobre el
      fondo de color de la fase (landing 2026-07-11) y el cliente pidió
      quitarle el rectángulo negro y reducirla en la misma proporción que

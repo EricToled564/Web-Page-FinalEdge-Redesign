@@ -1222,14 +1222,17 @@ const TECHS = featureVideo
   .tech-title-prompt {
     font-family: 'Geist Mono', ui-monospace, monospace;
     font-weight: 700;
-    font-size: 35px;
+    /* a la mitad del tamaño original (pedido 2026-07-18: "reduce esto a
+       la mitad en todas las galerías" — 35px→17.5px) */
+    font-size: 17.5px;
     line-height: 1;
     color: var(--pc, var(--accent));
   }
   .tech-lockup-text {
     font-family: 'Geist Mono', ui-monospace, monospace;
     font-weight: 600;
-    font-size: 28px;
+    /* a la mitad (28px→14px, justo el piso R2.1 — no puede bajar más) */
+    font-size: 14px;
     letter-spacing: -.02em;
     line-height: 1.18;
     color: var(--fg);
@@ -1316,6 +1319,17 @@ const TECHS = featureVideo
     transition: transform var(--t-ui) var(--ease);
   }
   .collage-item:hover img { transform: scale(1.03); }
+  /* fix cabezas cortadas en móvil (reporte 2026-07-18): la celda grande
+     "a" es 2x1 en el layout móvil (retrato forzado a horizontal) — el
+     recorte centrado por default cortaba la cabeza en 3 fotos de
+     cuerpo completo. object-position:top ancla la parte de ARRIBA de
+     la foto (conserva cabeza y torso) y recorta piernas/pies en vez de
+     la cabeza — nunca al revés. */
+  [data-imgtech-group='yoga'] .collage-item:first-child img,
+  [data-variant-group='femenino'] .collage-item:first-child img,
+  [data-variant-group='masculino'] .collage-item:first-child img {
+    object-position: top;
+  }
   /* lightbox: la imagen agrandada sobre velo oscuro */
   .img-lightbox {
     position: fixed;
@@ -1648,6 +1662,11 @@ const TECHS = featureVideo
     .tech-gallery { grid-template-columns: 1fr; padding-left: 24px; padding-right: 24px; }
     .tech-menu { flex-direction: row; flex-wrap: wrap; }
     .tech-menu-item { width: auto; }
+    /* sin miniaturas en móvil (pedido 2026-07-18): la pantalla dominante
+       ya muestra el video en grande arriba — la tira de abajo pasa a
+       ser una lista directa de títulos, sin repetir la imagen */
+    .work-card-media { display: none; }
+    .work-card-title { padding: 14px 16px; min-height: 0; }
     /* banda de fases apilada en móvil: en columna única la celda es más
        baja y el texto cabe con las alturas fijas reducidas */
     .phase-band-inner { padding: 24px 20px 36px; }
@@ -2259,7 +2278,7 @@ const TECHS = featureVideo
       const toggle = document.querySelector('[data-video-toggle]') as HTMLElement | null;
       const panel = document.querySelector('[data-video-detail]') as HTMLElement | null;
       if (panel && !panel.hidden) toggle?.click();
-      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('.reel-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     const cta = document.querySelector('[data-gallery-cta]') as HTMLElement | null;
@@ -2323,7 +2342,7 @@ const TECHS = featureVideo
       const toggle = document.querySelector('[data-img-toggle]') as HTMLElement | null;
       const panel = document.querySelector('[data-img-detail]') as HTMLElement | null;
       if (panel && !panel.hidden) toggle?.click();
-      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('.reel-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
   }
   initImgGallery();
@@ -2525,7 +2544,7 @@ const TECHS = featureVideo
       const toggle = document.querySelector('[data-music-toggle]') as HTMLElement | null;
       const panel = document.querySelector('[data-music-detail]') as HTMLElement | null;
       if (panel && !panel.hidden) toggle?.click();
-      document.querySelector('.reel-gallery-grid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      document.querySelector('.reel-gallery')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
 
     /* estado del iframe: arranque/fin de la pista, sin loop */
