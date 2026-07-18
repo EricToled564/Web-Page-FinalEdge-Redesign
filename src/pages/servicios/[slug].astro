@@ -281,6 +281,11 @@ const TECHS = featureVideo
          y muestra la explicación — y abajo las técnicas como tarjetas
          premium con frames reales de los videos. */}
       <div class="reel-video-detail" id="video-detail" data-video-detail hidden>
+        {/* PANTALLA propia (pedido 2026-07-17): al abrir Video solo se ve
+           la banda con las 5 tarjetas y el CTA de la galería — la galería
+           queda fuera del visor hasta el scroll/click, y en UN movimiento
+           la banda se esconde y la galería llena la pantalla. */}
+        <div class="phase-screen" data-phase-screen>
         <div class="phase-band">
           <canvas class="phase-band-bg" data-blue-edge aria-hidden="true"></canvas>
           <div class="phase-band-inner">
@@ -305,6 +310,7 @@ const TECHS = featureVideo
           Visita nuestra galería
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
         </button>
+        </div>
 
         {/* técnicas al estilo del menú de la rueda del home (pedido
            2026-07-17): título >_ + menú de chips; hover o click en una
@@ -329,8 +335,8 @@ const TECHS = featureVideo
               {TECHS.map((t, i) => (
                 <div class="tech-videos-group" data-tech-group={t.key} hidden={i !== 0}>
                   {t.videos.map((v) => (
-                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4`} data-video-title={v.title}>
-                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
+                    <button class="work-card" type="button" data-video-src={`/assets/work/v/${v.slug}.mp4?v=2`} data-video-title={v.title}>
+                      <span class="work-card-media"><img src={`/assets/work/thumbs/${v.slug}.jpg?v=2`} alt={v.title} width="1280" height="720" loading="lazy" /></span>
                       <span class="work-card-title">{v.title}</span>
                     </button>
                   ))}
@@ -353,17 +359,23 @@ const TECHS = featureVideo
     </div>
   )}
 
-  <section class="section" style={`--pc:${phase.color}`}>
-    <div class="hairline-grid grid-3 reveal">
-      {edge.stats.map(([num, txt]) => (
-        <div>
-          <p class="svc-stat-num" style={`color:${phase.color}`}>{num}</p>
-          <p class="svc-stat-txt">{txt}</p>
-        </div>
-      ))}
-    </div>
-    <blockquote class="svc-quote reveal">«{edge.quote}»</blockquote>
-  </section>
+  {/* en creative el trabajo ya se cuenta con el reel + la banda de fases
+     + la galería — la lámina genérica de cifras sobraba y seguía
+     apareciendo debajo (reporte 2026-07-17): solo va en los servicios
+     sin reel */}
+  {!featureVideo && (
+    <section class="section" style={`--pc:${phase.color}`}>
+      <div class="hairline-grid grid-3 reveal">
+        {edge.stats.map(([num, txt]) => (
+          <div>
+            <p class="svc-stat-num" style={`color:${phase.color}`}>{num}</p>
+            <p class="svc-stat-txt">{txt}</p>
+          </div>
+        ))}
+      </div>
+      <blockquote class="svc-quote reveal">«{edge.quote}»</blockquote>
+    </section>
+  )}
 
   <section class="section" style="padding-top:0">
     <header class="section-head reveal">
@@ -741,9 +753,24 @@ const TECHS = featureVideo
      fase que SUBE desde la base de la tarjeta (como el video); el título
      vive clavado al centro (no se mueve) y la explicación aparece
      debajo. --- */
+  /* pantalla propia de la banda: ocupa el visor completo — la galería
+     que sigue queda debajo del pliegue hasta el scroll/click */
+  .phase-screen {
+    min-height: calc(100vh - 92px);
+    scroll-margin-top: 92px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
   .phase-band {
     position: relative;
     overflow: hidden;
+    /* a lo ancho de TODA la pantalla, igual que .presion-band del home:
+       rompe el contenedor de 1080px de .section y sangra de borde a
+       borde del viewport (el overflow-x del documento ya recorta el
+       exceso del ancho de la barra de scroll) */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
     /* fondo con el efecto (pedido 2026-07-17): base oscura del tono de
        fase + Blue Edge pintando encima, como los hubs */
     background: var(--void-deep);
@@ -760,12 +787,17 @@ const TECHS = featureVideo
   .phase-band-inner {
     position: relative;
     z-index: 1;
+    /* misma caja interior que .presion-inner del home (1180px centrados
+       con 72px de piso lateral): la retícula de las 5 tarjetas ocupa el
+       mismo ancho que la de los 3 datos de La Presión */
     max-width: 1180px;
     margin: 0 auto;
     /* título más arriba (pedido): menos aire encima */
-    padding: 34px 48px 52px;
+    padding: 34px 72px 52px;
   }
-  /* mismo título que .presion-h2 del home: >_ plateado horneado + texto */
+  /* mismo título que .presion-h2 del home, receta IDÉNTICA valor por
+     valor: >_ plateado horneado + texto, mismo clamp, peso, tracking,
+     mismo blanco sobre acento y la misma sombra ligera aprobada */
   .phase-band-title {
     margin: 0;
     display: flex;
@@ -775,7 +807,9 @@ const TECHS = featureVideo
     font-weight: 600;
     font-size: clamp(20px, 6vw, 29px);
     letter-spacing: -.02em;
-    color: var(--fg);
+    color: var(--on-accent);
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (misma sombra que .presion-inner) */ 0 1px 2px color-mix(in srgb, var(--void-deep) 55%, transparent),
+                 0 3px 14px color-mix(in srgb, var(--void-deep) 40%, transparent);
   }
   .phase-band-prompt-img { height: 0.78em; width: auto; display: block; }
   .phase-grid {
@@ -790,7 +824,7 @@ const TECHS = featureVideo
     background: transparent;
     border: none;
     border-inline-start: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
-    min-height: 272px;
+    min-height: 288px;
     padding: 0;
     color: var(--fg);
     font: inherit;
@@ -809,13 +843,15 @@ const TECHS = featureVideo
   }
   .phase-card:hover::before,
   .phase-card.is-open::before { transform: translateY(0); }
-  /* título CLAVADO al centro de la celda: jamás se mueve */
+  /* título CLAVADO a una altura FIJA e IGUAL en las 5 celdas: jamás se
+     mueve y la primera línea de todos queda alineada (con el centrado
+     vertical, "Post/producción" a dos líneas arrancaba más arriba que
+     los demás — reporte 2026-07-17) */
   .phase-card-title {
     position: absolute;
     left: 12px;
     right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 88px;
     z-index: 1;
     text-align: center;
     font-family: var(--font-ui);
@@ -827,11 +863,13 @@ const TECHS = featureVideo
     transition: color var(--t-ui) var(--ease);
   }
   /* la explicación aparece DEBAJO del título, sin moverlo */
+  /* la explicación arranca DEBAJO del título más alto (2 líneas) y cabe
+     completa dentro de la celda — nunca se sale de la tarjeta */
   .phase-card-desc {
     position: absolute;
     left: 16px;
     right: 16px;
-    top: calc(50% + 28px);
+    top: 148px;
     z-index: 1;
     text-align: center;
     font-size: 14px;
@@ -989,11 +1027,14 @@ const TECHS = featureVideo
     .tech-videos-group { grid-template-columns: 1fr; }
     .tech-gallery { grid-template-columns: 1fr; }
     .tech-menu { flex-direction: row; flex-wrap: wrap; }
-    /* banda de fases apilada en móvil */
+    /* banda de fases apilada en móvil: en columna única la celda es más
+       baja y el texto cabe con las alturas fijas reducidas */
     .phase-band-inner { padding: 24px 20px 36px; }
     .phase-grid { grid-template-columns: 1fr; }
-    .phase-card { border-inline-start: none; border-top: 1px solid var(--hairline); min-height: 150px; }
+    .phase-card { border-inline-start: none; border-top: 1px solid var(--hairline); min-height: 190px; }
     .phase-card:first-child { border-top: none; }
+    .phase-card-title { top: 42px; }
+    .phase-card-desc { top: 96px; }
   }
   .reel-video-detail.is-open .reel-detail-title {
     opacity: 1;
@@ -1397,7 +1438,10 @@ const TECHS = featureVideo
         panel.hidden = false;
         requestAnimationFrame(() => panel.classList.add('is-open'));
         btn.setAttribute('aria-expanded', 'true');
-        requestAnimationFrame(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+        /* pantalla propia: la banda arranca justo bajo el nav y la
+           galería queda fuera del visor (scroll-margin-top de 92px) */
+        const screen = panel.querySelector('[data-phase-screen]') || panel;
+        requestAnimationFrame(() => screen.scrollIntoView({ behavior: 'smooth', block: 'start' }));
       } else {
         panel.classList.remove('is-open');
         btn.setAttribute('aria-expanded', 'false');
