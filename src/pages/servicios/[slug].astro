@@ -79,14 +79,15 @@ const featureVideo = FEATURE_VIDEOS[edge.id] ?? null;
    con true, el click en una técnica despliega sus tarjetas de video y
    cada tarjeta abre la pantalla con el reproductor nativo. */
 const WORK_VIDEOS_READY = true;
-/* Las 5 fases del proceso de video (banda al dar click en "Video",
-   2026-07-17). Copy editorial propia — el cliente ajusta lo que quiera. */
-const PHASES_5 = [
-  { title: 'Brief', desc: 'Objetivo, audiencia y mensaje. Todo empieza con una conversación corta.' },
-  { title: 'Concepto', desc: 'Guion, estilo visual y storyboard aprobados antes de producir un solo frame.' },
-  { title: 'Producción', desc: 'Escenas, personajes y mundos generados con IA bajo dirección humana.' },
-  { title: 'Postproducción', desc: 'Edición, color, música y sonido con acabado de estudio.' },
-  { title: 'Final cut', desc: 'Master listo para publicar en días, no en meses.' },
+/* Las fases del proceso de video (banda al dar click en "Video") —
+   copy DICTADO por el cliente 2026-07-17, no se edita sin su visto. */
+const PHASES_BAND = [
+  { title: 'Estrategia de Comunicación', desc: 'Brief, análisis estratégico y concepto creativo.' },
+  { title: 'Pre producción', desc: 'Storyboard, investigación de física y mecánica, y scene cards con rigor de producción tradicional.' },
+  { title: 'Dirección creativa', desc: 'Expertos en producción con IA definen dirección de arte, secuencia de tomas, personajes y locaciones.' },
+  { title: 'Producción con IA', desc: 'Lo que antes tomaba semanas ahora toma algunos días.' },
+  { title: 'Post producción', desc: 'Edición de color, música, efectos de sonido e iluminación.' },
+  { title: 'Final cut', desc: 'Formatos finales producidos de forma impecable.' },
 ];
 const TECHS = featureVideo
   ? [
@@ -294,9 +295,9 @@ const TECHS = featureVideo
               del concepto a la producción final en días
             </p>
             <div class="phase-grid">
-              {PHASES_5.map((f) => (
+              {PHASES_BAND.map((f) => (
                 <button class="phase-card" type="button" data-phase-card>
-                  <span class="phase-card-title">{f.title === 'Postproducción' ? (<>Post<br />producción</>) : f.title}</span>
+                  <span class="phase-card-title">{f.title}</span>
                   <span class="phase-card-desc">{f.desc}</span>
                 </button>
               ))}
@@ -377,21 +378,25 @@ const TECHS = featureVideo
     </section>
   )}
 
-  <section class="section" style="padding-top:0">
-    <header class="section-head reveal">
-      <p class="eyebrow"><span class="prompt">&gt;_</span>¿para qué sirve?</p>
-      <hr />
-    </header>
-    <div class="hairline-grid grid-2 reveal">
-      {edge.uses.map(([t, d], i) => (
-        <div>
-          <p class="svc-use-num prompt">{String(i + 1).padStart(2, '0')}</p>
-          <p class="svc-use-title">{t}</p>
-          <p class="svc-use-desc">{d}</p>
-        </div>
-      ))}
-    </div>
-  </section>
+  {/* "¿para qué sirve?" fuera de creative (pedido 2026-07-17: eliminar
+     esa lámina de la página) — las fases ya viven en la banda del reel */}
+  {!featureVideo && (
+    <section class="section" style="padding-top:0">
+      <header class="section-head reveal">
+        <p class="eyebrow"><span class="prompt">&gt;_</span>¿para qué sirve?</p>
+        <hr />
+      </header>
+      <div class="hairline-grid grid-2 reveal">
+        {edge.uses.map(([t, d], i) => (
+          <div>
+            <p class="svc-use-num prompt">{String(i + 1).padStart(2, '0')}</p>
+            <p class="svc-use-title">{t}</p>
+            <p class="svc-use-desc">{d}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
 
   <section class="section" style="padding-top:0">
     <header class="section-head reveal">
@@ -814,29 +819,46 @@ const TECHS = featureVideo
   .phase-band-prompt-img { height: 0.78em; width: auto; display: block; }
   .phase-grid {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     margin-top: 34px;
     border: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
   }
   .phase-card {
     position: relative;
     overflow: hidden;
-    background: transparent;
+    /* vidrio translúcido en reposo (pedido 2026-07-17): la estática del
+       fondo se percibe A TRAVÉS de la tarjeta desenfocada, con luz de
+       arriba que se apaga hacia abajo — relieve 3D real sin sombras */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--fg) 10%, transparent) 0%,
+      color-mix(in srgb, var(--fg) 4%, transparent) 45%,
+      color-mix(in srgb, var(--void-deep) 30%, transparent) 100%);
+    backdrop-filter: blur(4px);
     border: none;
     border-inline-start: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
-    min-height: 288px;
+    /* la celda más exigente: título de 2 líneas + desc de ~7 líneas a
+       6 columnas — todo cabe sin tocar el borde inferior */
+    min-height: 322px;
     padding: 0;
     color: var(--fg);
     font: inherit;
     cursor: pointer;
+    transition: transform var(--t-ui) var(--ease);
   }
+  /* levantamiento sutil al encender: profundidad sin perder la retícula */
+  .phase-card:hover,
+  .phase-card.is-open { transform: translateY(-4px); z-index: 2; }
   .phase-card:first-child { border-inline-start: none; }
   /* el relleno que sube desde abajo (video de referencia) */
   .phase-card::before {
     content: '';
     position: absolute;
     inset: 0;
-    background: var(--pc, var(--accent));
+    /* tinte PROFUNDO del color de fase, iluminado desde arriba (no el
+       plano saturado): pensado para leerse con tipografía blanca */
+    background: linear-gradient(180deg,
+      color-mix(in srgb, var(--pc, var(--accent)) 72%, var(--void-deep)) 0%,
+      color-mix(in srgb, var(--pc, var(--accent)) 38%, var(--void-deep)) 100%);
     transform: translateY(101%);
     transition: transform 340ms var(--ease);
     z-index: 0;
@@ -875,13 +897,14 @@ const TECHS = featureVideo
     font-size: 14px;
     font-weight: 400;
     line-height: 1.4;
-    color: color-mix(in srgb, var(--void-deep) 85%, transparent);
+    color: color-mix(in srgb, var(--on-accent) 88%, transparent);
     opacity: 0;
     transform: translateY(6px);
     transition: opacity var(--t-ui) var(--ease) 120ms, transform var(--t-ui) var(--ease) 120ms;
   }
+  /* tipografía en BLANCO sobre la tarjeta encendida (pedido 2026-07-17) */
   .phase-card:hover .phase-card-title,
-  .phase-card.is-open .phase-card-title { color: var(--void-deep); }
+  .phase-card.is-open .phase-card-title { color: var(--on-accent); }
   .phase-card:hover .phase-card-desc,
   .phase-card.is-open .phase-card-desc { opacity: 1; transform: none; }
   /* galería de técnicas: frase central que cambia + miniaturas */
