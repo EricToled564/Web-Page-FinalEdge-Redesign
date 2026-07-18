@@ -89,11 +89,19 @@ const IMG_TECHS = featureVideo
       { key: 'luxury-resorts', label: 'Luxury resorts', n: 4 },
       { key: 'yoga', label: 'Yoga por la mañana', n: 5 },
       { key: 'bar', label: 'Bar', n: 5 },
+      { key: 'comida', label: 'Comida', n: 5 },
+      { key: 'room-service', label: 'Room service', n: 10 },
       { key: 'new-years-eve', label: "New Year's Eve", n: 1 },
-    ].map((t) => ({
-      ...t,
-      images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.jpg`),
-    }))
+    ].map((t) =>
+      t.variants
+        ? {
+            ...t,
+            variants: t.variants
+              .filter((v) => v.n > 0)
+              .map((v) => ({ ...v, images: Array.from({ length: v.n }, (_, i) => `/assets/gallery/img/${t.key}/${v.key}/${String(i + 1).padStart(2, '0')}.jpg`) })),
+          }
+        : { ...t, images: Array.from({ length: t.n }, (_, i) => `/assets/gallery/img/${t.key}/${String(i + 1).padStart(2, '0')}.jpg`) }
+    )
   : [];
 /* Las fases del proceso de video (banda al dar click en "Video") —
    copy DICTADO por el cliente 2026-07-17, no se edita sin su visto. */
@@ -424,15 +432,34 @@ const TECHS = featureVideo
               </button>
             </div>
             <div class="img-collages">
-              {IMG_TECHS.map((t, i) => (
-                <div class="img-collage" data-imgtech-group={t.key} data-n={t.images.length} hidden={i !== 0}>
-                  {t.images.map((src, j) => (
-                    <button class="collage-item" type="button" data-lightbox-src={src} aria-label={`${t.label} ${j + 1}`}>
-                      <img src={src} alt={`${t.label} ${String(j + 1).padStart(2, '0')}`} loading="lazy" />
-                    </button>
-                  ))}
-                </div>
-              ))}
+              {IMG_TECHS.map((t, i) =>
+                t.variants ? (
+                  <div class="img-collage-set" data-imgtech-group={t.key} hidden={i !== 0}>
+                    <div class="img-subswitch" role="tablist" aria-label={t.label}>
+                      {t.variants.map((v, k) => (
+                        <button class={`tech-menu-item img-sub-chip${k === 0 ? ' is-active' : ''}`} type="button" data-variant-key={v.key}>{v.label}</button>
+                      ))}
+                    </div>
+                    {t.variants.map((v, k) => (
+                      <div class="img-collage" data-variant-group={v.key} data-n={v.images.length} hidden={k !== 0}>
+                        {v.images.map((src, j) => (
+                          <button class="collage-item" type="button" data-lightbox-src={src} aria-label={`${v.label} ${j + 1}`}>
+                            <img src={src} alt={`${v.label} ${String(j + 1).padStart(2, '0')}`} loading="lazy" />
+                          </button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div class="img-collage" data-imgtech-group={t.key} data-n={t.images.length} hidden={i !== 0}>
+                    {t.images.map((src, j) => (
+                      <button class="collage-item" type="button" data-lightbox-src={src} aria-label={`${t.label} ${j + 1}`}>
+                        <img src={src} alt={`${t.label} ${String(j + 1).padStart(2, '0')}`} loading="lazy" />
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -1114,6 +1141,15 @@ const TECHS = featureVideo
   .img-collage[data-n='4'] { grid-template-areas: 'a a b c' 'a a d d'; }
   .img-collage[data-n='5'] { grid-template-areas: 'a a b c' 'a a d e'; }
   .img-collage[data-n='6'] { grid-template-areas: 'a a b c' 'a a d e' 'f f f f'; }
+  /* menú de 10 páginas idénticas (Room service): retícula uniforme 5×2 —
+     misma proporción en todas las celdas, el lienzo cierra sin recortar
+     una sola línea del menú */
+  .img-collage[data-n='10'] { grid-template-columns: repeat(5, 1fr); grid-auto-rows: auto; }
+  .img-collage[data-n='10'] .collage-item { grid-area: auto; aspect-ratio: 1164 / 1826; height: auto; }
+  /* técnica con opciones internas (Personajes: Femenino / Masculino) */
+  .img-collage-set[hidden] { display: none; }
+  .img-subswitch { display: flex; gap: 10px; margin-bottom: 12px; }
+  .img-sub-chip { display: inline-block; width: auto; padding: 7px 16px; font-size: 14px; }
   .collage-item:nth-child(1) { grid-area: a; }
   .collage-item:nth-child(2) { grid-area: b; }
   .collage-item:nth-child(3) { grid-area: c; }
@@ -1175,6 +1211,7 @@ const TECHS = featureVideo
     .img-collage[data-n='4'] { grid-template-areas: 'a a' 'b c' 'd d'; }
     .img-collage[data-n='5'] { grid-template-areas: 'a a' 'b c' 'd e'; }
     .img-collage[data-n='6'] { grid-template-areas: 'a a' 'b c' 'd e' 'f f'; }
+    .img-collage[data-n='10'] { grid-template-columns: repeat(2, 1fr); }
   }
   /* menú de técnicas: chips CALCADOS de .engine-menu-item del home,
      en COLUMNA vertical como en el slide de la rueda */
@@ -2021,6 +2058,17 @@ const TECHS = featureVideo
     chips.forEach((el) => {
       el.addEventListener('mouseenter', () => { if (!pinned) openTech(el); });
       el.addEventListener('click', () => { pinned = true; openTech(el); });
+    });
+    /* opciones internas de una técnica (Personajes: Femenino/Masculino):
+       el click cambia el collage visible dentro de su propio set */
+    gallery.addEventListener('click', (e) => {
+      const chip = (e.target as HTMLElement | null)?.closest?.('[data-variant-key]') as HTMLElement | null;
+      if (!chip) return;
+      const set = chip.closest('.img-collage-set') as HTMLElement | null;
+      const key = chip.getAttribute('data-variant-key');
+      if (!set || !key) return;
+      set.querySelectorAll('[data-variant-key]').forEach((c) => c.classList.toggle('is-active', c === chip));
+      set.querySelectorAll('[data-variant-group]').forEach((g) => { (g as HTMLElement).hidden = g.getAttribute('data-variant-group') !== key; });
     });
     /* volver: colapsa TODA la sección de imágenes y regresa al menú */
     const back = gallery.querySelector('[data-img-back]') as HTMLElement | null;
