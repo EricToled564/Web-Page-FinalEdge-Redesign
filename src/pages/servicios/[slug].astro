@@ -1476,8 +1476,13 @@ const TECHS = featureVideo
   .tech-stage:hover .tech-stage-cta { color: var(--pc, var(--accent)); }
   /* "En vivo" en magenta apenas arranca la reproducción (pedido
      2026-07-18) — color fijo, no --pc, para que sea SIEMPRE magenta sin
-     importar el color de fase del servicio */
-  .tech-stage-cta.is-live { color: #E15CDB; }
+     importar el color de fase del servicio. Se repite con el prefijo
+     ":hover" (bug encontrado 2026-07-18 "sigue sin iluminarse": esa
+     regla de arriba tiene MÁS especificidad que ".is-live" sola, así
+     que con el mouse sobre la pantalla — lo normal mientras se mira el
+     efecto — el magenta se perdía y volvía al color de fase). */
+  .tech-stage-cta.is-live,
+  .tech-stage:hover .tech-stage-cta.is-live { color: #E15CDB; }
   .tech-stage-cta svg { width: 14px; height: 14px; }
   /* tira numerada bajo la pantalla — mismo ancho tope que la pantalla
      para que sus bordes queden alineados */
