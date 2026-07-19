@@ -367,7 +367,7 @@ const TECHS = featureVideo
          con las 5 fases — solo el título; hover/click enciende la tarjeta
          y muestra la explicación — y abajo las técnicas como tarjetas
          premium con frames reales de los videos. */}
-      <div class="reel-video-detail" id="video-detail" data-video-detail hidden>
+      <div class="reel-video-detail" id="video-detail" data-video-detail hidden style={`--pc:${phase.color}`}>
         {/* PANTALLA propia (pedido 2026-07-17): al abrir Video solo se ve
            la banda con las 5 tarjetas y el CTA de la galería — la galería
            queda fuera del visor hasta el scroll/click, y en UN movimiento
@@ -473,7 +473,7 @@ const TECHS = featureVideo
          técnicas a la izquierda y COLLAGE en tonos mate a la derecha;
          click en una imagen la agranda (lightbox). */}
       {IMG_TECHS.length > 0 && (
-        <div class="reel-video-detail" id="img-detail" data-img-detail hidden>
+        <div class="reel-video-detail" id="img-detail" data-img-detail hidden style={`--pc:${phase.color}`}>
           <div class="tech-gallery" data-img-gallery>
             <div class="tech-col-text">
               <header class="tech-head">
@@ -1873,7 +1873,13 @@ const TECHS = featureVideo
     .svc-vhero { padding: 32px 20px 40px; gap: 24px; }
     .svc-vhero-actions { position: static; margin-top: 8px; max-width: 100%; }
     .svc-feature-frame { padding: 8px; }
-    .svc-feature-play { font-size: clamp(40px, 13vw, 72px); left: 7%; }
+    /* reporte 2026-07-19: la palabra "Play" se encimaba con la barra
+       nativa de controles del <video> en móvil — la altura de esa
+       barra la pone el navegador/SO, no se puede predecir en CSS con
+       certeza. Se quita en vez de arriesgar el traslape (el navegador
+       ya trae su propio botón de play en la barra nativa, controls
+       sigue activo). */
+    .svc-feature-play { display: none; }
   }
 </style>
 
@@ -2213,7 +2219,7 @@ const TECHS = featureVideo
           panel.hidden = false;
           requestAnimationFrame(() => panel.classList.add('is-open'));
           btn.setAttribute('aria-expanded', 'true');
-          if (isMusic) dustResume();
+          if (isMusic) { dustResume(); (window as any).__ensureDustColor?.(); }
           /* pantalla propia: arranca justo bajo el nav */
           const screen = panel.querySelector('[data-phase-screen]') || panel;
           requestAnimationFrame(() => screen.scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -2466,19 +2472,33 @@ const TECHS = featureVideo
 
     /* color del servicio → el efecto de partículas (pedido 2026-07-18):
        llamado apenas el iframe expone dustSetColor, con reintento breve
-       por si el módulo Three.js aún no terminó de cargar. */
+       por si el módulo Three.js aún no terminó de cargar. BUG (reporte
+       2026-07-19 "a veces magenta y a veces azul"): esto solo corría
+       UNA vez al inicializar la página — el iframe usa loading="lazy" y
+       no empieza a cargar hasta que el panel de Música se abre, así que
+       si el usuario abría el panel después de que expirara el
+       reintento de 10s, dustSetColor nunca se llamaba y el polvo se
+       quedaba en su azul por defecto. Se expone en window para poder
+       relanzar el reintento cada vez que el panel abre (ver wire() en
+       initVideoDetail), no solo en la carga inicial. */
     const serviceColor = gallery.getAttribute('data-service-color') || '';
-    const applyColor = () => {
+    let colorRetryIv: number | null = null;
+    const ensureDustColor = () => {
       const win = frame?.contentWindow as any;
-      if (win && typeof win.dustSetColor === 'function') { win.dustSetColor(serviceColor); return true; }
-      return false;
+      const applyColor = () => {
+        if (win && typeof win.dustSetColor === 'function') { win.dustSetColor(serviceColor); return true; }
+        return false;
+      };
+      if (!serviceColor || !frame) return;
+      if (colorRetryIv !== null) { clearInterval(colorRetryIv); colorRetryIv = null; }
+      if (applyColor()) return;
+      let tries = 0;
+      colorRetryIv = window.setInterval(() => {
+        if (applyColor() || ++tries > 60) { if (colorRetryIv !== null) clearInterval(colorRetryIv); colorRetryIv = null; }
+      }, 250);
     };
-    if (serviceColor && frame) {
-      if (!applyColor()) {
-        let tries = 0;
-        const iv = setInterval(() => { if (applyColor() || ++tries > 40) clearInterval(iv); }, 250);
-      }
-    }
+    (window as any).__ensureDustColor = ensureDustColor;
+    ensureDustColor();
 
     /* menú colapsable de pistas: colapsado por default, el toggle
        muestra cuántas trae el estilo activo; elegir una pista lo

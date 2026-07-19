@@ -167,6 +167,16 @@ const { compact = false, fitHeight = false } = Astro.props;
      etiqueta: solo el tamaño de fuente y el padding que lo acompaña,
      el posicionamiento centrado (translate -50%,-50%) no se mueve. */
   .wl-band { font-size: clamp(17px, 1.7vw, 20px); letter-spacing: 2.6px; font-weight: 600; color: var(--fg); background: var(--void-deep); padding: 5px 13px; white-space: nowrap; }
+  /* reporte 2026-07-19 (segunda vez — "sigue estando muy pequeñas
+     todavía"): en móvil 1.7vw cae debajo del piso de 17px en cualquier
+     viewport <1000px, así que la etiqueta se queda SIEMPRE en el
+     mínimo — pero la rueda en sí crece bastante en móvil (ver
+     .engine-col-wheel en index.astro, "pasa de 273px a ~370px"), y el
+     nombre de fase no acompañaba ese crecimiento. Sube el piso propio
+     para móvil, proporcional al tamaño real de la rueda ahí. */
+  @media (max-width: 900px) {
+    .wl-band { font-size: clamp(22px, 6vw, 28px); padding: 7px 16px; }
+  }
   /* En el hub de fase (modo 'phase') la banda dice "Conoce más:" sobre el
      fondo de color de la fase (landing 2026-07-11) y el cliente pidió
      quitarle el rectángulo negro y reducirla en la misma proporción que
