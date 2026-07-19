@@ -2514,33 +2514,25 @@ const TECHS = featureVideo
       listToggle.setAttribute('aria-expanded', 'false');
     };
     /* posiciona el dropdown FLOTANTE contra el toggle en coordenadas de
-       VIEWPORT (position:fixed) — el alto máximo se calcula contra el
-       espacio real que queda hasta el borde inferior de la ventana, así
-       la lista completa (con TODAS las pistas) siempre cabe entera y su
-       scroll interno es el único que hace falta. Se recalcula cada vez
-       que se abre por si la ventana cambió de tamaño mientras tanto. */
+       VIEWPORT (position:fixed) — SIEMPRE hacia arriba (pedido explícito
+       y repetido varias veces 2026-07-19: "quiero que el menú se
+       expanda hacia arriba, no hacia abajo" — antes era condicional
+       según el espacio disponible y normalmente abría hacia abajo,
+       que es justo lo que no se quería). El alto máximo se calcula
+       contra el espacio real que queda hasta el borde SUPERIOR de la
+       ventana, así la lista siempre cabe entera y su scroll interno es
+       el único que hace falta. Se recalcula cada vez que se abre por si
+       la ventana cambió de tamaño mientras tanto. */
     const positionList = () => {
       if (!listPanel || !listToggle) return;
       const r = listToggle.getBoundingClientRect();
       const gap = 8, margin = 20;
-      const spaceBelow = innerHeight - r.bottom - gap - margin;
       const spaceAbove = r.top - gap - margin;
       listPanel.style.left = `${Math.round(r.left)}px`;
       listPanel.style.width = `${Math.round(r.width)}px`;
-      if (spaceBelow >= 160 || spaceBelow >= spaceAbove) {
-        /* caso normal: abre hacia abajo */
-        listPanel.style.top = `${Math.round(r.bottom + gap)}px`;
-        listPanel.style.bottom = 'auto';
-        listPanel.style.maxHeight = `${Math.max(120, Math.round(spaceBelow))}px`;
-      } else {
-        /* viewport corto (móvil) con el toggle muy abajo: se voltea y
-           abre hacia ARRIBA, ancla el fondo del panel justo encima del
-           toggle — sin esto el panel se salía por debajo de la
-           pantalla en celulares (reporte 2026-07-18, revisión móvil) */
-        listPanel.style.top = 'auto';
-        listPanel.style.bottom = `${Math.round(innerHeight - r.top + gap)}px`;
-        listPanel.style.maxHeight = `${Math.max(120, Math.round(spaceAbove))}px`;
-      }
+      listPanel.style.top = 'auto';
+      listPanel.style.bottom = `${Math.round(innerHeight - r.top + gap)}px`;
+      listPanel.style.maxHeight = `${Math.max(120, Math.round(spaceAbove))}px`;
     };
     const expandList = () => {
       if (!listPanel || !listToggle) return;
