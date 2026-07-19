@@ -63,7 +63,17 @@ const {
   .lm-wheel {
     display: inline-flex;
     align-items: baseline;
-    gap: 9px;
+    /* pedido 2026-07-19: la distancia entre >_ y la palabra debe ser
+       SIEMPRE la misma, sin importar la colocación (nav, hero, rueda) —
+       un gap en px fijo se ve distinto en cada tamaño porque el
+       font-size cambia por colocación (22.5px en el nav, 35px en
+       brand-lockup, 34px por defecto) pero el hueco no. En em, contra
+       el font-size DEL PROPIO CONTENEDOR (línea de abajo, calcado del
+       tamaño real del >_ de cada variante), el hueco escala igual que
+       el texto — misma proporción en todos lados. 0.3em: mismo valor
+       usado en el resto del sitio (>_ + título). */
+    font-size: 34px;
+    gap: .3em;
     line-height: 1;
     white-space: nowrap;
     transform: scale(var(--wheel-scale, 1));
@@ -93,6 +103,10 @@ const {
      verdad no cabe) — forzarlo con !important bloquearía ese seguro
      universal contra desbordes y volveríamos a tener scroll horizontal
      en pantallas angostas. */
+  /* font-size del CONTENEDOR también, no solo de los hijos — es contra
+     ESE valor que se calcula el gap en em (arriba), así el hueco queda
+     proporcional también en esta colocación fija. */
+  .lm-wheel.brand-lockup { font-size: 35px; }
   .lm-wheel.brand-lockup .lm-prompt { font-size: 35px; }
   .lm-wheel.brand-lockup .lm-word { font-size: 28px; }
   .lm-wheel.brand-lockup .lm-tag { font-size: 22px; }
@@ -101,7 +115,8 @@ const {
   .lm-section {
     display: inline-flex;
     align-items: baseline;
-    gap: 7px;
+    font-size: 26px;
+    gap: .3em;
     line-height: 1;
     white-space: nowrap;
   }
@@ -114,7 +129,8 @@ const {
   .lm-hub {
     display: inline-flex;
     align-items: baseline;
-    gap: 9px;
+    font-size: 29px;
+    gap: .3em;
     line-height: 1;
     white-space: nowrap;
     transform: scale(var(--wheel-scale, 1));
@@ -129,7 +145,8 @@ const {
   .lm-big {
     display: inline-flex;
     align-items: baseline;
-    gap: 28px;
+    font-size: 106px;
+    gap: .3em;
     line-height: 1;
     white-space: nowrap;
   }
@@ -138,7 +155,7 @@ const {
   .lm-big .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 84px; letter-spacing: -.01em; color: var(--lm-word-color); line-height: 1; }
   .lm-big .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 56px; letter-spacing: .16em; color: var(--lm-color); line-height: 1; }
   @media (max-width: 760px) {
-    .lm-big { gap: 14px; }
+    .lm-big { font-size: 53px; gap: .3em; }
     .lm-big .lm-col { gap: 18px; }
     .lm-big .lm-prompt { font-size: 53px; }
     .lm-big .lm-word { font-size: 42px; }

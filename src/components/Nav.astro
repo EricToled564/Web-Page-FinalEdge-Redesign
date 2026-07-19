@@ -88,6 +88,12 @@ import LockupMark from './LockupMark.astro';
      sección Engine del home) conserva su tamaño fijo de siempre.
      :global() porque .lm-* se renderiza dentro de LockupMark (otro
      componente) y el scope de Astro no lo alcanza desde aquí. */
+  /* también el font-size del CONTENEDOR (no solo los hijos): el gap
+     >_-palabra de LockupMark se calcula en em contra ESE valor
+     (pedido 2026-07-19, "la distancia debe ser siempre la misma") —
+     sin esto el hueco se quedaba en el tamaño de brand-lockup (35px)
+     aunque el texto ya achicara a 22.5px aquí, y se veía desproporcionado. */
+  .nav-cta--lockup :global(.lm-wheel.brand-lockup) { font-size: 22.5px; }
   .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-prompt),
   .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-word) { font-size: 22.5px; }
   .nav-cta--lockup :global(.lm-wheel.brand-lockup .lm-tag) { font-size: 17.5px; }
