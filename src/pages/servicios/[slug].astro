@@ -290,7 +290,7 @@ const TECHS = featureVideo
          no se ve ningún frame del video hasta dar play. -->
     <section class="svc-feature" data-svc-feature data-state="idle" data-reel="ready" style={`--pc:${phase.color}`}>
       <div class="svc-feature-stage">
-        <p class="svc-feature-label" aria-hidden="true"><span class="prompt svc-pc-prompt">&gt;_</span> conoce lo que podemos hacer:</p>
+        <p class="svc-feature-label" aria-hidden="true"><span class="prompt svc-pc-prompt">&gt;_</span>conoce lo que podemos hacer:</p>
         <div class="svc-feature-frame" data-svc-frame>
           <video
             class="svc-feature-video"
@@ -998,7 +998,7 @@ const TECHS = featureVideo
   /* la tarjeta es una FOTO a sangre completa, no un fondo sólido → el
      >_ va en gris, no en el color de fase (pedido 2026-07-19). */
   .reel-card-prompt { color: var(--fg-faint); }
-  .svc-pc-prompt { color: var(--pc, var(--accent)); }
+  .svc-pc-prompt { color: var(--pc, var(--accent)); margin-right: .3em; }
   @media (max-width: 860px) {
     .reel-gallery-grid { grid-template-columns: 1fr; gap: 18px; }
   }

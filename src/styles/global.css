@@ -31,7 +31,7 @@ a:hover { color: var(--fg); }
   letter-spacing: .18em;
   color: var(--fg-muted);
 }
-.eyebrow .prompt { letter-spacing: 0; margin-right: .6em; }
+.eyebrow .prompt { letter-spacing: 0; margin-right: .3em; }
 
 /* eyebrow que incrusta el lockup ENGINE en vez de escribir "Final Edge
    Engine" como texto plano — el lockup real junto al sufijo opcional de

@@ -107,7 +107,7 @@ const MENU_ITEMS = [
            intuitivo, dejar claro al usuario que ahí es para elegir los
            servicios") — el lockup de arriba nombra el SISTEMA, no dice
            qué hacer con él. Esta línea sí lo dice. -->
-      <p class="engine-h2 reveal"><span class="prompt">&gt;_</span> elige el servicio que necesitas:</p>
+      <p class="engine-h2 reveal"><span class="prompt">&gt;_</span><span class="engine-h2-text">elige el servicio que necesitas:</span></p>
       <!-- Menú de servicios (pedido 2026-07-15, referencia visual de
            lista de chips): al POSAR el puntero sobre un item, el gajo
            de ese servicio se activa y se mueve en la rueda — el mismo
@@ -495,8 +495,13 @@ const MENU_ITEMS = [
   /* mismo font-size y letter-spacing que .hero-sub ("Haz más. Sin
      contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
      text-transform: mayúsculas y minúsculas normales, como el copy. */
-  .engine-h2 { font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
-  .engine-h2 .prompt { margin-right: .5em; }
+  /* pedido 2026-07-19: si el texto envuelve a un segundo renglón, ESE
+     renglón debe arrancar donde arranca la primera letra del anterior,
+     nunca debajo del >_ (que además nunca debe quedar tapado). Flexbox
+     con el >_ en su propia columna de ancho fijo logra exactamente
+     eso: el texto envuelve dentro de SU columna, nunca la del símbolo. */
+  .engine-h2 { display: flex; align-items: baseline; gap: .3em; font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
+  .engine-h2-text { flex: 1; }
   /* Menú de servicios (referencia visual del cliente: columna de chips;
      rectangulares por R3.3). Hover: chip a blanco + gajo activo en la
      rueda (wheel-glow). Click: navega al servicio. */
