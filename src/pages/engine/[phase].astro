@@ -49,7 +49,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
   <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
     <canvas class="hub-static" data-blue-edge aria-hidden="true"></canvas>
     <div class="hub-stack">
-      <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}>{phase.name}<span class="cursor hub-cursor">▌</span></h1>
+      <h1 class="hub-name reveal" transition:name={`phase-${phase.id}`}><span class="prompt hub-name-prompt" aria-hidden="true">&gt;_</span> {phase.name}<span class="cursor hub-cursor">▌</span></h1>
       <p class="hub-statement reveal">
         {phase.statement}
       </p>
@@ -61,7 +61,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
            rueda se dimensiona SOLO por el ancho del carril, que es
            función pura del viewport. -->
       <div class="hub-wheel reveal">
-        <p class="hub-cta-label" aria-hidden="true">Elige un servicio:</p>
+        <p class="hub-cta-label" aria-hidden="true"><span class="prompt hub-cta-prompt">&gt;_</span> elige un servicio:</p>
         <EngineWheel compact />
       </div>
       <!-- Flechas de navegación (pedido 2026-07-15, sustituyen a los
@@ -164,6 +164,10 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
     padding: 4px 12px;
     white-space: nowrap;
   }
+  /* fondo propio SÓLIDO (el chip de arriba, no el efecto de estática que
+     tiene detrás) → el >_ va en el color de la fase, no en gris
+     (pedido 2026-07-19). */
+  .hub-cta-prompt { color: var(--pc, var(--accent)); margin-right: .3em; }
 
   /* pila centrada: título → statement → rueda-menú → acciones */
   .hub-stack {
@@ -200,6 +204,19 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
        hex nuevo. */
     text-shadow: /* brand-ok:R3.2 excepción 2026-07-13 en RULES.md (pedido explícito) */ 0 1px 3px color-mix(in srgb, var(--void-deep) 78%, transparent),
                  0 3px 16px color-mix(in srgb, var(--void-deep) 60%, transparent);
+    /* títulos nunca en mayúscula inicial (pedido 2026-07-19) — el dato
+       {phase.name} viene capitalizado porque también alimenta rótulos
+       de la rueda y botones ("Volver a Evaluación"), donde SÍ debe
+       quedarse así; se minusculiza solo aquí, con CSS, sin tocar el
+       dato compartido. */
+    text-transform: lowercase;
+  }
+  /* directo sobre el efecto de estática (sin chip propio detrás) → el
+     >_ va en gris, no en el color de la fase (pedido 2026-07-19). */
+  .hub-name-prompt {
+    color: var(--fg-faint);
+    font-size: max(14px, calc(var(--text-opener) / 2 * .5));
+    vertical-align: .08em;
   }
   /* mismo cursor parpadeante del hero ("Tu ventaja definitiva▌") tras el
      nombre de la fase (pedido explícito, las 3). .cursor global ya trae

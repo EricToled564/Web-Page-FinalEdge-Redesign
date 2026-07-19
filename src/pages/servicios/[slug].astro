@@ -167,12 +167,12 @@ const MUSIC_STYLES = featureVideo
 /* Las fases del proceso de video (banda al dar click en "Video") —
    copy DICTADO por el cliente 2026-07-17, no se edita sin su visto. */
 const PHASES_BAND = [
-  { title: 'Estrategia de Comunicación', desc: 'Brief, análisis estratégico y concepto creativo.' },
-  { title: 'Pre producción', desc: 'Storyboard, investigación de física y mecánica, y scene cards con rigor de producción tradicional.' },
-  { title: 'Dirección creativa', desc: 'Expertos en producción con IA definen dirección de arte, secuencia de tomas, personajes y locaciones.' },
-  { title: 'Producción con IA', desc: 'Lo que antes tomaba semanas ahora toma algunos días.' },
-  { title: 'Post producción', desc: 'Edición de color, música, efectos de sonido e iluminación.' },
-  { title: 'Final cut', desc: 'Formatos finales producidos de forma impecable.' },
+  { title: 'estrategia de comunicación', desc: 'Brief, análisis estratégico y concepto creativo.' },
+  { title: 'pre producción', desc: 'Storyboard, investigación de física y mecánica, y scene cards con rigor de producción tradicional.' },
+  { title: 'dirección creativa', desc: 'Expertos en producción con IA definen dirección de arte, secuencia de tomas, personajes y locaciones.' },
+  { title: 'producción con IA', desc: 'Lo que antes tomaba semanas ahora toma algunos días.' },
+  { title: 'post producción', desc: 'Edición de color, música, efectos de sonido e iluminación.' },
+  { title: 'final cut', desc: 'Formatos finales producidos de forma impecable.' },
 ];
 const TECHS = featureVideo
   ? [
@@ -290,7 +290,7 @@ const TECHS = featureVideo
          no se ve ningún frame del video hasta dar play. -->
     <section class="svc-feature" data-svc-feature data-state="idle" data-reel="ready" style={`--pc:${phase.color}`}>
       <div class="svc-feature-stage">
-        <p class="svc-feature-label" aria-hidden="true">Conoce lo que podemos hacer:</p>
+        <p class="svc-feature-label" aria-hidden="true"><span class="prompt svc-pc-prompt">&gt;_</span> conoce lo que podemos hacer:</p>
         <div class="svc-feature-frame" data-svc-frame>
           <video
             class="svc-feature-video"
@@ -341,7 +341,7 @@ const TECHS = featureVideo
          Imágenes, Música — en fila (layout de referencia del cliente). -->
     <section class="section reel-gallery" style={`--pc:${phase.color}`}>
       <header class="section-head reveal">
-        <p class="eyebrow"><span class="prompt">&gt;_</span>nuestro trabajo</p>
+        <p class="eyebrow"><span class="prompt svc-pc-prompt">&gt;_</span>nuestro trabajo</p>
         <hr />
       </header>
       <div class="reel-gallery-grid reveal">
@@ -351,15 +351,15 @@ const TECHS = featureVideo
            valoración por ahora. TODA el área de la tarjeta es el botón. */}
         <button class="reel-card" type="button" data-video-toggle aria-expanded="false" aria-controls="video-detail">
           <span class="reel-card-media"><img src="/assets/gallery/gal-video-v.webp" alt="Video" width="1080" height="1920" loading="lazy" /></span>
-          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Video</span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>video</span>
         </button>
         <button class="reel-card" type="button" data-img-toggle aria-expanded="false" aria-controls="img-detail">
           <span class="reel-card-media"><img src="/assets/gallery/gal-imagenes-v.webp" alt="Imágenes" width="1080" height="1920" loading="lazy" /></span>
-          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Imágenes</span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>imágenes</span>
         </button>
         <button class="reel-card" type="button" data-music-toggle aria-expanded="false" aria-controls="music-detail">
           <span class="reel-card-media"><img src="/assets/gallery/gal-musica-v.webp" alt="Música" width="1080" height="1920" loading="lazy" /></span>
-          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>Música</span>
+          <span class="reel-card-title"><span class="reel-card-prompt">&gt;_</span>música</span>
         </button>
       </div>
       {/* Al dar click en la tarjeta de Video (rediseño 2026-07-17, con
@@ -649,9 +649,9 @@ const TECHS = featureVideo
   {/* "¿para qué sirve?" fuera de creative (pedido 2026-07-17: eliminar
      esa lámina de la página) — las fases ya viven en la banda del reel */}
   {!featureVideo && (
-    <section class="section" style="padding-top:0">
+    <section class="section" style={`padding-top:0; --pc:${phase.color}`}>
       <header class="section-head reveal">
-        <p class="eyebrow"><span class="prompt">&gt;_</span>¿para qué sirve?</p>
+        <p class="eyebrow"><span class="prompt svc-pc-prompt">&gt;_</span>¿para qué sirve?</p>
         <hr />
       </header>
       <div class="hairline-grid grid-2 reveal">
@@ -670,9 +670,9 @@ const TECHS = featureVideo
      tercera lámina genérica eliminada): el trabajo real ya se muestra en
      la galería de técnicas con los videos */}
   {!featureVideo && (
-    <section class="section" style="padding-top:0">
+    <section class="section" style={`padding-top:0; --pc:${phase.color}`}>
       <header class="section-head reveal">
-        <p class="eyebrow"><span class="prompt">&gt;_</span>entregables reales</p>
+        <p class="eyebrow"><span class="prompt svc-pc-prompt">&gt;_</span>entregables reales</p>
         <hr />
       </header>
       <div class="hairline-grid grid-2 reveal">
@@ -995,7 +995,10 @@ const TECHS = featureVideo
     gap: 8px;
     text-align: left;
   }
-  .reel-card-prompt { color: var(--pc, var(--accent)); }
+  /* la tarjeta es una FOTO a sangre completa, no un fondo sólido → el
+     >_ va en gris, no en el color de fase (pedido 2026-07-19). */
+  .reel-card-prompt { color: var(--fg-faint); }
+  .svc-pc-prompt { color: var(--pc, var(--accent)); }
   @media (max-width: 860px) {
     .reel-gallery-grid { grid-template-columns: 1fr; gap: 18px; }
   }

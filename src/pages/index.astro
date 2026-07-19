@@ -39,7 +39,7 @@ const MENU_ITEMS = [
     <div class="hero-scrim" aria-hidden="true"></div>
     <div class="hero-inner">
       <p class="eyebrow hero-eyebrow reveal">
-        <span class="prompt hero-eyebrow-prompt">&gt;_</span> Tu ventaja definitiva<span class="cursor">▌</span>
+        <span class="prompt hero-eyebrow-prompt">&gt;_</span> tu ventaja definitiva<span class="cursor">▌</span>
       </p>
       <img
         class="hero-logo reveal"
@@ -69,7 +69,7 @@ const MENU_ITEMS = [
     <div class="presion-inner">
       <p class="presion-h2 reveal">
         <img class="presion-prompt-img" src="/assets/logos/symbol-prompt-silver.png" alt="" width="260" height="200" />
-        La Presión
+        la presión
       </p>
       <div class="presion-facts reveal">
         <div class="presion-fact">
@@ -107,7 +107,7 @@ const MENU_ITEMS = [
            intuitivo, dejar claro al usuario que ahí es para elegir los
            servicios") — el lockup de arriba nombra el SISTEMA, no dice
            qué hacer con él. Esta línea sí lo dice. -->
-      <p class="engine-h2 reveal">Elige el servicio que necesitas:</p>
+      <p class="engine-h2 reveal"><span class="prompt">&gt;_</span> elige el servicio que necesitas:</p>
       <!-- Menú de servicios (pedido 2026-07-15, referencia visual de
            lista de chips): al POSAR el puntero sobre un item, el gajo
            de ese servicio se activa y se mueve en la rueda — el mismo
@@ -496,6 +496,7 @@ const MENU_ITEMS = [
      contratar más.") — no --text-h2 genérico ni el tamaño del h1. Sin
      text-transform: mayúsculas y minúsculas normales, como el copy. */
   .engine-h2 { font-size: clamp(14px, 1.3vw, 16px); font-weight: 400 !important; letter-spacing: normal; margin-top: 20px; color: var(--fg-muted); }
+  .engine-h2 .prompt { margin-right: .5em; }
   /* Menú de servicios (referencia visual del cliente: columna de chips;
      rectangulares por R3.3). Hover: chip a blanco + gajo activo en la
      rueda (wheel-glow). Click: navega al servicio. */
