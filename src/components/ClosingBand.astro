@@ -13,6 +13,14 @@ const { color } = Astro.props as Props;
 <section class="closing-band" aria-label="Tu ventaja definitiva" style={color ? `--pc:${color}` : undefined}>
   <canvas class="band-static" data-blue-edge aria-hidden="true"></canvas>
   <div class="closing-band-scene">
+    <img
+      class="closing-band-logo"
+      src="/assets/logos/logo-finaledge.png"
+      alt="final edge [AI]"
+      width="220"
+      loading="lazy"
+    />
+    <p class="closing-band-tagline"><span class="prompt">&gt;_</span> tu ventaja definitiva</p>
     <!-- sin destino funcional todavía (pedido explícito) — <button>,
          no <a href="#">, para no simular una navegación que no existe. -->
     <div class="closing-band-ctas">
@@ -45,7 +53,19 @@ const { color } = Astro.props as Props;
     margin: 0 auto;
     text-align: center;
   }
+  .closing-band-logo { display: inline-block; width: 220px; height: auto; }
+  /* mismo tamaño que el texto de las tarjetas de "la presión"
+     (var(--text-body), pedido 2026-07-19) — minúscula, con el prompt,
+     igual que el footer. */
+  .closing-band-tagline {
+    margin-top: 16px;
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    color: var(--on-accent);
+  }
+  .closing-band-tagline .prompt { color: var(--on-accent); }
   .closing-band-ctas {
+    margin-top: 48px;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
