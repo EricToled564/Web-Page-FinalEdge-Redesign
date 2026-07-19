@@ -44,6 +44,7 @@ const titleEm = sizeRefName.length * 0.594 - (sizeRefName.length - 1) * 0.06;
 <Base
   title={`${phase.name} — Final Edge Engine`}
   description={phase.lead}
+  bandColor={phase.color}
 >
   <section class="hub-hero hub-hero--static" style={`--pc:${phase.color}; --title-em:${titleEm}`}>
     <canvas class="hub-static" data-blue-edge aria-hidden="true"></canvas>

@@ -4,10 +4,12 @@ import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Assistant from '../components/Assistant.astro';
+import ClosingBand from '../components/ClosingBand.astro';
 
 const {
   title = 'Final Edge — La IA ejecuta. La experiencia decide.',
   description = 'Firma mexicana potenciada por inteligencia artificial y dirigida por visión de negocio. Haz más. Sin contratar más.',
+  bandColor,
 } = Astro.props;
 
 /* marca de build visible en el DOM (<html data-build>): permite saber
@@ -54,6 +56,7 @@ const jsonLd = {
     <main data-main>
       <slot />
     </main>
+    <ClosingBand color={bandColor} />
     <Footer />
     <Assistant />
     <script>
@@ -111,6 +114,12 @@ const jsonLd = {
     </script>
     <script>
       import '../scripts/scroll-to-engine.js';
+    </script>
+    <script>
+      /* global (pedido 2026-07-19): la banda de cierre ahora vive aquí y
+         sale en TODAS las páginas, incluidas las de /servicios/ que
+         antes no traían este script. */
+      import '../scripts/blue-edge-bg.js';
     </script>
     <script>
       /* Precalienta TODOS los videos de hero en segundo plano (reporte

@@ -129,32 +129,11 @@ const MENU_ITEMS = [
     </div>
   </section>
 
-  <!-- placa Edge Blue — cierre de la página principal. Segunda banda
-       (pedido 2026-07-19): el logo real arriba, y "tu ventaja
-       definitiva" pasa del asset 3D horneado (gigante, 9396px) a texto
-       vivo en minúscula con el prompt, al mismo tamaño que el texto de
-       las tarjetas de "la presión" — mismo lenguaje que el footer.
-       Centrado en la misma cuadrícula de 1180px que usa "la presión". -->
-  <section class="plate" aria-label="Tu ventaja definitiva">
-    <canvas class="band-static" data-blue-edge aria-hidden="true"></canvas>
-    <div class="plate-scene">
-      <img
-        class="plate-logo"
-        src="/assets/logos/logo-finaledge.png"
-        alt="final edge [AI]"
-        width="220"
-        loading="lazy"
-      />
-      <p class="plate-tagline"><span class="prompt">&gt;_</span> tu ventaja definitiva</p>
-      <!-- sin destino funcional todavía (pedido explícito) — <button>,
-           no <a href="#">, para no simular una navegación que no existe. -->
-      <div class="plate-ctas">
-        <button type="button" class="plate-cta">Por qué elegirnos</button>
-        <button type="button" class="plate-cta">Test: ¿Estás preparado para trabajar con IA?</button>
-        <button type="button" class="plate-cta">Blog</button>
-      </div>
-    </div>
-  </section>
+  <!-- Banda azul de cierre (pedido 2026-07-19: "quiero que la última
+       banda azul quede igual en todas las otras páginas pero que
+       cambie de color dependiendo de dónde esté"): se movió a
+       Base.astro/ClosingBand.astro — sale en TODAS las páginas, no
+       solo aquí. Ver Base.astro. -->
 
   <script>
     import '../scripts/blue-edge-bg.js'; // efecto Blue Edge (código de referencia del cliente 2026-07-13) en las dos barras
@@ -640,64 +619,8 @@ const MENU_ITEMS = [
     .engine-col-wheel .wheel-card { height: auto; max-width: 100%; }
   }
 
-  /* placa Edge Blue de cierre — misma cuadrícula de 1180px que
-     .presion-inner (arriba), texto centrado dentro de ella. */
-  .plate {
-    position: relative;
-    background: var(--void-deep);
-    background: oklch(from var(--accent) calc(l * 0.28) calc(c * 0.7) h);
-    padding: 120px 72px;
-    overflow: hidden;
-  }
-  .plate-scene {
-    position: relative; /* encima del canvas de estática */
-    max-width: 1180px;
-    margin: 0 auto;
-    text-align: center;
-  }
-  .plate-logo { display: inline-block; width: 220px; height: auto; }
-  /* mismo tamaño que el texto de las tarjetas de "la presión"
-     (var(--text-body), pedido 2026-07-19) — minúscula, con el prompt,
-     igual que el footer. */
-  .plate-tagline {
-    margin-top: 16px;
-    font-family: var(--font-ui);
-    font-size: var(--text-body);
-    color: var(--on-accent);
-  }
-  .plate-tagline .prompt { color: var(--on-accent); }
-  /* 3 botones debajo de la frase, pedido explícito — mismo lenguaje que
-     .btn (brand book: piso de 14px, sin border-radius R3.1, una sola
-     curva de easing R3.4) pero invertido para fondo accent (azul): .btn
-     usa color/borde accent sobre fondo claro, aquí sería azul sobre
-     azul, ilegible — mismo patrón ya usado en esta página para texto
-     sobre accent (--on-accent, ver .presion-*). Sin destino funcional
-     todavía (pedido explícito), por eso son <button>, no enlaces. */
-  .plate-ctas {
-    margin-top: 48px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 16px;
-  }
-  .plate-cta {
-    font-family: var(--font-ui);
-    font-size: var(--text-label);
-    text-transform: none;
-    letter-spacing: .02em;
-    color: var(--on-accent);
-    background: transparent;
-    border: 1px solid color-mix(in srgb, var(--on-accent) 40%, transparent);
-    padding: 16px 28px;
-    cursor: pointer;
-    transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
-  }
-  .plate-cta:hover { background: var(--on-accent); color: var(--accent); border-color: var(--on-accent); }
-  .plate-cta:active { background: color-mix(in srgb, var(--on-accent) 85%, transparent); }
-
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
-    .plate { padding: 88px 24px; }
     .presion-band { padding: 64px 24px; }
     /* sigue a .presion-band: la cuadrícula baja a 24px de lateral aquí */
     .engine-split { padding-left: 24px; padding-right: 24px; }
