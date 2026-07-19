@@ -2,7 +2,6 @@
 import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
-import Footer from '../components/Footer.astro';
 import Assistant from '../components/Assistant.astro';
 import ClosingBand from '../components/ClosingBand.astro';
 
@@ -56,8 +55,12 @@ const jsonLd = {
     <main data-main>
       <slot />
     </main>
+    <!-- pedido 2026-07-19: la página termina donde termina la banda de
+         cierre (con su efecto de estática, el color de fase y los 3
+         botones) — se elimina la última barra sólida con el logo
+         (Footer.astro), quedaba redundante con el lockup que ya trae
+         la propia banda. -->
     <ClosingBand color={bandColor} />
-    <Footer />
     <Assistant />
     <script>
       // Revelado de secciones — 600ms, curva maestra (R3.4)
