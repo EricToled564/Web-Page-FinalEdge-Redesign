@@ -59,12 +59,22 @@ import LockupMark from './LockupMark.astro';
   }
   .nav-lang { font-size: var(--text-label); letter-spacing: .14em; color: var(--fg-faint); }
   .nav-lang-on { color: var(--fg); }
-  .nav-cta { padding: 10px 18px; white-space: nowrap; }
+  /* mayúsculas/minúsculas normales (pedido 2026-07-19) — .btn fuerza
+     uppercase globalmente, se resetea aquí igual que ya hacía
+     .nav-cta--lockup para su propio contenido. */
+  /* 68px = alto natural del botón --lockup (su lockup de 2 líneas
+     necesita ese espacio) — se comparte como min-height para que el
+     botón de texto plano quede exactamente de la misma altura, nunca al
+     revés (recortar el lockup lo rompería). */
+  .nav-cta { padding: 10px 18px; min-height: 68px; white-space: nowrap; box-sizing: border-box; display: inline-flex; align-items: center; text-transform: none; letter-spacing: .02em; }
   .nav-cta-short { display: none; }
   /* resetea el uppercase/tracking del .btn (R5.8) para que el lockup se
      vea igual que en cualquier otro lugar del sitio, nunca distorsionado
-     por el estilo del botón. */
-  .nav-cta--lockup { display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
+     por el estilo del botón. Border-color sube de --hairline (casi
+     invisible sobre el fondo oscuro del nav, reporte 2026-07-19 "uno
+     tiene recuadro y el otro no") a --fg-faint — gris visible, más
+     discreto que el azul del CTA primario pero se lee como caja. */
+  .nav-cta--lockup { border-color: var(--fg-faint); display: flex; align-items: baseline; gap: 8px; text-transform: none; letter-spacing: normal; }
   /* "Servicios" solo vive en la franja móvil (ver @media 900px abajo):
      en escritorio ya está el lockup completo, sobraría duplicado */
   .nav-cta--services { display: none; }
