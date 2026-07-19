@@ -1249,6 +1249,15 @@ const TECHS = featureVideo
     color: var(--fg);
   }
   .tech-head hr { border: 0; border-top: 1px solid var(--hairline); margin: 14px 0 0; }
+  /* proporción con el desktop (pedido 2026-07-19): el texto ya está en
+     el piso duro de 14px (R2.1, no puede bajar), pero en móvil se veía
+     desproporcionado porque nada más ahí se achica — el ">_" (17.5px,
+     SÍ tiene margen antes del piso) y el espaciado se reducen para que
+     el conjunto pese visualmente como en desktop. */
+  @media (max-width: 860px) {
+    .tech-title-prompt { font-size: 14px; }
+    .tech-lockup { gap: 6px; }
+  }
   /* botón de regreso al menú de Video/Imágenes/Música: misma voz que el
      CTA de la galería, alineado a la columna del menú */
   .tech-back {

@@ -404,10 +404,9 @@ const MENU_ITEMS = [
     gap: 14px;
     font-family: var(--font-ui);
     font-weight: 600;
-    /* equivalente al lockup >_ FINAL EDGE [ENGINE] de la sección
-       siguiente (18px base × escala 1.6 = 28.8px) — antes crecía hasta
-       48px con el viewport y quedaba mucho más grande que ese logo. */
-    font-size: clamp(20px, 6vw, 29px);
+    /* mismo tamaño que el texto de las tarjetas de abajo (pedido
+       2026-07-19) — var(--text-body), igual que .presion-fact-txt. */
+    font-size: var(--text-body);
     letter-spacing: -.02em;
     color: var(--on-accent);
   }
