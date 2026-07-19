@@ -323,7 +323,11 @@ const MENU_ITEMS = [
     background: color-mix(in srgb, var(--bg) 41%, transparent);
   }
   .hero-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
-  .hero-eyebrow { color: var(--fg); }
+  /* "tu ventaja definitiva" siempre al MISMO tamaño en cualquier
+     colocación del sitio (pedido 2026-07-19) — 16px = var(--text-body),
+     el mismo tamaño ya usado en la banda de cierre (ClosingBand.astro),
+     por encima del piso de .eyebrow (14px, R2.1). */
+  .hero-eyebrow { font-size: var(--text-body); color: var(--fg); }
   .hero-eyebrow-prompt { color: var(--silver); }
   .hero-logo { width: min(220px, 55vw); height: auto; margin: 28px 0 24px; }
   /* plancha negra DETRÁS del logo para que resalte sobre el video
