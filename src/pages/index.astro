@@ -129,27 +129,23 @@ const MENU_ITEMS = [
     </div>
   </section>
 
-  <!-- placa Edge Blue — cierre de la página principal. Mismo tratamiento
-       de relieve 3D que logo-finaledge.png (R5.4: monocromos/marca
-       siempre como PNG horneado con relieve 3D intacto, nunca
-       CSS-simulado): el texto se generó como un asset real con bisel +
-       iluminación calculada (tools/plate-3d — ver script fuente en el
-       historial de commits), no con box-shadow/text-shadow (R3.2).
-       Centrado en la misma cuadrícula de 1180px que usa "la presión".
-       Sin animación (pedido explícito) — estática, tamaño de fuente
-       igual al h1 del hero (ver .plate-img). -->
+  <!-- placa Edge Blue — cierre de la página principal. Segunda banda
+       (pedido 2026-07-19): el logo real arriba, y "tu ventaja
+       definitiva" pasa del asset 3D horneado (gigante, 9396px) a texto
+       vivo en minúscula con el prompt, al mismo tamaño que el texto de
+       las tarjetas de "la presión" — mismo lenguaje que el footer.
+       Centrado en la misma cuadrícula de 1180px que usa "la presión". -->
   <section class="plate" aria-label="Tu ventaja definitiva">
     <canvas class="band-static" data-blue-edge aria-hidden="true"></canvas>
     <div class="plate-scene">
-      <span class="plate-img-wrap">
-        <img
-          class="plate-img"
-          src="/assets/plate-3d.webp"
-          width="9396"
-          height="1225"
-          alt="Tu ventaja definitiva."
-        />
-      </span>
+      <img
+        class="plate-logo"
+        src="/assets/logos/logo-finaledge.png"
+        alt="final edge [AI]"
+        width="220"
+        loading="lazy"
+      />
+      <p class="plate-tagline"><span class="prompt">&gt;_</span> tu ventaja definitiva</p>
       <!-- sin destino funcional todavía (pedido explícito) — <button>,
            no <a href="#">, para no simular una navegación que no existe. -->
       <div class="plate-ctas">
@@ -653,34 +649,23 @@ const MENU_ITEMS = [
     padding: 120px 72px;
     overflow: hidden;
   }
-  /* mismo lenguaje de relieve 3D que el logotipo horneado
-     (logo-finaledge.png / R5.4 — monocromos SIEMPRE como PNG horneado
-     con relieve 3D intacto, nunca CSS-simulado): asset real con bisel +
-     iluminación calculada, mismo navy de canto (--hub-ring) que usa el
-     logotipo. Escala con --text-plate para conservar el tamaño ya
-     aprobado en cualquier ancho de viewport. */
   .plate-scene {
     position: relative; /* encima del canvas de estática */
     max-width: 1180px;
     margin: 0 auto;
     text-align: center;
   }
-  /* envoltura al tamaño exacto de la imagen (inline-block se ajusta al
-     contenido). */
-  .plate-img-wrap { position: relative; display: inline-block; }
-  /* pedido explícito: sin animación (se quitó el import de
-     plate-pixel-reveal.js más abajo) y el mismo tamaño de fuente que el
-     h1 del hero (.hero-h1: clamp(17px, 2.3vw, 32px)) — mismo multiplicador
-     (11.5053) que ya traducía --text-plate al ancho real de la imagen
-     horneada, solo que ahora aplicado sobre el clamp() del hero en vez
-     del de la placa, para que escale proporcional igual que antes.
-     Sigue centrada por .plate-scene (text-align:center), sin tocar. */
-  .plate-img {
-    display: block;
-    width: calc(clamp(17px, 2.3vw, 32px) * 11.5053);
-    max-width: 100%;
-    height: auto;
+  .plate-logo { display: inline-block; width: 220px; height: auto; }
+  /* mismo tamaño que el texto de las tarjetas de "la presión"
+     (var(--text-body), pedido 2026-07-19) — minúscula, con el prompt,
+     igual que el footer. */
+  .plate-tagline {
+    margin-top: 16px;
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    color: var(--on-accent);
   }
+  .plate-tagline .prompt { color: var(--on-accent); }
   /* 3 botones debajo de la frase, pedido explícito — mismo lenguaje que
      .btn (brand book: piso de 14px, sin border-radius R3.1, una sola
      curva de easing R3.4) pero invertido para fondo accent (azul): .btn
