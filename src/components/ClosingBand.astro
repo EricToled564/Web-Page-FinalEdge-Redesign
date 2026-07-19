@@ -30,6 +30,15 @@ const { color } = Astro.props as Props;
     padding: 120px 72px;
     overflow: hidden;
   }
+  /* reporte 2026-07-19 ("espacio magenta enorme y vacío en móvil"): el
+     scope de Astro es por componente — .band-static traía su
+     position:absolute definido dentro del <style> de index.astro
+     nada más, así que aquí el canvas caía en flujo normal de
+     documento con el alto que blue-edge-bg.js le pone (pensado para
+     llenar un contenedor ABSOLUTO, no para ser un bloque más), y
+     empujaba los botones cientos de píxeles hacia abajo. Mismo canon
+     que .band-static en index.astro / .hub-static en engine/[phase]. */
+  .band-static { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
   .closing-band-scene {
     position: relative; /* encima del canvas de estática */
     max-width: 1180px;
