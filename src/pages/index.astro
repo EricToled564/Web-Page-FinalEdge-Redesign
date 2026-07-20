@@ -54,6 +54,23 @@ const MENU_ITEMS = [
         30 años de experiencia dirigen.<br />Nuestros flujos de trabajo propietarios de IA ejecutan.
       </h1>
       <p class="hero-sub reveal">haz más. sin contratar más.</p>
+      <!-- Servicios animados (pedido 2026-07-20): el mismo índice de la
+           rueda (MENU_ITEMS), uno a la vez en vez de listados — clic
+           lleva directo a la rueda (mismo href que el CTA del nav,
+           bindEngineLinks en scroll-to-engine.js lo centra igual). Los
+           7 nombres van todos en el DOM (SEO/sin-JS incluidos); el
+           script solo alterna cuál lleva is-active. -->
+      <a class="hero-services reveal" href="/#engine" aria-label="Ver todos los servicios en la rueda del Engine">
+        <span class="prompt hero-services-prompt">&gt;_</span>
+        <span class="hero-services-words" data-hero-services-words>
+          {MENU_ITEMS.map((m, i) => (
+            <span class={`hero-services-word${i === 0 ? ' is-active' : ''}`}>{m.label}</span>
+          ))}
+        </span>
+      </a>
+      <button class="hero-more" type="button" data-hero-more aria-label="Ver la presión del mercado">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+      </button>
     </div>
   </section>
 
@@ -193,6 +210,90 @@ const MENU_ITEMS = [
     }
     initEngineMenu();
     document.addEventListener('astro:page-load', initEngineMenu);
+
+    /* Servicios animados del hero (pedido 2026-07-20): rota entre los 7
+       <span> ya servidos en el DOM, con tiempo de sobra para leer cada
+       uno. El clic va directo a la rueda solo por ser un <a href="/#engine">
+       — bindEngineLinks (scroll-to-engine.js) ya ata TODOS esos enlaces,
+       sin código aparte aquí. */
+    function initHeroServices() {
+      const box = document.querySelector('[data-hero-services-words]') as HTMLElement | null;
+      if (!box || box.dataset.bound === '1') return;
+      box.dataset.bound = '1';
+      const words = Array.from(box.querySelectorAll('.hero-services-word')) as HTMLElement[];
+      if (words.length < 2 || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+      let i = 0;
+      setInterval(() => {
+        words[i].classList.remove('is-active');
+        i = (i + 1) % words.length;
+        words[i].classList.add('is-active');
+      }, 2200);
+    }
+    initHeroServices();
+    document.addEventListener('astro:page-load', initHeroServices);
+
+    /* Flecha "más" del hero (pedido 2026-07-20): clic baja a "la
+       presión". Desde ahí, un solo scroll/swipe hacia abajo debe actuar
+       como si se diera clic al CTA "Conoce el >_ final edge [ENGINE]"
+       (mismo enlace real: se dispara su click, no se duplica su
+       comportamiento) — y un solo scroll/swipe hacia arriba desde la
+       rueda regresa a "la presión". Mismo lenguaje de un-gesto-una-
+       lámina que ya usan las láminas de /servicios/produccion-creativa/. */
+    function initHeroGestures() {
+      const more = document.querySelector('[data-hero-more]') as HTMLElement | null;
+      const presion = document.getElementById('presion');
+      const engine = document.getElementById('engine');
+      if (!more || !presion || !engine || more.dataset.bound === '1') return;
+      more.dataset.bound = '1';
+      more.addEventListener('click', () => {
+        presion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+
+      let lastGesture = 0;
+      const fire = (isActive: () => boolean, action: () => void) => {
+        if (!isActive()) return;
+        const now = Date.now();
+        if (now - lastGesture < 1300) return;
+        lastGesture = now;
+        action();
+      };
+      const inView = (el: HTMLElement) => {
+        const r = el.getBoundingClientRect();
+        const vh = innerHeight || 800;
+        return r.top < vh * 0.6 && r.bottom > vh * 0.25;
+      };
+      const goEngine = () => {
+        const link = document.querySelector('a[href="/#engine"]') as HTMLElement | null;
+        link?.click();
+        /* scrollToEngineCentered() salta INSTANTE (no smooth), a
+           diferencia de goPresion() — un scroll suave se autocorrige
+           solo contra el scroll nativo residual del propio wheel/touch
+           que disparó este gesto (listener pasivo, nunca lo bloquea),
+           pero un salto instante no tiene ninguna animación en curso
+           que lo compense y ese residuo queda pegado. Mismo patrón de
+           doble rAF que maybeScrollOnLoad() en scroll-to-engine.js:
+           reclickar una vez que el scroll nativo del frame ya se
+           aplicó vuelve a centrar sobre la posición real. */
+        requestAnimationFrame(() => requestAnimationFrame(() => link?.click()));
+      };
+      const goPresion = () => presion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      addEventListener('wheel', (e) => {
+        const dy = (e as WheelEvent).deltaY;
+        if (dy > 6) fire(() => inView(presion), goEngine);
+        else if (dy < -6) fire(() => inView(engine), goPresion);
+      }, { passive: true });
+      let touchY = 0;
+      addEventListener('touchstart', (e) => { touchY = (e as TouchEvent).touches[0]?.clientY ?? 0; }, { passive: true });
+      addEventListener('touchmove', (e) => {
+        const y = (e as TouchEvent).touches[0]?.clientY ?? touchY;
+        const dy = touchY - y;
+        if (dy > 40) fire(() => inView(presion), goEngine);
+        else if (dy < -40) fire(() => inView(engine), goPresion);
+      }, { passive: true });
+    }
+    initHeroGestures();
+    document.addEventListener('astro:page-load', initHeroGestures);
 
     /* El atributo autoplay del <video> del hero solo actúa en la carga
        de DOCUMENTO: al regresar al home por navegación SPA (p. ej. click
@@ -382,6 +483,61 @@ const MENU_ITEMS = [
     letter-spacing: -.025em;
     color: var(--fg);
   }
+  /* servicios animados (pedido 2026-07-20): mismo tamaño que .hero-sub —
+     continúa esa misma línea de apoyo, no es un heading nuevo. Clic =
+     directo a la rueda (mismo href que "Conoce el >_ final edge
+     [ENGINE]" del nav; scroll-to-engine.js lo centra igual sin código
+     aparte aquí). Los 7 nombres se apilan en la MISMA celda de grid
+     (grid-area:1/1): así el track se dimensiona al más ancho de los
+     siete y el contenedor no salta de tamaño al rotar entre palabras
+     cortas y largas — solo se cruza la opacidad. */
+  .hero-services {
+    display: inline-flex;
+    align-items: baseline;
+    gap: .3em;
+    margin-top: 18px;
+    font-size: clamp(14px, 1.45vw, 19px);
+    letter-spacing: -.025em;
+    color: var(--fg);
+    text-decoration: none;
+  }
+  .hero-services-prompt { color: var(--silver); transition: color var(--t-hover) var(--ease); }
+  .hero-services:hover .hero-services-prompt { color: var(--accent); }
+  .hero-services:hover .hero-services-word.is-active { color: var(--accent); }
+  .hero-services-words { display: grid; }
+  .hero-services-word {
+    grid-area: 1 / 1;
+    /* .hero hereda text-align:center — sin esto, cada palabra corta se
+       centra dentro de la celda ancha (dimensionada a la palabra MÁS
+       larga de las 7) en vez de arrancar pegada al >_, dejando un
+       hueco visible entre el símbolo y la palabra activa. */
+    text-align: left;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 340ms var(--ease), transform 340ms var(--ease), color var(--t-hover) var(--ease);
+  }
+  .hero-services-word.is-active { opacity: 1; transform: translateY(0); }
+  /* flecha hacia abajo (pedido 2026-07-20): clic baja a "la presión";
+     un solo scroll/swipe desde ahí salta directo a la rueda (ver script
+     más abajo) — mismo lenguaje de navegación de un gesto que ya usan
+     las láminas de /servicios/produccion-creativa/. */
+  .hero-more {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: none;
+    border: 1px solid var(--hairline);
+    color: var(--fg-muted);
+    cursor: pointer;
+    transition: color var(--t-hover) var(--ease), border-color var(--t-hover) var(--ease);
+  }
+  .hero-more:hover { color: var(--accent); border-color: var(--accent); }
+  .hero-more svg { width: 18px; height: 18px; animation: hero-bob 1.8s var(--ease) infinite; }
+  @keyframes hero-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
   /* franja "la presión" — mismo tratamiento full-bleed que .plate (placa
      final): fondo Edge Blue sólido, contenido acotado y centrado, texto
      en --on-accent (blanco) porque azul sobre azul no se leería. */
