@@ -25,13 +25,16 @@ const MENU_ITEMS = [
        la marca) con velo oscuro para garantizar contraste con el texto,
        texto centrado en toda la pantalla. -->
   <section class="hero" id="inicio">
+    <!-- SIN loop nativo (pedido 2026-07-20): el clip corre una vez y se
+         queda fijo 10s en su último frame (el foco ya encendido) antes
+         de reiniciar — ver bindHeroLoop() más abajo, atado al evento
+         'ended' que solo dispara sin el atributo loop. -->
     <video
       class="hero-video"
       src="/assets/video/hero-bg.mp4"
       poster="/assets/video/hero-bg-poster.webp"
       autoplay
       muted
-      loop
       playsinline
       preload="auto"
       aria-hidden="true"
@@ -244,16 +247,38 @@ const MENU_ITEMS = [
        arrancarlo dentro de un gesto real: el primer pointerdown/scroll/
        tecla del usuario. Los listeners de gesto son once+passive y solo
        viven mientras el video siga sin correr. */
+    /* Loop manual (pedido 2026-07-20): sin el atributo loop, el video se
+       queda pausado en su último frame (el foco encendido) al terminar
+       — 'ended' solo dispara así. Se espera 10s ahí y recién entonces
+       se reinicia. data-holding evita que el vigilante de abajo (kick,
+       pensado para RETOMAR una reproducción que no arrancó) confunda
+       esta pausa intencional con una que haya que resucitar. */
+    function bindHeroLoop(v: HTMLVideoElement) {
+      if (v.dataset.loopBound === '1') return;
+      v.dataset.loopBound = '1';
+      v.addEventListener('ended', () => {
+        v.dataset.holding = '1';
+        setTimeout(() => {
+          if (!v.isConnected) return;
+          delete v.dataset.holding;
+          v.currentTime = 0;
+          v.muted = true;
+          v.play().catch(() => {});
+        }, 10000);
+      });
+    }
+
     let heroWatch = 0;
     function playHeroVideo() {
-      const v = document.querySelector('.hero-video');
+      const v = document.querySelector('.hero-video') as HTMLVideoElement | null;
       if (!v) return;
+      bindHeroLoop(v);
       /* v.muted por PROPIEDAD antes de cada intento: el atributo muted
          del markup fija el estado solo al crear el elemento, y hay
          motores donde un <video> insertado por el swap puede quedar con
          la propiedad en false — y un play() no-muted sin gesto se
          rechaza SIEMPRE (NotAllowedError). Reafirmarla es gratis. */
-      const kick = () => { if (v.isConnected && v.paused) { v.muted = true; v.play().catch(() => {}); } };
+      const kick = () => { if (v.isConnected && v.paused && !v.dataset.holding) { v.muted = true; v.play().catch(() => {}); } };
       kick();
       v.addEventListener('loadeddata', kick, { once: true });
       clearInterval(heroWatch);
