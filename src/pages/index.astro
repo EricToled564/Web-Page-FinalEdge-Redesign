@@ -629,6 +629,13 @@ const MENU_ITEMS = [
 
   @media (max-width: 760px) {
     .hero { padding: 32px 24px 48px; }
+    /* el foco no vive al centro exacto del cuadro (queda un poco a la
+       derecha) — en desktop el recorte ancho de object-fit:cover apenas
+       se nota y se deja como viene (pedido 2026-07-20), pero el recorte
+       angosto de móvil corta demasiado a la izquierda del foco con el
+       50% por defecto. Se desplaza el punto de recorte para que el
+       foco quede centrado en la pantalla solo aquí. */
+    .hero-video { object-position: 60% 50%; }
     .presion-band { padding: 64px 24px; }
     /* sigue a .presion-band: la cuadrícula baja a 24px de lateral aquí */
     .engine-split { padding-left: 24px; padding-right: 24px; }
