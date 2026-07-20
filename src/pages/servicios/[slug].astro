@@ -433,7 +433,7 @@ const TECHS = featureVideo
                hacia arriba también regresa: nada se secuestra) */}
             <button class="tech-back" type="button" data-tech-back>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
-              Nuestro trabajo
+              Categorías
             </button>
           </div>
           {WORK_VIDEOS_READY && (
@@ -495,7 +495,7 @@ const TECHS = featureVideo
               </nav>
               <button class="tech-back" type="button" data-img-back>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
-                Nuestro trabajo
+                Categorías
               </button>
             </div>
             <div class="img-collages">
@@ -573,7 +573,7 @@ const TECHS = featureVideo
           </nav>
           <button class="tech-back" type="button" data-music-back>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 19V5" /><path d="M6 11l6-6 6 6" /></svg>
-            Nuestro trabajo
+            Categorías
           </button>
         </div>
         <div class="tech-videos" data-music-tracks>
@@ -1268,7 +1268,10 @@ const TECHS = featureVideo
     .tech-lockup { gap: 6px; }
   }
   /* botón de regreso al menú de Video/Imágenes/Música: misma voz que el
-     CTA de la galería, alineado a la columna del menú */
+     CTA de la galería, alineado a la columna del menú.
+     Color magenta fijo (pedido 2026-07-20): --phase-exe, no --pc — se
+     mantiene igual sin importar el color del servicio/fase activa, y
+     no cambia con hover (permanente). */
   .tech-back {
     margin-top: 26px;
     display: flex;
@@ -1282,10 +1285,8 @@ const TECHS = featureVideo
     font-size: 14px;
     font-weight: 500;
     letter-spacing: 0.4px;
-    color: var(--fg-muted);
-    transition: color var(--t-hover) var(--ease);
+    color: var(--phase-exe);
   }
-  .tech-back:hover { color: var(--pc, var(--accent)); }
   .tech-back svg { width: 16px; height: 16px; }
   /* COLLAGE de verdad (corrección 2026-07-17): las piezas ensambladas
      borde con borde llenando UN solo lienzo — retícula empacada con
@@ -1924,6 +1925,43 @@ const TECHS = featureVideo
     }).catch(() => {});
   }
 
+  /* Navegación de un solo gesto entre láminas del recorrido creative
+     (pedido 2026-07-20): hero→reel, reel→manifiesto, banda de
+     fases↔galería y manifiesto↔reel deben avanzar/retroceder UNA
+     lámina exacta con un solo tick de rueda o un solo swipe — nunca
+     requerir scroll continuo. `isActive` decide si la lámina de
+     origen está en reposo; un cooldown GLOBAL (compartido entre TODAS
+     las reglas, no uno por regla) evita que un mismo gesto físico
+     dispare dos saltos encadenados — un trackpad o un wheel(deltaY
+     grande) sintético emite varios eventos wheel seguidos, y si cada
+     regla llevara su propio cooldown la primera podía aterrizar ya
+     "en reposo" de la siguiente lámina a tiempo para que ESA regla
+     also dispare con el mismo gesto (hero→reel→manifiesto de un
+     tirón). Escritorio (wheel) y móvil (swipe vertical) por igual. */
+  let lastGestureAdvance = 0;
+  function wireGestureAdvance(isActive: () => boolean, dir: 'down' | 'up', action: () => void) {
+    const fire = () => {
+      if (!isActive()) return;
+      const now = Date.now();
+      if (now - lastGestureAdvance < 1300) return;
+      lastGestureAdvance = now;
+      action();
+    };
+    addEventListener('wheel', (e) => {
+      const dy = (e as WheelEvent).deltaY;
+      if (dir === 'down' ? dy > 6 : dy < -6) fire();
+    }, { passive: true });
+    let touchY = 0;
+    addEventListener('touchstart', (e) => {
+      touchY = (e as TouchEvent).touches[0]?.clientY ?? 0;
+    }, { passive: true });
+    addEventListener('touchmove', (e) => {
+      const y = (e as TouchEvent).touches[0]?.clientY ?? touchY;
+      const dy = touchY - y; // positivo: el dedo sube → intención de bajar contenido
+      if (dir === 'down' ? dy > 40 : dy < -40) fire();
+    }, { passive: true });
+  }
+
   document.addEventListener('astro:after-swap', () => {
     const v = document.querySelector('[data-svc-hero-video]') as HTMLVideoElement | null;
     if (v) {
@@ -1988,6 +2026,25 @@ const TECHS = featureVideo
   }
   initSvcMore();
   document.addEventListener('astro:page-load', initSvcMore);
+
+  /* Un solo scroll/swipe hacia abajo en reposo sobre el hero = clickar
+     "Conoce lo que podemos hacer" / "Conoce más" (pedido 2026-07-20):
+     misma posición exacta de aterrizaje porque dispara el MISMO botón. */
+  function initSvcHeroGesture() {
+    const hero = document.querySelector('.svc-vhero') as HTMLElement | null;
+    const btn = document.querySelector('[data-svc-more]') as HTMLElement | null;
+    if (!hero || !btn || hero.dataset.gestureBound === '1') return;
+    hero.dataset.gestureBound = '1';
+    /* geometría, no scrollY absoluto: en un listener pasivo el navegador
+       ya aplicó el scroll nativo del propio gesto antes de que este
+       callback corra, así que un umbral de píxeles fijo (p.ej. scrollY
+       < 40) puede quedar cruzado por el mismo tick que debía disparar
+       la regla. La mitad del hero todavía a la vista es un reposo
+       equivalente y no depende de esa carrera. */
+    wireGestureAdvance(() => hero.getBoundingClientRect().bottom > innerHeight * 0.5, 'down', () => btn.click());
+  }
+  initSvcHeroGesture();
+  document.addEventListener('astro:page-load', initSvcHeroGesture);
 
   /* ---- STREAMING ADAPTATIVO (2026-07-17, reporte "los videos no
      corren instantáneamente y se traban"): un MP4 progresivo de tasa
@@ -2161,6 +2218,27 @@ const TECHS = featureVideo
   initSvcNext();
   document.addEventListener('astro:page-load', initSvcNext);
 
+  /* Un solo scroll/swipe hacia abajo con el reel ya en reposo expandido
+     = clickar "Conoce nuestro trabajo" (pedido 2026-07-20): mismo
+     botón, mismo aterrizaje exacto en el manifiesto. */
+  function initSvcReelGesture() {
+    const sec = document.querySelector('[data-svc-feature]') as HTMLElement | null;
+    const btn = document.querySelector('[data-svc-next]') as HTMLElement | null;
+    if (!sec || !btn || sec.dataset.gestureBound === '1') return;
+    sec.dataset.gestureBound = '1';
+    /* misma geometría que evalZone() en initSvcFeature (r.top<=96 &&
+       r.bottom>=vh-4), calculada aquí en vivo en vez de leer
+       sec.dataset.state: ese atributo lo escribe un rAF disparado por
+       este mismo scroll y puede no haber corrido todavía cuando este
+       listener evalúa el gesto. */
+    wireGestureAdvance(() => {
+      const r = sec.getBoundingClientRect();
+      return r.top <= 96 && r.bottom >= innerHeight - 4;
+    }, 'down', () => btn.click());
+  }
+  initSvcReelGesture();
+  document.addEventListener('astro:page-load', initSvcReelGesture);
+
   /* Manifiesto: enciende las palabras una a una según el avance del scroll
      mientras la lámina está fijada (pedido 2026-07-16). */
   function initReelManifesto() {
@@ -2174,19 +2252,47 @@ const TECHS = featureVideo
       return;
     }
     let raf = 0;
+    /* asentada (pedido 2026-07-20): al llegar al 82% del recorrido
+       (todas encendidas) la lámina deja de reaccionar palabra por
+       palabra a micro-scrolls hacia arriba — un vaivén pequeño ya no
+       apaga nada. Solo se reinicia la animación si el usuario sale de
+       verdad hacia el reel (near-inicio del recorrido, p<0.05). */
+    let settled = false;
     const update = () => {
       raf = 0;
       const total = sec.offsetHeight - innerHeight;                 // recorrido con la lámina fijada
       const scrolled = Math.min(Math.max(-sec.getBoundingClientRect().top, 0), total);
       const p = total > 0 ? scrolled / total : 0;
       /* todas encendidas al 82% del recorrido: se ven completas antes de salir */
-      const lit = Math.round(Math.min(p / 0.82, 1) * words.length);
+      if (p / 0.82 >= 1) settled = true;
+      else if (p < 0.05) settled = false;
+      if (settled) {
+        words.forEach((w) => w.classList.add('lit'));
+        return;
+      }
+      const lit = Math.round((p / 0.82) * words.length);
       words.forEach((w, i) => w.classList.toggle('lit', i < lit));
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
     addEventListener('scroll', onScroll, { passive: true });
     addEventListener('resize', onScroll, { passive: true });
     update();
+
+    /* Un solo scroll/swipe hacia arriba con el manifiesto ya asentado
+       (todas las palabras encendidas) = clickar "Conoce lo que podemos
+       hacer" del hero, es decir volver al reposo del reel — en vez de
+       desiluminar palabra por palabra (pedido 2026-07-20). `settled`
+       por sí solo NO basta: queda en true para siempre en cuanto se
+       pasa la lámina fijada (scrolled se clampa a total), así que sin
+       esta comprobación de geometría la regla disparaba incluso
+       estando ya en la galería, muy por debajo del manifiesto — se
+       exige además que la lámina siga realmente fijada (llenando el
+       visor) para considerarla "en reposo". */
+    wireGestureAdvance(() => settled && sec.getBoundingClientRect().bottom >= innerHeight - 4, 'up', () => {
+      const feat = document.querySelector('[data-svc-feature]') as any;
+      if (feat && typeof feat._openReel === 'function') { feat._openReel(); return; }
+      sec.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
   initReelManifesto();
   document.addEventListener('astro:page-load', initReelManifesto);
@@ -2348,21 +2454,33 @@ const TECHS = featureVideo
     const band = document.querySelector('.phase-band') as HTMLElement | null;
     const goGallery = () => gallery.scrollIntoView({ behavior: 'smooth', block: 'start' });
     cta?.addEventListener('click', goGallery);
+    const vh = () => innerHeight || 800;
+    const inView = (el: HTMLElement) => {
+      const r = el.getBoundingClientRect();
+      return r.top < vh() * 0.6 && r.bottom > vh() * 0.25;
+    };
     if (band) {
-      let armed = false;
-      new IntersectionObserver((es) => {
-        const on = es[es.length - 1].isIntersecting;
-        if (on) armed = true;          // se re-arma cada vez que la banda entra
-      }, { threshold: 0.5 }).observe(band);
-      addEventListener('wheel', (e) => {
-        if (!armed || e.deltaY <= 6) return;
-        const r = band.getBoundingClientRect();
-        const vh = innerHeight || 800;
-        if (r.top < vh * 0.6 && r.bottom > vh * 0.25) {   // banda a la vista
-          armed = false;
-          goGallery();
-        }
-      }, { passive: true });
+      /* banda de fases → galería: un solo scroll/swipe hacia abajo con
+         la banda a la vista = clickar "Visita nuestra galería" */
+      wireGestureAdvance(() => inView(band), 'down', goGallery);
+      /* galería → banda de fases: un solo scroll/swipe hacia arriba
+         con la galería a la vista regresa al inicio de la banda
+         (pedido 2026-07-20) */
+      wireGestureAdvance(() => inView(gallery), 'up', () => {
+        band.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      /* banda de fases → manifiesto TOTALMENTE iluminado: un solo
+         scroll/swipe hacia arriba con la banda a la vista salta directo
+         al final del recorrido fijado del manifiesto — todas las
+         palabras ya encendidas, no la entrada en blanco (pedido
+         2026-07-20). */
+      wireGestureAdvance(() => inView(band), 'up', () => {
+        const m = document.querySelector('[data-reel-manifesto]') as HTMLElement | null;
+        if (!m) return;
+        const total = m.offsetHeight - innerHeight;
+        const absTop = m.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top: Math.round(absTop + total), behavior: 'smooth' });
+      });
     }
   }
   initTechGallery();
