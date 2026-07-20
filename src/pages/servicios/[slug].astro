@@ -25,22 +25,27 @@ const sibling = EDGES.find((e) => e.phase === edge.phase && e.id !== edge.id);
    entrega su video (w/h = tamaño real de su PNG horneado); los que aún
    no lo tienen conservan el hero anterior. */
 /* f = factor de ancho que iguala el TAMAÑO VISUAL de los 6 logos
-   (reporte 2026-07-13: "logos de diferentes tamaños"): a ancho fijo,
-   "flow" (4 letras) renderiza glifos enormes e "intelligence" (12)
-   diminutos, porque cada PNG trae su propia escala interna. El factor
-   se calculó midiendo la altura en píxeles del glifo ">_" de cada PNG
-   (mismo elemento de marca en los 6, proporcional a la escala del
-   lockup: strategy 228px, intelligence 226, readiness 236, flow 322,
-   systems 234, creative 259) y despejando el ancho que deja esa altura
-   RENDERIZADA idéntica a la de creative (la muestra aprobada) a 560px:
-   f = (259 × Wᵢ) / (1284 × promptHᵢ). */
+   (reporte 2026-07-13, reabierto 2026-07-20 — "sigue sin ser uniforme"):
+   a ancho fijo, cada PNG trae su propia escala interna y no comparten
+   proporción entre el glifo ">_" y la palabra.
+   El primer intento (2026-07-13) igualaba solo la altura del glifo
+   ">_" — pero "flow" y "strategy" tienen la PALABRA (el elemento que
+   más pesa visualmente) horneada muchísimo más grande en proporción a
+   su propio ">_" que los otros cuatro, así que igualar el ícono dejaba
+   la palabra dispareja (a "strategy" incluso la agrandaba más, de ahí
+   el reporte). Recalculado midiendo en los 6 PNG la altura en píxeles
+   de la PALABRA (canal de color: la palabra es gris/blanco, ícono y
+   tag llevan el color de fase — creative 189, intelligence 167,
+   readiness 174, systems 167, flow 289, strategy 339) y despejando el
+   ancho que deja esa altura RENDERIZADA idéntica a la de creative (la
+   muestra aprobada) a 560px: f = (189 × Wᵢ) / (1284 × wordHᵢ). */
 const VIDEO_HEROES = {
   creative: { w: 1284, h: 465, f: 1 },
-  intelligence: { w: 1302, h: 482, f: 1.1621 },
-  readiness: { w: 1323, h: 449, f: 1.1308 },
-  systems: { w: 1182, h: 438, f: 1.0189 },
-  flow: { w: 1279, h: 634, f: 0.8012 },
-  strategy: { w: 1416, h: 566, f: 1.2528 },
+  intelligence: { w: 1302, h: 482, f: 1.1476 },
+  readiness: { w: 1323, h: 449, f: 1.1192 },
+  systems: { w: 1182, h: 438, f: 1.0418 },
+  flow: { w: 1279, h: 634, f: 0.6514 },
+  strategy: { w: 1416, h: 566, f: 0.6148 },
 };
 const videoHero = VIDEO_HEROES[edge.id]
   ? {
