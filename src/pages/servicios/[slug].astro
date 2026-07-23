@@ -24,40 +24,25 @@ const sibling = EDGES.find((e) => e.phase === edge.phase && e.id !== edge.id);
    exacta por construcción). Un servicio entra al mapa cuando el cliente
    entrega su video (w/h = tamaño real de su PNG horneado); los que aún
    no lo tienen conservan el hero anterior. */
-/* f = factor de ancho que iguala el TAMAÑO VISUAL de los 6 logos
-   (reporte 2026-07-13, reabierto 2026-07-20 y otra vez 2026-07-23 —
-   "los logos siguen sin ser consistentes"): a ancho fijo, cada PNG
-   trae su propia escala interna y no comparten proporción entre el
-   glifo ">_", la palabra y el lienzo completo.
-   Intento 1 (2026-07-13): igualaba solo la altura del glifo ">_" —
-   dejaba la palabra despareja (a "strategy" la agrandaba más).
-   Intento 2 (2026-07-20): igualaba solo la altura de la PALABRA — se
-   ve bien en escritorio, pero en el ancho angosto de móvil (donde el
-   render lo fija min(560px,70vw)) "strategy" y "flow" quedaban muy
-   chicos/grandes entre sí: igualar SOLO la palabra ignoraba que cada
-   lienzo tiene una proporción alto/ancho muy distinta (flow 297/600,
-   strategy 240/600 tras el resize a tamaño real de despliegue — ver
-   "Optimiza todas las imágenes"), y esa proporción también pesa en
-   cuánto "logo" ocupa la pantalla.
-   Recalculado combinando ambas señales (media geométrica de los dos
-   factores — ni la palabra sola ni la caja sola, un punto medio entre
-   las dos): w/h = dimensión real del PNG hoy (600px de ancho, todos);
-   f = √(f_palabra × f_caja), con creative como referencia f=1. */
-const VIDEO_HEROES = {
-  creative: { w: 600, h: 217, f: 1 },
-  intelligence: { w: 600, h: 222, f: 1.0592 },
-  readiness: { w: 600, h: 204, f: 1.0913 },
-  systems: { w: 600, h: 222, f: 1.0092 },
-  flow: { w: 600, h: 297, f: 0.6898 },
-  strategy: { w: 600, h: 240, f: 0.7456 },
-};
-const videoHero = VIDEO_HEROES[edge.id]
+/* Intentos 1-3 (2026-07-13, 2026-07-20, 2026-07-23) trataron de igualar
+   el TAMAÑO VISUAL de los 6 PNG horneados a mano (factor por glifo, por
+   palabra, media geométrica de ambos) — cada intento se veía mejor en un
+   contexto y peor en otro porque son 6 imágenes bespoke, cada una con su
+   propia proporción de lienzo, y calibrar 6 assets distintos para que
+   siempre midan igual en cualquier ancho de pantalla no converge.
+   Fix definitivo (2026-07-23, pedido explícito del cliente: "la
+   comparación debe ser como los logos que están poniendo en la rueda,
+   no es aceptable tener logos diferentes"): dejar de hornear el lockup
+   como imagen y usar el MISMO componente LockupMark (variant="big") que
+   ya arma la rueda — mismo font, mismo peso, misma proporción >_/palabra/
+   tag, mismo clamp responsivo. Los 6 miden igual por construcción, no por
+   calibración manual, y además ya coinciden con la rueda porque es
+   literalmente el mismo lockup vivo. */
+const VIDEO_HERO_IDS = new Set(['creative', 'intelligence', 'readiness', 'systems', 'flow', 'strategy']);
+const videoHero = VIDEO_HERO_IDS.has(edge.id)
   ? {
-      ...VIDEO_HEROES[edge.id],
       src: `/assets/video/svc-${edge.id}-hero.mp4`,
       poster: `/assets/video/svc-${edge.id}-hero-poster.webp`,
-      logo: `/assets/logos/logo-${edge.id}.png`,
-      plate: `/assets/logos/logo-${edge.id}-plate.png`,
     }
   : null;
 /* Sección de video con animación disparada por scroll (pedido
@@ -219,7 +204,7 @@ const TECHS = featureVideo
   bandColor={phase.color}
 >
   {videoHero ? (
-    <section class="svc-vhero" style={`--pc:${phase.color}; --plate:url('${videoHero.plate}'); --logo-f:${videoHero.f}`}>
+    <section class="svc-vhero" style={`--pc:${phase.color}`}>
       <video
         class="svc-vhero-video"
         data-svc-hero-video
@@ -232,13 +217,11 @@ const TECHS = featureVideo
         preload="auto"
         aria-hidden="true"
       ></video>
-      <img
-        class="svc-vhero-logo"
-        src={videoHero.logo}
-        alt={`${edge.id} [AI]`}
-        width={videoHero.w}
-        height={videoHero.h}
-      />
+      <h1 class="svc-vhero-logo">
+        <span class="svc-vhero-logo-inner">
+          <LockupMark word={edge.id} tag="[AI]" color={phase.color} variant="big" dot transition:name={`edge-${edge.id}`} />
+        </span>
+      </h1>
       {edge.statement && (
         <div class="svc-vhero-copy reveal">
           <p class="svc-statement">{edge.statement}</p>
@@ -728,19 +711,28 @@ const TECHS = featureVideo
   }
   .svc-vhero-logo {
     position: relative;
-    /* base común min(560px, 70vw) multiplicada por el factor de
-       igualación visual de cada logo (--logo-f, ver VIDEO_HEROES): el
-       factor va FUERA del min() a propósito — así en pantallas chicas
-       los 6 se encogen por el mismo múltiplo y siguen viéndose del
-       mismo tamaño entre sí, en vez de que el min() recorte antes a
-       los factores grandes.
-       × 0.41 = reducción del 59% pedida explícitamente 2026-07-13
-       ("reduzcas todos los logos de los heros de los servicios en un
-       59%") — multiplica a los 6 por igual, así la igualación visual
-       recién calibrada se conserva intacta. */
-    width: calc(var(--logo-f, 1) * min(560px, 70vw) * 0.41);
-    height: auto;
-    background: var(--plate) center / 100% 100% no-repeat;
+    margin: 0;
+    display: inline-flex;
+    max-width: min(560px, 88vw);
+    padding: 22px 34px;
+    /* plancha de contraste contra el video (reemplaza al PNG "-plate.png"
+       horneado, hoy en desuso 2026-07-23): mismo patrón que el fondo del
+       nav (color-mix sobre --panel, sin hex fuera de tokens). max-width
+       (no width) le da a fit-lockups.js una caja real contra la cual
+       encoger "intelligence" (la palabra más larga) en pantallas
+       angostas, igual que ya hace con el resto de los lockups del sitio. */
+    background: color-mix(in srgb, var(--panel) 82%, transparent);
+  }
+  /* fit-lockups.js mide el .lm contra SU parentElement inmediato — si
+     ese padre trae padding (arriba), el ancho "disponible" que mide
+     incluye el padding y el lockup escalado termina desbordando la
+     plancha exactamente esa cantidad (recortado por el overflow:hidden
+     que el propio script aplica). Este wrapper sin padding es el
+     parentElement real del .lm, así la medida SÍ es el ancho de
+     contenido disponible. */
+  .svc-vhero-logo-inner { display: inline-flex; max-width: 100%; }
+  @media (max-width: 760px) {
+    .svc-vhero-logo { padding: 14px 22px; }
   }
 
   /* Animación disparada por scroll (técnica de referencia del cliente):
