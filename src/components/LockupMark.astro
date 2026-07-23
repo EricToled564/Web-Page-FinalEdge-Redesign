@@ -30,6 +30,14 @@ interface Props {
   wordColor?: string;
   variant?: 'wheel' | 'section' | 'hub' | 'big';
   class?: string;
+  /* pedido 2026-07-23: los 6 heroes horneados (logo-<edge>.png +
+     svc-<edge>-hero.mp4) traen un punto grabado en el arte después de
+     la palabra ("strategy.", "readiness.", etc.) — no se puede editar
+     esos assets desde código. dot alinea al lockup VIVO (rueda, menú)
+     con esa realidad ya horneada; se pasa explícito por caller, nunca
+     por defecto, porque el lockup del sistema ("final edge [ENGINE]")
+     nunca lleva punto. */
+  dot?: boolean;
 }
 
 const {
@@ -39,12 +47,13 @@ const {
   wordColor = 'var(--fg)',
   variant = 'section',
   class: klass = '',
+  dot = false,
 } = Astro.props as Props;
 ---
 <span class={`lm lm-${variant} ${klass}`} style={`--lm-color:${color}; --lm-word-color:${wordColor}`} data-autofit={variant === 'wheel' ? 'wheel' : undefined}>
   <span class="lm-prompt">&gt;_</span>
   <span class="lm-col">
-    <span class="lm-word">{word}</span>
+    <span class="lm-word">{word}{dot && '.'}</span>
     <span class="lm-tag">{tag}</span>
   </span>
 </span>

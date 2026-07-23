@@ -22,7 +22,7 @@ const { compact = false, fitHeight = false } = Astro.props;
       const color = PHASES.find((p) => p.id === e.phase).color;
       return (
         <a class={`wl wl-edge wl-phase-${e.phase}`} data-anchor={`edge-${e.id}`} href={e.slug} aria-label={`${e.id} — ${e.service}`}>
-          <LockupMark word={e.id} tag="[AI]" color={color} variant="wheel" />
+          <LockupMark word={e.id} tag="[AI]" color={color} variant="wheel" dot />
         </a>
       );
     })}
