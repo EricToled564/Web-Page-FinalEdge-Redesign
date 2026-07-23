@@ -61,7 +61,6 @@ const MENU_ITEMS = [
            7 nombres van todos en el DOM (SEO/sin-JS incluidos); el
            script solo alterna cuál lleva is-active. -->
       <a class="hero-services reveal" href="/#engine" aria-label="Ver todos los servicios en la rueda del Engine">
-        <span class="prompt hero-services-prompt">&gt;_</span>
         <span class="hero-services-words" data-hero-services-words>
           {MENU_ITEMS.map((m, i) => (
             <span class={`hero-services-word${i === 0 ? ' is-active' : ''}`}>{m.label}</span>
@@ -494,24 +493,22 @@ const MENU_ITEMS = [
   .hero-services {
     display: inline-flex;
     align-items: baseline;
-    gap: .3em;
+    justify-content: center;
     margin-top: 18px;
-    font-size: clamp(14px, 1.45vw, 19px);
+    /* pedido 2026-07-22: +50% sobre el tamaño anterior (14/1.45vw/19px) */
+    font-size: clamp(21px, 2.175vw, 28.5px);
     letter-spacing: -.025em;
     color: var(--fg);
     text-decoration: none;
   }
-  .hero-services-prompt { color: var(--silver); transition: color var(--t-hover) var(--ease); }
-  .hero-services:hover .hero-services-prompt { color: var(--accent); }
   .hero-services:hover .hero-services-word.is-active { color: var(--accent); }
-  .hero-services-words { display: grid; }
+  .hero-services-words { display: grid; justify-items: center; }
   .hero-services-word {
     grid-area: 1 / 1;
-    /* .hero hereda text-align:center — sin esto, cada palabra corta se
-       centra dentro de la celda ancha (dimensionada a la palabra MÁS
-       larga de las 7) en vez de arrancar pegada al >_, dejando un
-       hueco visible entre el símbolo y la palabra activa. */
-    text-align: left;
+    /* .hero hereda text-align:center: cada palabra se centra dentro de
+       la celda ancha (dimensionada a la más larga de las 7), así la
+       rotación queda centrada sin importar el largo de cada nombre. */
+    text-align: center;
     white-space: nowrap;
     opacity: 0;
     transform: translateY(4px);
