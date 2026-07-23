@@ -219,7 +219,7 @@ const TECHS = featureVideo
       ></video>
       <h1 class="svc-vhero-logo">
         <span class="svc-vhero-logo-inner">
-          <LockupMark word={edge.id} tag="[AI]" color={phase.color} variant="big" dot transition:name={`edge-${edge.id}`} />
+          <LockupMark word={edge.id} tag="[AI]" color={phase.color} variant="big" class="lm-hero-fit" dot transition:name={`edge-${edge.id}`} />
         </span>
       </h1>
       {edge.statement && (
@@ -710,30 +710,23 @@ const TECHS = featureVideo
     object-fit: cover;
   }
   .svc-vhero-logo {
+    /* SIN plancha (pedido 2026-07-23: "horrible recuadro negro") — la
+       legibilidad sobre el video la da el text-shadow de .lm-hero-fit
+       (LockupMark.astro, misma técnica ya aprobada del sitio para texto
+       sobre video). El tamaño base de .lm-hero-fit ya está calibrado
+       para que quepa sin encogerse (ver comentario en LockupMark.astro);
+       max-width se deja como red de seguridad para pantallas
+       excepcionalmente angostas (<360px), donde fit-lockups.js entra a
+       encoger como último recurso. */
     position: relative;
     margin: 0;
     display: inline-flex;
     max-width: min(560px, 88vw);
-    padding: 22px 34px;
-    /* plancha de contraste contra el video (reemplaza al PNG "-plate.png"
-       horneado, hoy en desuso 2026-07-23): mismo patrón que el fondo del
-       nav (color-mix sobre --panel, sin hex fuera de tokens). max-width
-       (no width) le da a fit-lockups.js una caja real contra la cual
-       encoger "intelligence" (la palabra más larga) en pantallas
-       angostas, igual que ya hace con el resto de los lockups del sitio. */
-    background: color-mix(in srgb, var(--panel) 82%, transparent);
   }
-  /* fit-lockups.js mide el .lm contra SU parentElement inmediato — si
-     ese padre trae padding (arriba), el ancho "disponible" que mide
-     incluye el padding y el lockup escalado termina desbordando la
-     plancha exactamente esa cantidad (recortado por el overflow:hidden
-     que el propio script aplica). Este wrapper sin padding es el
-     parentElement real del .lm, así la medida SÍ es el ancho de
-     contenido disponible. */
+  /* fit-lockups.js mide el .lm contra SU parentElement inmediato — con
+     la plancha ya no hay padding que confunda esa medida, pero se deja
+     el wrapper igual por si algún día vuelve a haber padding aquí. */
   .svc-vhero-logo-inner { display: inline-flex; max-width: 100%; }
-  @media (max-width: 760px) {
-    .svc-vhero-logo { padding: 14px 22px; }
-  }
 
   /* Animación disparada por scroll (técnica de referencia del cliente):
      la sección mide 260vh — el visor (sticky) se queda clavado bajo el

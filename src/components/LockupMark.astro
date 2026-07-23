@@ -150,7 +150,17 @@ const {
   .lm-hub .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 23px; letter-spacing: -.02em; word-spacing: -.36ch; color: var(--fg); line-height: 1; }
   .lm-hub .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 14px; letter-spacing: .16em; color: var(--accent); line-height: 1; }
 
-  /* --- variant="big" — misma fórmula que "section", ×4 --- */
+  /* --- variant="big" — misma fórmula que "section", ×4. Corregido
+     2026-07-23 (pedido explícito: "la comparación debe ser como los
+     logos que están poniendo en la rueda"): el tag [AI] y el hueco
+     vertical palabra→tag NO seguían la misma proporción que la rueda
+     (tag/palabra: 0.78 aquí vs 0.62 en la rueda; hueco/palabra: 0.43
+     aquí vs 0.22 en la rueda — medido). Recalculados como fracción
+     exacta de wheelEdges (prompt/palabra/tag = 34/27/21, hueco vertical
+     = 6), escalados al mismo font-size que ya tenía "big": tag =
+     106×21/34, hueco = 106×6/34 (y su mitad en el breakpoint móvil, que
+     ya usa font-size 53 = 106/2). SIN TOCAR .lm-wheel: son reglas
+     completamente separadas, la rueda no cambia. */
   .lm-big {
     display: inline-flex;
     align-items: baseline;
@@ -159,15 +169,49 @@ const {
     line-height: 1;
     white-space: nowrap;
   }
-  .lm-big .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 36px; }
+  .lm-big .lm-col { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 19px; }
   .lm-big .lm-prompt { font-family: 'Geist Mono', monospace; font-weight: 700; font-size: 106px; color: var(--lm-color); line-height: 1; }
   .lm-big .lm-word { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 84px; letter-spacing: -.01em; color: var(--lm-word-color); line-height: 1; }
-  .lm-big .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 56px; letter-spacing: .16em; color: var(--lm-color); line-height: 1; }
+  .lm-big .lm-tag { font-family: 'Geist Mono', monospace; font-weight: 600; font-size: 65px; letter-spacing: .16em; color: var(--lm-color); line-height: 1; }
   @media (max-width: 760px) {
     .lm-big { font-size: 53px; gap: .3em; }
-    .lm-big .lm-col { gap: 18px; }
+    .lm-big .lm-col { gap: 9px; }
     .lm-big .lm-prompt { font-size: 53px; }
     .lm-big .lm-word { font-size: 42px; }
-    .lm-big .lm-tag { font-size: 28px; }
+    .lm-big .lm-tag { font-size: 33px; }
+  }
+
+  /* --- .lm-big.lm-hero-fit — modificador SOLO para los heroes de video
+     de /servicios/<slug>/ (pedido 2026-07-23). Misma proporción que
+     "big" de arriba (=la rueda, escalada), pero con un tamaño base
+     menor: calibrado —medido con Playwright— para que "intelligence."
+     (la palabra más larga de los 6 servicios) quepa en el hero SIN que
+     fit-lockups.js tenga que encogerla. Así los 6 servicios miden
+     EXACTAMENTE igual entre sí, con una sola escala compartida — nunca
+     cada uno encogido por su cuenta según el largo de su propia
+     palabra (mismo principio que --wheel-scale en la rueda). Incluye
+     legibilidad sobre el video de fondo con la misma técnica ya
+     aprobada en este sitio para ese caso (excepción R3.2 documentada en
+     RULES.md, mismo patrón que .svc-feature-play). */
+  .lm-big.lm-hero-fit { font-size: 64px; }
+  .lm-big.lm-hero-fit .lm-prompt {
+    font-size: 64px;
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video), mismo patrón que .svc-feature-play */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
+  }
+  .lm-big.lm-hero-fit .lm-word {
+    font-size: 51px;
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video) */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
+  }
+  .lm-big.lm-hero-fit .lm-tag {
+    font-size: 40px;
+    text-shadow: /* brand-ok:R3.2 excepción 2026-07-16 (legibilidad sobre video) */ 0 2px 22px color-mix(in srgb, var(--void-deep) 78%, transparent);
+  }
+  .lm-big.lm-hero-fit .lm-col { gap: 11px; }
+  @media (max-width: 760px) {
+    .lm-big.lm-hero-fit { font-size: 35px; }
+    .lm-big.lm-hero-fit .lm-prompt { font-size: 35px; }
+    .lm-big.lm-hero-fit .lm-word { font-size: 28px; }
+    .lm-big.lm-hero-fit .lm-tag { font-size: 22px; }
+    .lm-big.lm-hero-fit .lm-col { gap: 6px; }
   }
 </style>
