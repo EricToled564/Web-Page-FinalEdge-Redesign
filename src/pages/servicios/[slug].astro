@@ -1295,6 +1295,13 @@ const TECHS = featureVideo
   .img-collage[data-n='4'] { grid-template-areas: 'a a b c' 'a a d d'; }
   .img-collage[data-n='5'] { grid-template-areas: 'a a b c' 'a a d e'; }
   .img-collage[data-n='6'] { grid-template-areas: 'a a b c' 'a a d e' 'f f f f'; }
+  /* Personajes (Femenino/Masculino, ahora 6 fotos = 3 filas) desbordaba
+     la pantalla: 3 filas × hasta 29vh cada una pasaban de la altura del
+     viewport en portátiles comunes (pedido 2026-07-25: "que el collage
+     entero no exceda el tamaño de la pantalla"). Encogido SOLO para los
+     collages con variantes (hoy únicamente Personajes) — el resto de las
+     técnicas siguen en 2 filas con el tamaño original, no lo necesitan. */
+  .img-collage[data-variant-group] { grid-auto-rows: minmax(130px, 20vh); }
   /* menú de 10 páginas idénticas (Room service): retícula uniforme 5×2 —
      misma proporción en todas las celdas, el lienzo cierra sin recortar
      una sola línea del menú */
