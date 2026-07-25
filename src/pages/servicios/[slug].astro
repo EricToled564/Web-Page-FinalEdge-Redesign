@@ -83,8 +83,8 @@ const IMG_TECHS = featureVideo
       { key: 'wakeboarding', label: 'Wakeboarding', n: 5 },
       { key: 'couture', label: 'Haute Couture', n: 4 },
       { key: 'personajes', label: 'Personajes', variants: [
-        { key: 'femenino', label: 'Femenino', n: 6 },
-        { key: 'masculino', label: 'Masculino', n: 6 },
+        { key: 'femenino', label: 'Femenino', n: 5 },
+        { key: 'masculino', label: 'Masculino', n: 5 },
       ] },
       { key: 'manglares', label: 'Manglares', n: 4 },
       { key: 'luxury-resorts', label: 'Luxury resorts', n: 4 },
@@ -524,6 +524,11 @@ const TECHS = featureVideo
   {IMG_TECHS.length > 0 && (
     <div class="img-lightbox" data-img-lightbox hidden>
       <button class="work-player-close" data-lightbox-close type="button" aria-label="Cerrar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true" style="width:20px;height:20px"><path d="M6 6l12 12" /><path d="M18 6L6 18" /></svg></button>
+      {/* navegar entre las fotos de la misma técnica sin cerrar el
+         lightbox (pedido 2026-07-25): mismas flechas ya usadas en el
+         hero de servicio (svc-arrow), izquierda/derecha */}
+      <button class="lightbox-nav lightbox-nav--prev" data-lightbox-prev type="button" aria-label="Foto anterior"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M19 12H5" /><path d="M11 6l-6 6 6 6" /></svg></button>
+      <button class="lightbox-nav lightbox-nav--next" data-lightbox-next type="button" aria-label="Foto siguiente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M5 12h14" /><path d="M13 6l6 6-6 6" /></svg></button>
       <img class="img-lightbox-img" data-lightbox-img alt="" />
     </div>
   )}
@@ -1295,13 +1300,6 @@ const TECHS = featureVideo
   .img-collage[data-n='4'] { grid-template-areas: 'a a b c' 'a a d d'; }
   .img-collage[data-n='5'] { grid-template-areas: 'a a b c' 'a a d e'; }
   .img-collage[data-n='6'] { grid-template-areas: 'a a b c' 'a a d e' 'f f f f'; }
-  /* Personajes (Femenino/Masculino, ahora 6 fotos = 3 filas) desbordaba
-     la pantalla: 3 filas × hasta 29vh cada una pasaban de la altura del
-     viewport en portátiles comunes (pedido 2026-07-25: "que el collage
-     entero no exceda el tamaño de la pantalla"). Encogido SOLO para los
-     collages con variantes (hoy únicamente Personajes) — el resto de las
-     técnicas siguen en 2 filas con el tamaño original, no lo necesitan. */
-  .img-collage[data-variant-group] { grid-auto-rows: minmax(130px, 20vh); }
   /* menú de 10 páginas idénticas (Room service): retícula uniforme 5×2 —
      misma proporción en todas las celdas, el lienzo cierra sin recortar
      una sola línea del menú */
@@ -1399,6 +1397,37 @@ const TECHS = featureVideo
     border: 1px solid var(--hairline);
   }
   .img-lightbox .work-player-close { position: absolute; top: 18px; right: 18px; }
+  /* flechas prev/next del lightbox (pedido 2026-07-25): navegar entre
+     las fotos de la misma técnica sin cerrar y reabrir — mismo tratamiento
+     visual que .work-player-close (hairline + hover en el color de fase),
+     ancladas a los bordes izq/der, centradas verticalmente. Ocultas si la
+     técnica abierta tiene una sola foto (nada que navegar). */
+  .lightbox-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid var(--hairline);
+    color: var(--fg);
+    cursor: pointer;
+    transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+  }
+  .lightbox-nav svg { width: 24px; height: 24px; }
+  .lightbox-nav:hover { border-color: var(--pc, var(--accent)); color: var(--pc, var(--accent)); }
+  .lightbox-nav[hidden] { display: none; }
+  .lightbox-nav--prev { left: 18px; }
+  .lightbox-nav--next { right: 18px; }
+  @media (max-width: 760px) {
+    .lightbox-nav { width: 38px; height: 38px; }
+    .lightbox-nav svg { width: 20px; height: 20px; }
+    .lightbox-nav--prev { left: 8px; }
+    .lightbox-nav--next { right: 8px; }
+  }
   @media (max-width: 860px) {
     /* en móvil el lienzo se reempaca a 2 columnas, siempre sin huecos */
     .img-collage { grid-template-columns: repeat(2, 1fr); grid-auto-rows: minmax(150px, 24vh); }
@@ -2542,8 +2571,16 @@ const TECHS = featureVideo
 
   /* Lightbox de imágenes: delegación a nivel documento, atada UNA sola
      vez (los elementos se buscan al momento del click — sobrevive los
-     swaps SPA sin duplicar listeners ni quedarse con nodos muertos). */
+     swaps SPA sin duplicar listeners ni quedarse con nodos muertos).
+     Flechas prev/next (pedido 2026-07-25): al abrir una foto se guarda
+     TODO el set de fotos del collage visible que la contiene (mismo
+     alcance que ya usa el propio grid — funciona igual para un
+     .img-collage suelto que para el sub-collage activo de Personajes)
+     y el índice de la foto abierta, así prev/next solo recorren ESE
+     set, nunca fotos de otra técnica. */
   let imgLightboxBound = false;
+  let lbItems: HTMLElement[] = [];
+  let lbIndex = -1;
   function initImgLightbox() {
     if (imgLightboxBound) return;
     imgLightboxBound = true;
@@ -2553,23 +2590,51 @@ const TECHS = featureVideo
       if (!lb || lb.hidden) return;
       lb.hidden = true;
       im?.removeAttribute('src');
+      lbItems = [];
+      lbIndex = -1;
+    };
+    const showAt = (idx: number) => {
+      if (!lbItems.length) return;
+      lbIndex = (idx + lbItems.length) % lbItems.length;
+      const lb = document.querySelector('[data-img-lightbox]') as HTMLElement | null;
+      const im = lb?.querySelector('[data-lightbox-img]') as HTMLImageElement | null;
+      if (!im) return;
+      im.src = lbItems[lbIndex].getAttribute('data-lightbox-src') || '';
+      const label = lbItems[lbIndex].getAttribute('aria-label') || '';
+      if (label) im.alt = label;
     };
     document.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
-      const item = t.closest('[data-lightbox-src]');
+      const item = t.closest('[data-lightbox-src]') as HTMLElement | null;
       if (item) {
         const lb = document.querySelector('[data-img-lightbox]') as HTMLElement | null;
-        const im = lb?.querySelector('[data-lightbox-img]') as HTMLImageElement | null;
-        if (!lb || !im) return;
-        im.src = item.getAttribute('data-lightbox-src') || '';
+        if (!lb) return;
+        const collage = item.closest('.img-collage');
+        lbItems = collage
+          ? (Array.from(collage.querySelectorAll('[data-lightbox-src]')) as HTMLElement[])
+          : [item];
+        const prevBtn = lb.querySelector('[data-lightbox-prev]') as HTMLElement | null;
+        const nextBtn = lb.querySelector('[data-lightbox-next]') as HTMLElement | null;
+        const multi = lbItems.length > 1;
+        if (prevBtn) prevBtn.hidden = !multi;
+        if (nextBtn) nextBtn.hidden = !multi;
         lb.hidden = false;
+        showAt(lbItems.indexOf(item));
         return;
       }
+      if (t.closest('[data-lightbox-next]')) { showAt(lbIndex + 1); return; }
+      if (t.closest('[data-lightbox-prev]')) { showAt(lbIndex - 1); return; }
       if (t.closest('[data-lightbox-close]')) { closeLb(); return; }
       const lb = t.closest('[data-img-lightbox]');
       if (lb && t === lb) closeLb();
     });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLb(); });
+    document.addEventListener('keydown', (e) => {
+      const lb = document.querySelector('[data-img-lightbox]') as HTMLElement | null;
+      if (!lb || lb.hidden) return;
+      if (e.key === 'Escape') { closeLb(); return; }
+      if (e.key === 'ArrowRight') { showAt(lbIndex + 1); return; }
+      if (e.key === 'ArrowLeft') { showAt(lbIndex - 1); return; }
+    });
     document.addEventListener('astro:before-swap', closeLb);
   }
   initImgLightbox();
