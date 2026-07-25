@@ -91,7 +91,7 @@ const IMG_TECHS = featureVideo
       { key: 'yoga', label: 'Yoga por la mañana', n: 5 },
       { key: 'bar', label: 'Bar', n: 5 },
       { key: 'comida', label: 'Comida', n: 5 },
-      { key: 'room-service', label: 'Room service', n: 10 },
+      { key: 'room-service', label: 'Menu design', n: 10 },
       { key: 'new-years-eve', label: "New Year's Eve", n: 1 },
     ].map((t) =>
       t.variants
@@ -1358,10 +1358,25 @@ const TECHS = featureVideo
      ciego cortaría composiciones donde el objeto importa abajo). */
   [data-imgtech-group='couture'] .collage-item img,
   [data-imgtech-group='sports-world'] .collage-item img,
-  [data-imgtech-group='wakeboarding'] .collage-item img,
+  [data-imgtech-group='wakeboarding'] .collage-item img {
+    object-position: top;
+  }
+  /* Personajes y Yoga (reporte 2026-07-25, tercer intento): "anclar
+     arriba" seguía sin ser suficiente en la celda "a"/"f" — su alto
+     puede volverse tan corto (celda ancha-panorámica) que la ventana
+     visible ya ni siquiera alcanza la cabeza aunque esté "arriba" del
+     todo en la foto fuente; no hay margen de recorte que funcione para
+     TODAS las proporciones de celda posibles al mismo tiempo. Fix de
+     raíz: object-fit:contain en vez de cover — la foto COMPLETA entra
+     siempre en la celda (nunca se recorta nada, cabeza incluida),
+     dejando franjas del --panel (ya es el fondo de .collage-item) donde
+     sobra espacio. object-position:top reparte ese espacio sobrante
+     abajo, no arriba, para que la persona quede siempre pegada arriba
+     de su celda. */
   [data-imgtech-group='yoga'] .collage-item img,
   [data-variant-group='femenino'] .collage-item img,
   [data-variant-group='masculino'] .collage-item img {
+    object-fit: contain;
     object-position: top;
   }
   /* lightbox: la imagen agrandada sobre velo oscuro */
