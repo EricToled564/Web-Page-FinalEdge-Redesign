@@ -1359,23 +1359,39 @@ const TECHS = featureVideo
   [data-imgtech-group='wakeboarding'] .collage-item img {
     object-position: top;
   }
-  /* Personajes y Yoga (reporte 2026-07-25, tercer intento): "anclar
-     arriba" seguía sin ser suficiente en la celda "a"/"f" — su alto
-     puede volverse tan corto (celda ancha-panorámica) que la ventana
-     visible ya ni siquiera alcanza la cabeza aunque esté "arriba" del
-     todo en la foto fuente; no hay margen de recorte que funcione para
-     TODAS las proporciones de celda posibles al mismo tiempo. Fix de
-     raíz: object-fit:contain en vez de cover — la foto COMPLETA entra
-     siempre en la celda (nunca se recorta nada, cabeza incluida),
-     dejando franjas del --panel (ya es el fondo de .collage-item) donde
-     sobra espacio. object-position:top reparte ese espacio sobrante
-     abajo, no arriba, para que la persona quede siempre pegada arriba
-     de su celda. */
+  /* Personajes y Yoga (reporte 2026-07-25, cuarto intento): object-fit
+     contain sí evitaba cortar cabezas, pero dejaba franjas NEGRAS sólidas
+     debajo de cada foto en las celdas b/c/d/e — la celda es más ancha que
+     alta (grid-auto-rows en vh) y la foto (recorte cuadrado) no la llena,
+     así que sobra espacio real, no solo una anécdota visual: se ve roto.
+     Fix de raíz de verdad: en vez de pelear con la forma variable de la
+     celda (depende de vh Y de fr, nunca la misma proporción dos veces),
+     se FIJA la proporción de la celda con aspect-ratio a 4/5 — más alta
+     que ancha, IGUAL o más alta que el recorte cuadrado (1:1) de estas
+     fotos. Con cover sobre una celda así, el sobrante SIEMPRE cae en el
+     ancho (recorta lados, nunca arriba/abajo) — la cabeza y los pies del
+     recorte cuadrado original quedan siempre 100% dentro, cero franjas
+     negras. height:auto para que aspect-ratio mande, no el alto de fila
+     compartido del resto de técnicas — y grid-auto-rows:auto en el propio
+     .img-collage para que la fila tome el alto real de sus celdas (con
+     minmax(190px,29vh) fijo, la fila seguía imponiendo su propio alto
+     por encima del aspect-ratio del item y volvía el mismo problema). */
+  [data-imgtech-group='yoga'].img-collage,
+  [data-variant-group='femenino'].img-collage,
+  [data-variant-group='masculino'].img-collage {
+    grid-auto-rows: auto;
+  }
+  [data-imgtech-group='yoga'] .collage-item,
+  [data-variant-group='femenino'] .collage-item,
+  [data-variant-group='masculino'] .collage-item {
+    aspect-ratio: 4 / 5;
+    height: auto;
+  }
   [data-imgtech-group='yoga'] .collage-item img,
   [data-variant-group='femenino'] .collage-item img,
   [data-variant-group='masculino'] .collage-item img {
-    object-fit: contain;
-    object-position: top;
+    object-fit: cover;
+    object-position: center;
   }
   /* lightbox: la imagen agrandada sobre velo oscuro */
   .img-lightbox {
