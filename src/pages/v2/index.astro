@@ -1,0 +1,817 @@
+---
+/**
+ * PÁGINA PRINCIPAL v2 — exploración paralela «>_ OS» (2026-07-26).
+ * NO sustituye a /: el cliente pidió explícitamente un rediseño paralelo
+ * («no borres el sitio actual, crea uno paralelo»). Sistema de diseño
+ * documentado en brand/DS-PROMPT-OS.md — el símbolo >_ como motor
+ * narrativo: la página se comporta como una sesión de terminal viva.
+ * Referencias analizadas: Terminal Industries (arco problema→sistema→
+ * prueba), Lazarev (índice fijo + dossier), Subduxion (retícula hairline
+ * mono), TRIONN (profundidad por movimiento), Microsoft AI (contrapeso
+ * humano). TODO el copy es el existente (index.astro + engine.js +
+ * Base.astro), verbatim — nada inventado, nada omitido.
+ */
+import Base from '../../layouts/Base.astro';
+import LockupMark from '../../components/LockupMark.astro';
+import { PHASES, EDGES, edgeById, phaseOfEdge } from '../../data/engine.js';
+
+/* mismos 7 items del hero/menú del home actual (index.astro) */
+const MENU_ITEMS = [
+  { label: 'Planeación Estratégica', edge: 'strategy' },
+  { label: 'Inteligencia de Negocios', edge: 'intelligence' },
+  { label: 'Inteligencia de Mercados', edge: 'intelligence' },
+  { label: 'Capacitación en IA', edge: 'readiness' },
+  { label: 'Optimización de Procesos', edge: 'flow' },
+  { label: 'Creación de Software Personalizado', edge: 'systems' },
+  { label: 'Producción Creativa', edge: 'creative' },
+].map((m) => ({ ...m, slug: edgeById(m.edge).slug }));
+
+/* los 12 casos reales: los arrays `proof` de los 6 edges, verbatim */
+const PROOF = EDGES.flatMap((e) =>
+  e.proof.map(([title, desc]) => ({
+    title,
+    desc,
+    service: e.service,
+    slug: e.slug,
+    color: phaseOfEdge(e).color,
+  }))
+);
+
+/* las 3 cifras de «la presión», verbatim del home actual */
+const FACTS = [
+  { kind: 'range', from: 48, to: 40, txt: 'horas de jornada laboral semanal hacia 2030' },
+  { kind: 'delta', to: 26.6, decimals: 1, txt: 'acumulado en el salario mínimo en los últimos dos años' },
+  { kind: 'delta', to: 52, decimals: 0, txt: 'impacto acumulado en el costo laboral' },
+];
+
+const MANIFESTO = 'La IA ejecuta. La experiencia decide.';
+---
+<Base>
+  <!-- ============ boot · hero ============ -->
+  <section class="os-hero" id="inicio">
+    <div class="os-hero-grid" aria-hidden="true"></div>
+    <div class="os-hero-inner">
+      <p class="os-boot eyebrow">
+        <span class="prompt">&gt;_</span>
+        <span class="os-type" data-os-type="tu ventaja definitiva">tu ventaja definitiva</span><span class="cursor">▌</span>
+      </p>
+      <h1 class="os-h1">
+        <span class="os-h1-line" data-os-line>30 años de experiencia dirigen.</span>
+        <span class="os-h1-line os-h1-line--exec" data-os-line>Nuestros flujos de trabajo propietarios de IA ejecutan.</span>
+      </h1>
+      <p class="os-sub reveal">haz más. sin contratar más.</p>
+      <a class="os-services reveal" href="/#engine" aria-label="Ver todos los servicios en la rueda del Engine">
+        <span class="prompt os-services-prompt">&gt;_</span>
+        <span class="os-services-words" data-os-services>
+          {MENU_ITEMS.map((m, i) => (
+            <span class={`os-services-word${i === 0 ? ' is-active' : ''}`}>{m.label}</span>
+          ))}
+        </span>
+      </a>
+    </div>
+    <button class="os-more" type="button" data-os-more aria-label="Continuar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="square" aria-hidden="true"><path d="M12 5v14" /><path d="M6 13l6 6 6-6" /></svg>
+    </button>
+  </section>
+
+  <!-- ============ manifiesto ============ -->
+  <section class="os-manifesto" id="manifiesto" data-os-manifesto>
+    <p class="os-manifesto-line" aria-label={MANIFESTO}>
+      {MANIFESTO.split(' ').map((w) => (
+        <span class="os-word">{w}</span>
+      ))}
+    </p>
+  </section>
+
+  <!-- ============ 01 · la presión ============ -->
+  <section class="os-section" id="presion" data-os-path="01-la-presion">
+    <header class="os-head reveal">
+      <p class="os-head-cmd"><span class="prompt">&gt;_</span> 01 · la presión</p>
+      <hr />
+    </header>
+    <div class="os-grid os-facts" data-os-facts>
+      {FACTS.map((f) => (
+        <div class="os-fact reveal">
+          <p class="os-fact-num">
+            {f.kind === 'range' ? (
+              <>
+                <span>{f.from}</span
+                ><span class="os-fact-arrow">→</span><span data-os-count data-from={f.from} data-to={f.to} data-decimals="0">{f.from}</span>
+              </>
+            ) : (
+              <>
+                <span class="os-fact-plus">+</span><span data-os-count data-from="0" data-to={f.to} data-decimals={f.decimals}>0</span><span class="os-fact-unit">%</span>
+              </>
+            )}
+          </p>
+          <p class="os-fact-txt">{f.txt}</p>
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============ 02 · el sistema ============ -->
+  <section class="os-section" id="sistema" data-os-path="02-el-sistema">
+    <header class="os-head reveal">
+      <p class="os-head-cmd"><span class="prompt">&gt;_</span> 02 · el sistema</p>
+      <p class="eyebrow eyebrow--lockup os-head-lockup">
+        <LockupMark word="final edge" tag="[ENGINE]" variant="wheel" class="brand-lockup" />
+      </p>
+      <hr />
+    </header>
+    <div class="os-stack" data-os-stack>
+      {PHASES.map((p) => (
+        <article class="os-phase" style={`--pc:${p.color}`}>
+          <div class="os-phase-card">
+            <p class="os-phase-num"><span class="prompt os-phase-prompt">&gt;_</span> {p.num}</p>
+            <h2 class="os-phase-name">{p.name}</h2>
+            <p class="os-phase-tagline">{p.tagline}</p>
+            <p class="os-phase-lead">{p.lead}</p>
+            <p class="os-phase-statement">{p.statement}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============ 03 · servicios ============ -->
+  <section class="os-section" id="engine" data-os-path="03-servicios">
+    <header class="os-head reveal">
+      <p class="os-head-cmd"><span class="prompt">&gt;_</span> 03 · servicios</p>
+      <hr />
+    </header>
+    <div class="os-dossier" data-os-dossier>
+      <nav class="os-index" aria-label="Servicios del Engine">
+        {EDGES.map((e, i) => (
+          <a class={`os-index-item${i === 0 ? ' is-active' : ''}`} href={`#svc-${e.id}`} data-os-index={e.id} style={`--pc:${phaseOfEdge(e).color}`}>
+            <LockupMark word={e.id} tag="[AI]" color={phaseOfEdge(e).color} variant="section" dot />
+          </a>
+        ))}
+      </nav>
+      <div class="os-entries">
+        {EDGES.map((e) => (
+          <article class="os-entry" id={`svc-${e.id}`} data-os-entry={e.id} style={`--pc:${phaseOfEdge(e).color}`}>
+            <p class="os-entry-service reveal">{e.service}</p>
+            <h3 class="os-entry-hook reveal">{e.hook}</h3>
+            <p class="os-entry-summary reveal">{e.summary}</p>
+            <div class="os-grid os-entry-stats reveal">
+              {e.stats.map(([num, txt]) => (
+                <div class="os-stat">
+                  <p class="os-stat-num">{num}</p>
+                  <p class="os-stat-txt">{txt}</p>
+                </div>
+              ))}
+            </div>
+            <p class="os-entry-quote reveal"><span class="prompt">&gt;_</span> {e.quote}</p>
+            <p class="os-entry-closing reveal">{e.closing}</p>
+            <a class="btn btn--ghost os-entry-link reveal" href={e.slug}>Conoce más</a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 · casos reales ============ -->
+  <section class="os-section" id="casos" data-os-path="04-casos-reales">
+    <header class="os-head reveal">
+      <p class="os-head-cmd"><span class="prompt">&gt;_</span> 04 · casos reales</p>
+      <hr />
+    </header>
+    <div class="os-proof">
+      {PROOF.map((c) => (
+        <a class="os-proof-row reveal" href={c.slug} style={`--pc:${c.color}`}>
+          <p class="os-proof-service">{c.service}</p>
+          <p class="os-proof-title">{c.title}</p>
+          <p class="os-proof-desc">{c.desc}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============ run · valoración ============ -->
+  <section class="os-run" id="valoracion-cta" data-os-path="run-valoracion">
+    <p class="os-run-cmd eyebrow reveal">
+      <span class="prompt">&gt;_</span>
+      <span class="os-type" data-os-type="run valoración">run valoración</span><span class="cursor">▌</span>
+    </p>
+    <a class="btn os-run-btn reveal" href="/#valoracion">Agenda tu reunión de valoración</a>
+  </section>
+
+  <!-- línea de estado tipo consola (solo escritorio) -->
+  <p class="os-status" data-os-status aria-hidden="true">~/final-edge/<span data-os-status-path>inicio</span></p>
+</Base>
+
+<style>
+  /* ================= hero ================= */
+  .os-hero {
+    position: relative;
+    min-height: calc(100vh - 92px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  /* retícula hairline visible (Subduxion): el layout confiesa su
+     estructura. Líneas de 1px con --hairline vía gradientes. */
+  .os-hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, var(--hairline) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--hairline) 1px, transparent 1px);
+    background-size: 96px 96px;
+    opacity: 0.5;
+    pointer-events: none;
+  }
+  /* glow sutil del acento detrás del hero (calidez Microsoft AI sin
+     violar R3.2: es fondo de superficie, no sombra) — mismo mecanismo
+     oklch ya usado por ClosingBand. */
+  .os-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 45% at 50% 60%, oklch(from var(--accent) calc(l * 0.35) calc(c * 0.6) h / 0.35), transparent 70%);
+    pointer-events: none;
+  }
+  .os-hero-inner {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 0 24px;
+    width: 100%;
+    max-width: 1180px;
+  }
+  .os-boot { font-size: var(--text-label); }
+  .os-h1 {
+    margin: 28px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-h2);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.14;
+    color: var(--fg);
+  }
+  .os-h1-line {
+    display: block;
+    opacity: 0;
+    transform: translateY(18px);
+    transition: opacity var(--t-enter) var(--ease), transform var(--t-enter) var(--ease);
+  }
+  .os-h1-line.is-on { opacity: 1; transform: none; }
+  /* «ejecutan» = la máquina: segunda línea en el acento, más tenue la
+     primera — la jerarquía cuenta la historia (dirigen → ejecutan). */
+  .os-h1-line--exec { color: var(--accent); transition-delay: 180ms; }
+  .os-sub {
+    margin: 22px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-subtitle);
+    color: var(--fg-2);
+  }
+  .os-services {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.5em;
+    margin-top: 34px;
+    font-family: var(--font-ui);
+    font-size: var(--text-lead);
+    color: var(--fg);
+    text-decoration: none;
+  }
+  .os-services:hover .os-services-word.is-active { color: var(--accent); }
+  .os-services-words { display: grid; justify-items: start; text-align: left; min-width: 0; max-width: 100%; }
+  .os-services-word {
+    grid-area: 1 / 1;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 340ms var(--ease), transform 340ms var(--ease), color var(--t-hover) var(--ease);
+  }
+  .os-services-word.is-active { opacity: 1; transform: none; }
+  .os-more {
+    position: absolute;
+    bottom: 26px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    width: 46px;
+    height: 46px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: 1px solid var(--hairline);
+    color: var(--fg-2);
+    cursor: pointer;
+    transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+  }
+  .os-more:hover { border-color: var(--accent); color: var(--accent); }
+  .os-more svg { width: 18px; height: 18px; }
+
+  /* ================= manifiesto ================= */
+  .os-manifesto {
+    padding: 22vh 24px;
+    display: flex;
+    justify-content: center;
+  }
+  .os-manifesto-line {
+    /* min-width:0 obligatorio: como flex item, el <p> se dimensiona por
+       su contenido y sin esto se ensancha más allá del contenedor en
+       móvil (scroll horizontal). */
+    min-width: 0;
+    max-width: min(1020px, 100%);
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-manifesto);
+    font-weight: 400;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+    text-align: center;
+    /* flex+wrap y NO inline con margin: los <span> de palabras se
+       generan adyacentes (sin nodos de texto entre ellos), así que en
+       flujo inline el navegador no encuentra dónde cortar la línea y
+       la frase desborda en móvil. El gap sustituye al espacio real. */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 0.32em;
+  }
+  .os-word {
+    color: var(--fg-faint);
+    transition: color 340ms var(--ease);
+  }
+  .os-word.is-lit { color: var(--fg); }
+
+  /* ================= secciones / encabezado comando ================= */
+  .os-section { padding: 96px 72px; max-width: 1440px; margin: 0 auto; }
+  .os-head { margin-bottom: 44px; }
+  .os-head-cmd {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    letter-spacing: 0.18em;
+    color: var(--fg-muted);
+  }
+  .os-head-lockup { margin-top: 14px; }
+  .os-head hr { border: 0; border-top: 1px solid var(--hairline); margin: 18px 0 0; }
+
+  /* ================= retícula hairline (R3.3) ================= */
+  .os-grid {
+    display: grid;
+    gap: 1px;
+    background: var(--hairline);
+    border: 1px solid var(--hairline);
+  }
+  .os-grid > * { background: var(--bg); }
+
+  /* ================= 01 presión ================= */
+  .os-facts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .os-fact { padding: 44px 32px 40px; }
+  .os-fact-num {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-plate);
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .os-fact-arrow { color: var(--accent); margin: 0 0.08em; }
+  .os-fact-plus, .os-fact-unit { color: var(--accent); }
+  .os-fact-txt {
+    margin: 18px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    color: var(--fg-2);
+    max-width: 34ch;
+  }
+
+  /* ================= 02 el sistema (apilado sticky) ================= */
+  .os-stack { display: block; }
+  .os-phase { position: sticky; top: 112px; }
+  .os-phase + .os-phase { margin-top: 24vh; }
+  .os-phase-card {
+    background: var(--panel);
+    border: 1px solid var(--hairline);
+    border-left: 2px solid var(--pc);
+    padding: 48px 56px 56px;
+    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+  }
+  .os-phase.is-behind .os-phase-card { opacity: 0.45; transform: scale(0.985); }
+  .os-phase-num {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    letter-spacing: 0.18em;
+    color: var(--fg-muted);
+  }
+  .os-phase-prompt { color: var(--pc); }
+  .os-phase-name {
+    margin: 14px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-h2);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    color: var(--fg);
+  }
+  .os-phase-tagline {
+    margin: 18px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-manifesto);
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+    color: var(--fg);
+    max-width: 30ch;
+  }
+  .os-phase-lead {
+    margin: 22px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-lead);
+    line-height: 1.55;
+    color: var(--fg-2);
+    max-width: 62ch;
+  }
+  .os-phase-statement {
+    margin: 16px 0 0;
+    font-family: var(--font-read);
+    font-size: var(--text-body);
+    line-height: 1.65;
+    color: var(--fg-muted);
+    max-width: 68ch;
+  }
+
+  /* ================= 03 servicios (índice + dossier) ================= */
+  .os-dossier {
+    display: grid;
+    grid-template-columns: minmax(240px, 320px) 1fr;
+    gap: 64px;
+    align-items: start;
+  }
+  .os-index {
+    position: sticky;
+    top: 128px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .os-index-item {
+    text-decoration: none;
+    opacity: 0.42;
+    transition: opacity var(--t-ui) var(--ease), transform var(--t-ui) var(--ease);
+    transform-origin: left center;
+  }
+  .os-index-item:hover { opacity: 0.8; }
+  .os-index-item.is-active { opacity: 1; transform: translateX(6px); }
+  .os-entries { display: flex; flex-direction: column; gap: 120px; }
+  .os-entry { border-top: 1px solid var(--hairline); padding-top: 40px; }
+  .os-entry-service {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--pc);
+  }
+  .os-entry-hook {
+    margin: 16px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-h2);
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    line-height: 1.14;
+    color: var(--fg);
+    max-width: 22ch;
+  }
+  .os-entry-summary {
+    margin: 20px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-lead);
+    line-height: 1.55;
+    color: var(--fg-2);
+    max-width: 58ch;
+  }
+  .os-entry-stats { margin-top: 34px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .os-stat { padding: 24px 22px; }
+  .os-stat-num {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-subtitle);
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .os-stat-txt {
+    margin: 10px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    letter-spacing: 0;
+    text-transform: none;
+    line-height: 1.5;
+    color: var(--fg-muted);
+  }
+  .os-entry-quote {
+    margin: 34px 0 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-subtitle);
+    color: var(--fg);
+  }
+  .os-entry-closing {
+    margin: 14px 0 0;
+    font-family: var(--font-read);
+    font-size: var(--text-body);
+    line-height: 1.6;
+    color: var(--fg-muted);
+    max-width: 60ch;
+  }
+  .os-entry-link { margin-top: 26px; }
+
+  /* ================= 04 casos reales ================= */
+  .os-proof { border-top: 1px solid var(--hairline); }
+  .os-proof-row {
+    display: grid;
+    grid-template-columns: minmax(150px, 220px) minmax(220px, 1fr) 1.4fr;
+    gap: 28px;
+    padding: 26px 8px;
+    border-bottom: 1px solid var(--hairline);
+    text-decoration: none;
+    transition: background var(--t-hover) var(--ease);
+  }
+  .os-proof-row:hover { background: var(--panel); }
+  .os-proof-service {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pc);
+  }
+  .os-proof-title {
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-body);
+    font-weight: 600;
+    color: var(--fg);
+    line-height: 1.45;
+  }
+  .os-proof-desc {
+    margin: 0;
+    font-family: var(--font-read);
+    font-size: var(--text-body);
+    line-height: 1.55;
+    color: var(--fg-muted);
+  }
+
+  /* ================= run ================= */
+  .os-run {
+    padding: 20vh 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    text-align: center;
+  }
+  .os-run-cmd { font-size: var(--text-subtitle); }
+  .os-run-btn { font-size: var(--text-body); }
+
+  /* ================= línea de estado ================= */
+  .os-status {
+    position: fixed;
+    left: 20px;
+    bottom: 16px;
+    z-index: 60;
+    margin: 0;
+    font-family: var(--font-ui);
+    font-size: var(--text-label);
+    color: var(--fg-faint);
+    pointer-events: none;
+  }
+  .os-status [data-os-status-path] { color: var(--fg-muted); }
+
+  /* ================= móvil ================= */
+  @media (max-width: 860px) {
+    .os-section { padding: 64px 20px; }
+    .os-facts { grid-template-columns: 1fr; }
+    .os-phase { position: static; }
+    .os-phase + .os-phase { margin-top: 20px; }
+    .os-phase-card { padding: 30px 22px 36px; }
+    .os-phase.is-behind .os-phase-card { opacity: 1; transform: none; }
+    .os-dossier { grid-template-columns: 1fr; gap: 40px; }
+    .os-index { position: static; flex-direction: row; flex-wrap: wrap; gap: 14px 22px; }
+    .os-index-item.is-active { transform: none; }
+    .os-entries { gap: 72px; }
+    .os-entry-stats { grid-template-columns: 1fr; }
+    .os-proof-row { grid-template-columns: 1fr; gap: 8px; }
+    .os-status { display: none; }
+    .os-hero-grid { background-size: 64px 64px; }
+    /* el ticker: la etiqueta más larga ("Creación de Software
+       Personalizado") no cabe en una línea a 390px — sin esto el grid
+       toma el ancho de esa palabra y arrastra scroll horizontal. */
+    .os-services { max-width: 100%; }
+    .os-services-word { white-space: normal; }
+  }
+</style>
+
+<script>
+  /* Motor «>_ OS» — vanilla, sin librerías: typing, contadores,
+     manifiesto palabra a palabra, apilado de fases, scrollspy del
+     dossier y línea de estado. Todo con la curva maestra de la marca y
+     desactivable por prefers-reduced-motion (R3.4 / accesibilidad). */
+  const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* curva maestra cubic-bezier(0.2, 0.8, 0.2, 1) evaluada en JS para los
+     contadores — misma sensación que las transiciones CSS (R3.4). */
+  function masterEase(t: number): number {
+    const cx = 0.6, bx = 0.6 - cx, ax = 1 - cx - bx;
+    const cy = 2.4, by = -1.8, ay = 1 - cy - by;
+    let u = t;
+    for (let i = 0; i < 5; i++) {
+      const x = ((ax * u + bx) * u + cx) * u - t;
+      const dx = (3 * ax * u + 2 * bx) * u + cx;
+      if (Math.abs(dx) < 1e-6) break;
+      u -= x / dx;
+    }
+    return ((ay * u + by) * u + cy) * u;
+  }
+
+  /* --- typing: instrucciones que se teclean al entrar al viewport --- */
+  function initTyping() {
+    document.querySelectorAll<HTMLElement>('[data-os-type]:not([data-bound])').forEach((el) => {
+      el.dataset.bound = '1';
+      const full = el.dataset.osType || el.textContent || '';
+      if (REDUCED) { el.textContent = full; return; }
+      el.textContent = '';
+      const io = new IntersectionObserver((entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        let i = 0;
+        const tick = () => {
+          i += 1;
+          el.textContent = full.slice(0, i);
+          if (i < full.length) setTimeout(tick, 34 + Math.random() * 40);
+          else el.dispatchEvent(new CustomEvent('os-typed', { bubbles: true }));
+        };
+        setTimeout(tick, 240);
+      });
+      io.observe(el);
+    });
+  }
+
+  /* --- hero: las dos líneas del H1 entran al terminar el typing --- */
+  function initHeroLines() {
+    const lines = document.querySelectorAll<HTMLElement>('[data-os-line]');
+    if (!lines.length) return;
+    const on = () => lines.forEach((l) => l.classList.add('is-on'));
+    if (REDUCED) { on(); return; }
+    const boot = document.querySelector('[data-os-type]');
+    if (!boot) { on(); return; }
+    boot.addEventListener('os-typed', on, { once: true });
+    /* seguro: si el observer nunca dispara (p. ej. carga con scroll
+       abajo), encender a los 2.5s de todos modos */
+    setTimeout(on, 2500);
+  }
+
+  /* --- ticker de servicios (mismo ritmo que el hero actual) --- */
+  function initServices() {
+    const box = document.querySelector<HTMLElement>('[data-os-services]');
+    if (!box || box.dataset.bound === '1') return;
+    box.dataset.bound = '1';
+    const words = Array.from(box.querySelectorAll<HTMLElement>('.os-services-word'));
+    if (words.length < 2 || REDUCED) return;
+    let i = 0;
+    setInterval(() => {
+      words[i].classList.remove('is-active');
+      i = (i + 1) % words.length;
+      words[i].classList.add('is-active');
+    }, 2200);
+  }
+
+  /* --- flecha del hero → manifiesto --- */
+  function initMore() {
+    const more = document.querySelector<HTMLElement>('[data-os-more]');
+    const target = document.getElementById('manifiesto');
+    if (!more || !target || more.dataset.bound === '1') return;
+    more.dataset.bound = '1';
+    more.addEventListener('click', () => target.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+  }
+
+  /* --- contadores de «la presión» --- */
+  function initCounters() {
+    const zone = document.querySelector<HTMLElement>('[data-os-facts]');
+    if (!zone || zone.dataset.bound === '1') return;
+    zone.dataset.bound = '1';
+    const counters = Array.from(zone.querySelectorAll<HTMLElement>('[data-os-count]'));
+    const run = () => {
+      counters.forEach((el) => {
+        const from = parseFloat(el.dataset.from || '0');
+        const to = parseFloat(el.dataset.to || '0');
+        const dec = parseInt(el.dataset.decimals || '0', 10);
+        if (REDUCED) { el.textContent = to.toFixed(dec); return; }
+        const t0 = performance.now();
+        const dur = 1400;
+        const step = (now: number) => {
+          const k = Math.min(1, (now - t0) / dur);
+          el.textContent = (from + (to - from) * masterEase(k)).toFixed(dec);
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    };
+    const io = new IntersectionObserver((entries) => {
+      if (!entries.some((e) => e.isIntersecting)) return;
+      io.disconnect();
+      run();
+    }, { threshold: 0.4 });
+    io.observe(zone);
+  }
+
+  /* --- manifiesto: palabras que se encienden con el scroll --- */
+  function initManifesto() {
+    const sec = document.querySelector<HTMLElement>('[data-os-manifesto]');
+    if (!sec || sec.dataset.bound === '1') return;
+    sec.dataset.bound = '1';
+    const words = Array.from(sec.querySelectorAll<HTMLElement>('.os-word'));
+    if (REDUCED) { words.forEach((w) => w.classList.add('is-lit')); return; }
+    const paint = () => {
+      const r = sec.getBoundingClientRect();
+      const vh = innerHeight;
+      const f = Math.min(1, Math.max(0, (vh * 0.85 - r.top) / (vh * 0.7)));
+      const lit = Math.round(f * words.length);
+      words.forEach((w, i) => w.classList.toggle('is-lit', i < lit));
+    };
+    addEventListener('scroll', paint, { passive: true });
+    paint();
+  }
+
+  /* --- apilado de fases: atenuar la tarjeta que quedó atrás --- */
+  function initStack() {
+    const stack = document.querySelector<HTMLElement>('[data-os-stack]');
+    if (!stack || stack.dataset.bound === '1') return;
+    stack.dataset.bound = '1';
+    const phases = Array.from(stack.querySelectorAll<HTMLElement>('.os-phase'));
+    if (REDUCED || innerWidth <= 860) return;
+    const paint = () => {
+      phases.forEach((p, i) => {
+        const next = phases[i + 1];
+        const covered = next ? next.getBoundingClientRect().top < innerHeight * 0.55 : false;
+        p.classList.toggle('is-behind', covered);
+      });
+    };
+    addEventListener('scroll', paint, { passive: true });
+    paint();
+  }
+
+  /* --- scrollspy del dossier de servicios --- */
+  function initDossier() {
+    const dossier = document.querySelector<HTMLElement>('[data-os-dossier]');
+    if (!dossier || dossier.dataset.bound === '1') return;
+    dossier.dataset.bound = '1';
+    const items = Array.from(dossier.querySelectorAll<HTMLElement>('[data-os-index]'));
+    const entries = Array.from(dossier.querySelectorAll<HTMLElement>('[data-os-entry]'));
+    const activate = (id: string | null) => {
+      items.forEach((it) => it.classList.toggle('is-active', it.dataset.osIndex === id));
+    };
+    const io = new IntersectionObserver((ents) => {
+      const visible = ents.filter((e) => e.isIntersecting);
+      if (!visible.length) return;
+      const top = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      activate((top.target as HTMLElement).dataset.osEntry || null);
+    }, { rootMargin: '-30% 0px -50% 0px' });
+    entries.forEach((e) => io.observe(e));
+  }
+
+  /* --- línea de estado: la ruta de la sesión --- */
+  function initStatus() {
+    const out = document.querySelector<HTMLElement>('[data-os-status-path]');
+    if (!out || out.dataset.bound === '1') return;
+    out.dataset.bound = '1';
+    const secs = Array.from(document.querySelectorAll<HTMLElement>('[data-os-path]'));
+    const io = new IntersectionObserver((ents) => {
+      const visible = ents.filter((e) => e.isIntersecting);
+      if (!visible.length) return;
+      const top = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      out.textContent = (top.target as HTMLElement).dataset.osPath || 'inicio';
+    }, { rootMargin: '-20% 0px -60% 0px' });
+    secs.forEach((s) => io.observe(s));
+    /* de vuelta al hero */
+    const hero = document.querySelector('.os-hero');
+    if (hero) {
+      const io2 = new IntersectionObserver((ents) => {
+        if (ents.some((e) => e.isIntersecting)) out.textContent = 'inicio';
+      }, { threshold: 0.5 });
+      io2.observe(hero);
+    }
+  }
+
+  function initAll() {
+    initTyping();
+    initHeroLines();
+    initServices();
+    initMore();
+    initCounters();
+    initManifesto();
+    initStack();
+    initDossier();
+    initStatus();
+  }
+  initAll();
+  document.addEventListener('astro:page-load', initAll);
+</script>
