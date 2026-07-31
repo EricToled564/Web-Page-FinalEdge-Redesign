@@ -275,7 +275,16 @@ scene.add(points);
    sigue bajando en paralelo mientras suena. */
 let actx = null, analyser = null, freq = null;
 let audioEl = null, currentSrcNode = null;
+let pendingEl = null; // <audio> todavía cargando, aún no llegó a 'canplay'
 let silentAudio = null;
+/* corta POR COMPLETO un <audio> (pausa + vacía src + load()): sin el
+   load() tras vaciar src, Chrome/Firefox siguen bajando el archivo en
+   segundo plano indefinidamente — vaciar src por sí solo no aborta el
+   fetch en curso, solo evita que se reproduzca. */
+const killAudioEl = (el) => {
+  if (!el) return;
+  try { el.pause(); el.onended = null; el.oncanplay = null; el.src = ''; el.load(); } catch (_) {}
+};
 let playToken = 0; // descarta un dustPlay viejo si llega uno nuevo antes de que arranque
 const prevSpec = new Float32Array(80);
 let fluxAvg = 0;
@@ -302,7 +311,21 @@ window.dustPlay = async function dustPlay(url) {
     }
     /* corta la pista actual DE INMEDIATO (bug 2026-07-18: "no para,
        sigue hasta que termina la anterior") */
-    if (audioEl) { try { audioEl.pause(); audioEl.onended = null; audioEl.src = ''; } catch (_) {} audioEl = null; }
+    killAudioEl(audioEl);
+    audioEl = null;
+    /* fuga real (reporte 2026-07-31 "colapsa el navegador cada vez que
+       le doy play"): lo anterior solo cortaba audioEl, que recién se
+       asigna cuando 'canplay' dispara. Si el usuario elige OTRA pista
+       antes de que la anterior termine de bufferear (flujo normal de
+       "voy probando canciones"), esa <audio> queda huérfana — nunca se
+       pausa, nunca se vacía su src — y el navegador sigue bajando el
+       mp3 completo (5-8MB) en segundo plano PARA SIEMPRE, sin límite de
+       cuántas se acumulen. Cada pista que se salta suma una descarga +
+       decodificador zombie; unos cuantos clicks explorando estilos
+       bastan para agotar memoria/red y colgar la pestaña. Se corta
+       también la que esté a medio cargar. */
+    killAudioEl(pendingEl);
+    pendingEl = null;
     const myToken = ++playToken;
 
     silentAudio.play().catch(() => {});
@@ -334,18 +357,21 @@ window.dustPlay = async function dustPlay(url) {
     const srcNode = actx.createMediaElementSource(el);
     currentSrcNode = srcNode;
     srcNode.connect(analyser);
+    pendingEl = el;
     el.addEventListener('ended', () => {
       if (myToken !== playToken) return;
       audioEl = null;
       notifyParent({ type: 'dust-ended' });
     });
     el.addEventListener('error', () => {
+      if (pendingEl === el) pendingEl = null;
       if (myToken !== playToken) return;
       notifyParent({ type: 'dust-error', message: 'no se pudo cargar el audio' });
     });
     /* 'canplay' dispara en cuanto hay suficiente buffer para arrancar
        sin cortes — no espera el archivo completo. */
     el.addEventListener('canplay', () => {
+      if (pendingEl === el) pendingEl = null;
       if (myToken !== playToken) return; // el usuario ya eligió otra pista mientras esta cargaba
       audioEl = el;
       el.play().catch(() => {});
@@ -359,7 +385,10 @@ window.dustPlay = async function dustPlay(url) {
 
 window.dustStop = function dustStop() {
   playToken++; // invalida cualquier dustPlay en vuelo para que no arranque después de este stop
-  if (audioEl) { try { audioEl.pause(); audioEl.onended = null; audioEl.src = ''; } catch (_) {} audioEl = null; }
+  killAudioEl(audioEl);
+  audioEl = null;
+  killAudioEl(pendingEl);
+  pendingEl = null;
   if (currentSrcNode) { try { currentSrcNode.disconnect(); } catch (_) {} currentSrcNode = null; }
   if (silentAudio) { try { silentAudio.pause(); } catch (_) {} }
 };
