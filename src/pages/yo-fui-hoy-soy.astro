@@ -37,6 +37,7 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         </button>
       </div>
       <p class="state" data-state>Lista para reproducir</p>
+      <p class="captions" data-captions aria-live="polite"></p>
     </main>
 
     <script type="importmap">
@@ -362,6 +363,100 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         analyser.connect(actx.destination);
       };
 
+      /* Letra en pantalla (pedido 2026-08-12), abajo del todo donde la
+         nube de polvo casi no llega. Tiempos estimados proporcionalmente
+         a la estructura de la canción (intro/verso/coro/puente/outro)
+         sobre sus 274s de duración — no hay forma de detectar el
+         arranque exacto de cada línea sin escuchar el audio, así que
+         puede necesitar ajuste fino una vez probado en vivo.
+         RELLENAR cada string vacío con la línea correspondiente de la
+         letra — el arreglo ya trae el tiempo (en segundos) de cada una. */
+      const LYRICS = [
+        [12,    ''],
+        [15.5,  ''],
+        [19,    ''],
+        [22.5,  ''],
+        [26,    ''],
+        [29.5,  ''],
+        [33,    ''],
+        [36.5,  ''],
+        [40,    ''],
+        [44,    ''],
+        [48,    ''],
+        [52,    ''],
+        [56,    ''],
+        [60,    ''],
+        [64,    ''],
+        [68,    ''],
+        [72,    ''],
+        [76,    ''],
+        [80,    ''],
+        [84,    ''],
+        [88,    ''],
+        [92,    ''],
+        [96,    ''],
+        [99.5,  ''],
+        [103,   ''],
+        [106.5, ''],
+        [110,   ''],
+        [113.5, ''],
+        [117,   ''],
+        [120.5, ''],
+        [124,   ''],
+        [128,   ''],
+        [132,   ''],
+        [136,   ''],
+        [140,   ''],
+        [144,   ''],
+        [148,   ''],
+        [152,   ''],
+        [156,   ''],
+        [160,   ''],
+        [164,   ''],
+        [168,   ''],
+        [172,   ''],
+        [176,   ''],
+        [188,   ''],
+        [192,   ''],
+        [196,   ''],
+        [200,   ''],
+        [204,   ''],
+        [208,   ''],
+        [212,   ''],
+        [216,   ''],
+        [220,   ''],
+        [224,   ''],
+        [228,   ''],
+        [232,   ''],
+        [236,   ''],
+        [240,   ''],
+        [244,   ''],
+        [248,   ''],
+        [252,   ''],
+        [256,   ''],
+        [260,   ''],
+        [264,   ''],
+        [268,   ''],
+        [271,   ''],
+      ].filter((row) => row[1]); // las líneas vacías no se muestran hasta rellenarlas
+      const captionsEl = document.querySelector('[data-captions]');
+      let lastCaptionIdx = -2;
+      const updateCaptions = () => {
+        if (!captionsEl || audio.paused) return;
+        const t = audio.currentTime;
+        let idx = -1;
+        for (let i = 0; i < LYRICS.length; i++) {
+          if (LYRICS[i][0] <= t) idx = i; else break;
+        }
+        /* una línea se queda en pantalla hasta 3.6s o hasta que arranca
+           la siguiente (lo que sea más corto) — así no se traslapan en
+           los tramos cortos como el coro. */
+        const lineEnd = idx >= 0 ? (idx + 1 < LYRICS.length ? Math.min(LYRICS[idx][0] + 3.6, LYRICS[idx + 1][0]) : LYRICS[idx][0] + 3.6) : 0;
+        const visible = idx >= 0 && t < lineEnd;
+        if (!visible) { if (lastCaptionIdx !== -1) { captionsEl.textContent = ''; lastCaptionIdx = -1; } return; }
+        if (idx !== lastCaptionIdx) { captionsEl.textContent = LYRICS[idx][1]; lastCaptionIdx = idx; }
+      };
+
       const stateEl = document.querySelector('[data-state]');
       const btnPlay = document.querySelector('[data-play]');
       const btnPause = document.querySelector('[data-pause]');
@@ -387,6 +482,7 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         audio.currentTime = 0;
         setActive(btnStop);
         stateEl.textContent = 'detenida';
+        if (captionsEl) { captionsEl.textContent = ''; lastCaptionIdx = -2; }
       });
       audio.addEventListener('ended', () => {
         setActive(btnStop);
@@ -411,6 +507,8 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         const tSec = (now - t0) / 1000;
         const dt = Math.min(0.05, Math.max(0, (now - lastFrameMs) / 1000));
         lastFrameMs = now;
+
+        updateCaptions();
 
         let lo = 0, mi = 0, hi = 0;
         if (analyser && freq && !audio.paused) {
@@ -568,6 +666,22 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         font-size: var(--text-label);
         letter-spacing: 0.08em;
         color: var(--fg-muted);
+      }
+      /* letra sincronizada (pedido 2026-08-12): pegada al borde inferior,
+         donde la nube de partículas casi no llega — nada de fondo/halo
+         detrás, solo texto sólido bien abajo para mantenerse legible. */
+      .captions {
+        position: absolute;
+        bottom: 56px;
+        left: 24px;
+        right: 24px;
+        text-align: center;
+        font-family: var(--font-ui);
+        font-size: clamp(14px, 2vw, 18px);
+        letter-spacing: 0.02em;
+        color: var(--bg);
+        min-height: 1.4em;
+        pointer-events: none;
       }
     </style>
   </body>
