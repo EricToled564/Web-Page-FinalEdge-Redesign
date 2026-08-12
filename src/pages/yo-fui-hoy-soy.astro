@@ -403,10 +403,26 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         lyricsLabel.textContent = LYRICS.length ? `Letra cargada (${LYRICS.length} líneas) — cambiar` : 'Subir letra (.txt)';
       };
       setLyricsLabel();
+      /* reporte 2026-08-12 "los acentos salen como signo de
+         interrogación": file.text() da por hecho que el .txt está en
+         UTF-8. Notepad y varios editores de Windows guardan por
+         defecto en "ANSI" (Windows-1252), que codifica letras
+         acentuadas y puntuación invertida con bytes distintos — UTF-8
+         los interpreta como inválidos y los reemplaza por el carácter
+         de reemplazo (que muchas fuentes dibujan como signo de
+         interrogación). Se decodifica primero como UTF-8; si aparece
+         ese carácter de reemplazo, se reintenta como Windows-1252 sin
+         pedirle nada al cliente. */
+      const readTextSmart = async (file) => {
+        const buf = await file.arrayBuffer();
+        const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buf);
+        if (!utf8.includes('�')) return utf8;
+        try { return new TextDecoder('windows-1252').decode(buf); } catch (_) { return utf8; }
+      };
       fileInput?.addEventListener('change', async () => {
         const file = fileInput.files && fileInput.files[0];
         if (!file) return;
-        const text = await file.text();
+        const text = await readTextSmart(file);
         const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
         localStorage.setItem(LYRICS_KEY, JSON.stringify(lines));
         LYRICS = buildLyrics(lines);
