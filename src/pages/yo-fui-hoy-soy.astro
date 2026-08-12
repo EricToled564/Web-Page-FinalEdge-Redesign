@@ -384,37 +384,33 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          real de la canción no tiene (bridge → "Treinta años..." directo).
          Se quita ese bloque repetido — el resto de bloques (verso, pre-
          coro, coro, post-coro x2, puente, cierre) queda igual. */
-      /* pedido 2026-08-12 (corregido dos veces): dentro de cada una de
-         las 3 repeticiones del estribillo, "Yo fui, Hoy soy" y "Sports
-         World" van TODAS juntas, sin ninguna pausa entre ellas — ambas
-         marcas comparten el mismo tiempo (88/88, 172/172, 236/236); la
-         fusión de las dos líneas en un solo texto ocurre más abajo en
-         buildLyrics(), agrupando por marca de tiempo repetida. */
+      /* REHECHO 2026-08-12 tras varios intentos fallidos con marcas de
+         tiempo duplicadas + un corrimiento aritmético (-1): la
+         combinación de ambos trucos hacía que cada repetición del
+         estribillo desplazara el conteo una posición MÁS, arruinando
+         todo lo que viniera después. Diseño nuevo, sin trucos:
+         - LYRIC_TIMES[0] es un marcador real y separado que NUNCA se
+           usa para texto (así el primer hueco de la canción queda
+           vacío) — el resto de las marcas se empareja 1 a 1, sin
+           corrimientos, con cada línea subida, en el mismo orden.
+         - "Sin pausa" entre líneas NO se logra duplicando marcas de
+           tiempo — eso rompe el conteo. Se logra en updateCaptions():
+           si la siguiente marca está muy cerca de la actual, se
+           muestran juntas. Cambiar SOLO los números de abajo para
+           ajustar qué tan "junto" se ve algo — nunca duplicar marcas. */
       const LYRIC_TIMES = [
         12, 15.5, 19, 22.5, 26, 29.5, 33, 36.5, 40, 44, 48, 52, 56, 60, 64, 68,
-        72, 76, 80, 84, 88, 88, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
-        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 172,
-        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 236,
+        72, 76, 80, 84, 88, 89, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
+        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 173,
+        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 237,
       ];
       const LYRICS_KEY = 'yfhs-lyrics-v1';
-      /* reporte 2026-08-12 "está desincronizado una línea": el primer
-         marcador de tiempo (12s) se estaba emparejando directo con la
-         primera línea subida, pero debe quedar vacío — el archivo
-         subido empieza a sonar en el SEGUNDO marcador (15.5s). Se
-         recorre el emparejamiento una posición (lines[i-1] en vez de
-         lines[i]), así el índice 0 siempre queda vacío. Después se
-         fusionan las marcas de tiempo repetidas (ver arriba) en una
-         sola entrada con ambas líneas juntas, sin pausa entre ellas. */
-      const buildLyrics = (lines) => {
-        const raw = LYRIC_TIMES.map((t, i) => [t, (i > 0 && lines && lines[i - 1]) || '']);
-        const merged = [];
-        for (const [t, text] of raw) {
-          const last = merged[merged.length - 1];
-          if (last && last[0] === t) last[1] = [last[1], text].filter(Boolean).join(' ');
-          else merged.push([t, text]);
-        }
-        return merged.filter((row) => row[1]);
-      };
+      /* mapeo simple y sin corrimientos: se descarta LYRIC_TIMES[0] (el
+         hueco inicial silencioso) y el resto se empareja 1 a 1, en
+         orden, con las líneas subidas — sin aritmética de índices que
+         pueda desincronizarse. */
+      const buildLyrics = (lines) =>
+        LYRIC_TIMES.slice(1).map((t, i) => [t, (lines && lines[i]) || '']).filter((row) => row[1]);
       let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
 
       const fileInput = document.querySelector('[data-lyrics-file]');
@@ -461,6 +457,11 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
       const captionsEl = document.querySelector('[data-captions]');
       let lastCaptionIdx = -2;
+      /* entradas cuyas marcas de tiempo caen a MERGE_GAP segundos o menos
+         una de otra se muestran JUNTAS, como una sola línea combinada,
+         sin pausa perceptible — esto reemplaza el truco anterior de
+         duplicar marcas de tiempo (que desincronizaba el conteo). */
+      const MERGE_GAP = 2.5;
       const updateCaptions = () => {
         if (!captionsEl || audio.paused) return;
         const t = audio.currentTime;
@@ -468,13 +469,19 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         for (let i = 0; i < LYRICS.length; i++) {
           if (LYRICS[i][0] <= t) idx = i; else break;
         }
-        /* una línea se queda en pantalla hasta 3.6s o hasta que arranca
-           la siguiente (lo que sea más corto) — así no se traslapan en
-           los tramos cortos como el coro. */
-        const lineEnd = idx >= 0 ? (idx + 1 < LYRICS.length ? Math.min(LYRICS[idx][0] + 3.6, LYRICS[idx + 1][0]) : LYRICS[idx][0] + 3.6) : 0;
-        const visible = idx >= 0 && t < lineEnd;
+        if (idx < 0) { if (lastCaptionIdx !== -1) { captionsEl.textContent = ''; lastCaptionIdx = -1; } return; }
+        let start = idx;
+        while (start > 0 && LYRICS[start][0] - LYRICS[start - 1][0] <= MERGE_GAP) start--;
+        let end = start;
+        while (end + 1 < LYRICS.length && LYRICS[end + 1][0] - LYRICS[end][0] <= MERGE_GAP) end++;
+        const groupText = LYRICS.slice(start, end + 1).map((r) => r[1]).join(' ');
+        /* el grupo se queda en pantalla hasta 3.6s después de su última
+           línea o hasta que arranca el siguiente grupo, lo que sea más
+           corto — así no se traslapan en los tramos cortos como el coro. */
+        const lineEnd = end + 1 < LYRICS.length ? Math.min(LYRICS[end][0] + 3.6, LYRICS[end + 1][0]) : LYRICS[end][0] + 3.6;
+        const visible = t < lineEnd;
         if (!visible) { if (lastCaptionIdx !== -1) { captionsEl.textContent = ''; lastCaptionIdx = -1; } return; }
-        if (idx !== lastCaptionIdx) { captionsEl.textContent = LYRICS[idx][1]; lastCaptionIdx = idx; }
+        if (start !== lastCaptionIdx) { captionsEl.textContent = groupText; lastCaptionIdx = start; }
       };
 
       const stateEl = document.querySelector('[data-state]');
