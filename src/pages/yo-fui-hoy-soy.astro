@@ -38,6 +38,11 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       </div>
       <p class="state" data-state>Lista para reproducir</p>
       <p class="captions" data-captions aria-live="polite"></p>
+
+      <label class="lyrics-upload">
+        <input type="file" accept=".txt" data-lyrics-file hidden />
+        <span data-lyrics-label>Subir letra (.txt)</span>
+      </label>
     </main>
 
     <script type="importmap">
@@ -369,76 +374,40 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          sobre sus 274s de duración — no hay forma de detectar el
          arranque exacto de cada línea sin escuchar el audio, así que
          puede necesitar ajuste fino una vez probado en vivo.
-         RELLENAR cada string vacío con la línea correspondiente de la
-         letra — el arreglo ya trae el tiempo (en segundos) de cada una. */
-      const LYRICS = [
-        [12,    ''],
-        [15.5,  ''],
-        [19,    ''],
-        [22.5,  ''],
-        [26,    ''],
-        [29.5,  ''],
-        [33,    ''],
-        [36.5,  ''],
-        [40,    ''],
-        [44,    ''],
-        [48,    ''],
-        [52,    ''],
-        [56,    ''],
-        [60,    ''],
-        [64,    ''],
-        [68,    ''],
-        [72,    ''],
-        [76,    ''],
-        [80,    ''],
-        [84,    ''],
-        [88,    ''],
-        [92,    ''],
-        [96,    ''],
-        [99.5,  ''],
-        [103,   ''],
-        [106.5, ''],
-        [110,   ''],
-        [113.5, ''],
-        [117,   ''],
-        [120.5, ''],
-        [124,   ''],
-        [128,   ''],
-        [132,   ''],
-        [136,   ''],
-        [140,   ''],
-        [144,   ''],
-        [148,   ''],
-        [152,   ''],
-        [156,   ''],
-        [160,   ''],
-        [164,   ''],
-        [168,   ''],
-        [172,   ''],
-        [176,   ''],
-        [188,   ''],
-        [192,   ''],
-        [196,   ''],
-        [200,   ''],
-        [204,   ''],
-        [208,   ''],
-        [212,   ''],
-        [216,   ''],
-        [220,   ''],
-        [224,   ''],
-        [228,   ''],
-        [232,   ''],
-        [236,   ''],
-        [240,   ''],
-        [244,   ''],
-        [248,   ''],
-        [252,   ''],
-        [256,   ''],
-        [260,   ''],
-        [264,   ''],
-        [268,   ''],
-        [271,   ''],
-      ].filter((row) => row[1]); // las líneas vacías no se muestran hasta rellenarlas
+         El TEXTO de cada línea NO vive en este archivo: se sube con el
+         botón "Subir letra" (.txt, una línea por renglón, en orden) y
+         se guarda en localStorage de este navegador — el arreglo de
+         abajo solo trae los tiempos. */
+      const LYRIC_TIMES = [
+        12, 15.5, 19, 22.5, 26, 29.5, 33, 36.5, 40, 44, 48, 52, 56, 60, 64, 68,
+        72, 76, 80, 84, 88, 92, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
+        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176,
+        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240,
+        244, 248, 252, 256, 260, 264, 268, 271,
+      ];
+      const LYRICS_KEY = 'yfhs-lyrics-v1';
+      const buildLyrics = (lines) =>
+        LYRIC_TIMES.map((t, i) => [t, (lines && lines[i]) || '']).filter((row) => row[1]);
+      let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
+
+      const fileInput = document.querySelector('[data-lyrics-file]');
+      const lyricsLabel = document.querySelector('[data-lyrics-label]');
+      const setLyricsLabel = () => {
+        if (!lyricsLabel) return;
+        lyricsLabel.textContent = LYRICS.length ? `Letra cargada (${LYRICS.length} líneas) — cambiar` : 'Subir letra (.txt)';
+      };
+      setLyricsLabel();
+      fileInput?.addEventListener('change', async () => {
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) return;
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+        localStorage.setItem(LYRICS_KEY, JSON.stringify(lines));
+        LYRICS = buildLyrics(lines);
+        setLyricsLabel();
+        fileInput.value = '';
+      });
+
       const captionsEl = document.querySelector('[data-captions]');
       let lastCaptionIdx = -2;
       const updateCaptions = () => {
@@ -683,6 +652,27 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         min-height: 1.4em;
         pointer-events: none;
       }
+      /* botón discreto para subir el .txt de la letra (pedido
+         2026-08-12) — guarda en localStorage de este navegador, sin
+         backend ni GitHub de por medio. */
+      .lyrics-upload {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--hairline);
+        color: var(--fg-muted);
+        font-family: var(--font-ui);
+        font-size: var(--text-label);
+        letter-spacing: 0.06em;
+        padding: 8px 14px;
+        cursor: pointer;
+        background: #fff;
+        transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+      }
+      .lyrics-upload:hover { border-color: var(--bg); color: var(--bg); }
     </style>
   </body>
 </html>
