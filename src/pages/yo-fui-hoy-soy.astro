@@ -529,12 +529,10 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         line-height: 1.05;
         color: var(--bg);
       }
-      /* pedido 2026-08-12: texto plano, sólido, sin transparencia,
-         sin fondo/halo/sombra de ningún tipo — se probaron un
-         rectángulo, un halo de stroke y un relieve con text-shadow, y
-         los tres fueron rechazados. Queda así hasta nueva indicación. */
+      /* pedido 2026-08-12: el gris no se leía bien — todo el título en
+         negro sólido, sin fondo/halo/sombra de ningún tipo. */
       .title span {
-        color: var(--fg-muted);
+        color: var(--bg);
       }
       .transport {
         display: flex;
@@ -558,7 +556,9 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       }
       .tbtn svg { width: 16px; height: 16px; }
       .tbtn:hover { background: var(--bg); color: #fff; }
-      .tbtn.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+      /* pedido 2026-08-12: rojo en vez de azul (coherente con la nube
+         negro/rojo de la página) en lugar del acento azul del sitio. */
+      .tbtn.is-active { background: var(--color-error); border-color: var(--color-error); color: #fff; }
       .state {
         position: absolute;
         bottom: 28px;
