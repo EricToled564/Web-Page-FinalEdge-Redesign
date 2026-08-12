@@ -96,10 +96,3 @@ revisión humana.
   color-mix — nunca un hex nuevo. El resto del sitio conserva la
   prohibición de sombras intacta.
 
-- **2026-08-12 — Excepción R3.2 (sombras) para el título de `/yo-fui-hoy-soy`.**
-  Pedido explícito del cliente: "dale a las letras de todo el título un
-  ligero efecto en 3D". Aplica SOLO al `<h1>` de esa página independiente
-  y no listada: `text-shadow` en dos capas de color SÓLIDO (sin blur, sin
-  alpha) usando `--fg-muted`/`--placeholder` + `--hairline`, simulando
-  relieve/extrusión en vez de una sombra proyectada. No aplica a ninguna
-  otra página del sitio.
