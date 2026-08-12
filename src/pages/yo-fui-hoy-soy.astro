@@ -123,7 +123,7 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         return targets;
       }
 
-      const N = 22000;
+      const N = 220000; // densidad x10 (pedido 2026-08-12)
       const positions = new Float32Array(N * 3);
       const seeds = new Float32Array(N);
       const tones = new Float32Array(N);
@@ -135,10 +135,10 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         positions[i * 3 + 1] = r * Math.cos(phi) * 0.85;
         positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta) * 0.85;
         seeds[i] = Math.random();
-        /* mezcla roja/negra por partícula (pedido 2026-08-12): mayoría
-           tinta negra con vetas rojas, no 50/50 uniforme — se ve como
-           polvo real, no como confeti. */
-        tones[i] = Math.pow(Math.random(), 2.2);
+        /* mezcla pareja negra/roja por partícula (pedido 2026-08-12,
+           corrige un primer intento donde quedaba mayormente negro con
+           solo vetas rojas — ahora es una mezcla real 50/50 al azar). */
+        tones[i] = Math.random();
       }
       const targets = sampleGlyphPoints('30', N);
       const geo = new THREE.BufferGeometry();
