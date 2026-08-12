@@ -386,8 +386,14 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         244, 248, 252, 256, 260, 264, 268, 271,
       ];
       const LYRICS_KEY = 'yfhs-lyrics-v1';
+      /* reporte 2026-08-12 "está desincronizado una línea": el primer
+         marcador de tiempo (12s) se estaba emparejando directo con la
+         primera línea subida, pero debe quedar vacío — el archivo
+         subido empieza a sonar en el SEGUNDO marcador (15.5s). Se
+         recorre el emparejamiento una posición (lines[i-1] en vez de
+         lines[i]), así el índice 0 siempre queda vacío. */
       const buildLyrics = (lines) =>
-        LYRIC_TIMES.map((t, i) => [t, (lines && lines[i]) || '']).filter((row) => row[1]);
+        LYRIC_TIMES.map((t, i) => [t, (i > 0 && lines && lines[i - 1]) || '']).filter((row) => row[1]);
       let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
 
       const fileInput = document.querySelector('[data-lyrics-file]');
