@@ -529,7 +529,16 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         line-height: 1.05;
         color: var(--bg);
       }
-      .title span { color: var(--fg-muted); }
+      /* pedido 2026-08-12: "Hoy Soy" pierde legibilidad sobre la nube
+         de partículas — un parche blanco pegado al texto (sin padding
+         extra, mismo tamaño que la caja de línea del propio texto)
+         resuelve el contraste sin verse como un rectángulo ajeno. */
+      .title span {
+        color: var(--fg-muted);
+        background: #fff;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+      }
       .transport {
         display: flex;
         gap: 12px;
