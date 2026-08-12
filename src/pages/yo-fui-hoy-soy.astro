@@ -405,24 +405,32 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       const lyricsLabel = document.querySelector('[data-lyrics-label]');
       const setLyricsLabel = () => {
         if (!lyricsLabel) return;
-        lyricsLabel.textContent = LYRICS.length ? `Letra cargada (${LYRICS.length} líneas) — cambiar` : 'Subir letra (.txt)';
+        if (!LYRICS.length) { lyricsLabel.textContent = 'Subir letra (.txt)'; return; }
+        /* vista previa de la primera línea en el propio botón (pedido
+           2026-08-12, tras dos intentos fallidos de arreglar acentos a
+           ciegas): así se ve en el momento si el texto quedó bien
+           decodificado, sin abrir herramientas de desarrollador. */
+        const preview = LYRICS[0][1].slice(0, 24);
+        lyricsLabel.textContent = `Letra cargada (${LYRICS.length}): "${preview}${LYRICS[0][1].length > 24 ? '…' : ''}" — cambiar`;
       };
       setLyricsLabel();
       /* reporte 2026-08-12 "los acentos salen como signo de
          interrogación": file.text() da por hecho que el .txt está en
          UTF-8. Notepad y varios editores de Windows guardan por
          defecto en "ANSI" (Windows-1252), que codifica letras
-         acentuadas y puntuación invertida con bytes distintos — UTF-8
-         los interpreta como inválidos y los reemplaza por el carácter
-         de reemplazo (que muchas fuentes dibujan como signo de
-         interrogación). Se decodifica primero como UTF-8; si aparece
-         ese carácter de reemplazo, se reintenta como Windows-1252 sin
-         pedirle nada al cliente. */
+         acentuadas y puntuación invertida con bytes distintos.
+         PRIMER intento (fatal:false + buscar el carácter de reemplazo)
+         no fue confiable — se cambia a fatal:true: así el decoder
+         de UTF-8 arroja un error real ante CUALQUIER byte inválido en
+         vez de solo sustituirlo, señal mucho más segura de que el
+         archivo no es UTF-8 y hay que releerlo como Windows-1252. */
       const readTextSmart = async (file) => {
         const buf = await file.arrayBuffer();
-        const utf8 = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-        if (!utf8.includes('�')) return utf8;
-        try { return new TextDecoder('windows-1252').decode(buf); } catch (_) { return utf8; }
+        try {
+          return new TextDecoder('utf-8', { fatal: true }).decode(buf);
+        } catch (_) {
+          return new TextDecoder('windows-1252').decode(buf);
+        }
       };
       fileInput?.addEventListener('change', async () => {
         const file = fileInput.files && fileInput.files[0];
