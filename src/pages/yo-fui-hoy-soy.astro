@@ -1,0 +1,551 @@
+---
+import '../styles/tokens.css';
+
+/* Página independiente y NO listada (pedido 2026-08-12): sin Nav, sin
+   footer, sin layout Base — solo vive en /yo-fui-hoy-soy, no se enlaza
+   desde ningún menú ni aparece en ningún sitemap, y lleva noindex para
+   que buscadores tampoco la descubran. Solo es alcanzable con el URL
+   directo. */
+const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+---
+<html lang="es-MX" data-build={BUILD}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Yo Fui, Hoy Soy</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="/fonts/fonts.css" />
+  </head>
+  <body>
+    <canvas id="dust" aria-hidden="true"></canvas>
+
+    <main class="stage">
+      <h1 class="title">Yo Fui, <span>Hoy Soy</span></h1>
+
+      <div class="transport">
+        <button type="button" data-play class="tbtn is-active" aria-label="Reproducir">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+          Play
+        </button>
+        <button type="button" data-pause class="tbtn" aria-label="Pausar">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
+          Pause
+        </button>
+        <button type="button" data-stop class="tbtn" aria-label="Detener">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 6h12v12H6z" /></svg>
+          Stop
+        </button>
+      </div>
+      <p class="state" data-state>Lista para reproducir</p>
+    </main>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "/assets/js/three.module.min.js"
+      }
+    }
+    </script>
+    <script type="module">
+      import * as THREE from 'three';
+
+      const canvas = document.getElementById('dust');
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      /* fondo blanco (pedido explícito), a diferencia del visualizador
+         oscuro de la sección Música — por eso el fragment shader de
+         abajo NO reutiliza el blending aditivo original: sobre blanco,
+         aditivo simplemente desaparece (sumar luz a lo ya máximo brillo
+         no cambia nada visible). Aquí las partículas son tinta oscura
+         semitransparente compuesta con blending normal, como polvo/tinta
+         sobre papel. */
+      renderer.setClearColor(0xffffff, 1);
+
+      const scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0xffffff, 0.045);
+
+      const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+      camera.position.set(0, 0, 8);
+
+      addEventListener('resize', () => {
+        const w = innerWidth, h = innerHeight;
+        renderer.setSize(w, h);
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+      });
+
+      /* muestrea el número "30" en un canvas 2D y devuelve N puntos
+         dentro del trazo (con repetición + jitter leve) — mismo método
+         de "glifo -> nube de puntos" usado antes para el >_ de /v2/:
+         se rasteriza el texto, se toma cada pixel con tinta como
+         candidato, y cada partícula elige uno al azar como su destino
+         cuando el efecto "arma" el número. */
+      function sampleGlyphPoints(text, count) {
+        const W = 512, H = 512;
+        const cv = document.createElement('canvas');
+        cv.width = W; cv.height = H;
+        const ctx = cv.getContext('2d');
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = '#fff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = '900 300px "Geist Mono", monospace';
+        ctx.fillText(text, W / 2, H / 2 + 14);
+        const data = ctx.getImageData(0, 0, W, H).data;
+        const pts = [];
+        let minX = W, maxX = 0, minY = H, maxY = 0;
+        for (let y = 0; y < H; y += 2) {
+          for (let x = 0; x < W; x += 2) {
+            const a = data[(y * W + x) * 4 + 3];
+            if (a > 128) {
+              pts.push(x, y);
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+        const span = Math.max(maxX - minX, maxY - minY, 1);
+        const scale = 3.6 / span;
+        const targets = new Float32Array(count * 3);
+        const nPts = pts.length / 2;
+        for (let i = 0; i < count; i++) {
+          const k = nPts ? (Math.random() * nPts | 0) : 0;
+          const px = nPts ? pts[k * 2] : cx;
+          const py = nPts ? pts[k * 2 + 1] : cy;
+          targets[i * 3 + 0] = (px - cx) * scale + (Math.random() - 0.5) * 0.025;
+          targets[i * 3 + 1] = -(py - cy) * scale + (Math.random() - 0.5) * 0.025;
+          targets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
+        }
+        return targets;
+      }
+
+      const N = 22000;
+      const positions = new Float32Array(N * 3);
+      const seeds = new Float32Array(N);
+      const tones = new Float32Array(N);
+      for (let i = 0; i < N; i++) {
+        const r = Math.pow(Math.random(), 0.6) * 2.4;
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        positions[i * 3 + 0] = r * Math.sin(phi) * Math.cos(theta) * 1.45;
+        positions[i * 3 + 1] = r * Math.cos(phi) * 0.85;
+        positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta) * 0.85;
+        seeds[i] = Math.random();
+        /* mezcla roja/negra por partícula (pedido 2026-08-12): mayoría
+           tinta negra con vetas rojas, no 50/50 uniforme — se ve como
+           polvo real, no como confeti. */
+        tones[i] = Math.pow(Math.random(), 2.2);
+      }
+      const targets = sampleGlyphPoints('30', N);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geo.setAttribute('aSeed', new THREE.Float32BufferAttribute(seeds, 1));
+      geo.setAttribute('aTone', new THREE.Float32BufferAttribute(tones, 1));
+      geo.setAttribute('aTarget', new THREE.Float32BufferAttribute(targets, 3));
+
+      const VERT = `
+      uniform float uTime;
+      uniform float uFlowTime;
+      uniform float uLow;
+      uniform float uMid;
+      uniform float uHigh;
+      uniform float uPulse;
+      uniform float uPhase;
+      uniform float uAssemble;
+
+      attribute float aSeed;
+      attribute float aTone;
+      attribute vec3 aTarget;
+
+      varying float vBright;
+      varying float vDepth;
+      varying float vTone;
+
+      vec3 mod289v3(vec3 x){return x - floor(x*(1.0/289.0))*289.0;}
+      vec4 mod289v4(vec4 x){return x - floor(x*(1.0/289.0))*289.0;}
+      vec4 permute(vec4 x){return mod289v4(((x*34.0)+1.0)*x);}
+      vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314*r;}
+      float snoise(vec3 v){
+        const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+        const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+        vec3 i = floor(v + dot(v, C.yyy));
+        vec3 x0 = v - i + dot(i, C.xxx);
+        vec3 g = step(x0.yzx, x0.xyz);
+        vec3 l = 1.0 - g;
+        vec3 i1 = min(g.xyz, l.zxy);
+        vec3 i2 = max(g.xyz, l.zxy);
+        vec3 x1 = x0 - i1 + C.xxx;
+        vec3 x2 = x0 - i2 + C.yyy;
+        vec3 x3 = x0 - D.yyy;
+        i = mod289v3(i);
+        vec4 p = permute(permute(permute(
+          i.z + vec4(0.0, i1.z, i2.z, 1.0)) +
+          i.y + vec4(0.0, i1.y, i2.y, 1.0)) +
+          i.x + vec4(0.0, i1.x, i2.x, 1.0));
+        float n_ = 0.142857142857;
+        vec3 ns = n_ * D.wyz - D.xzx;
+        vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+        vec4 x_ = floor(j * ns.z);
+        vec4 y_ = floor(j - 7.0*x_);
+        vec4 x = x_*ns.x + ns.yyyy;
+        vec4 y = y_*ns.x + ns.yyyy;
+        vec4 h = 1.0 - abs(x) - abs(y);
+        vec4 b0 = vec4(x.xy, y.xy);
+        vec4 b1 = vec4(x.zw, y.zw);
+        vec4 s0 = floor(b0)*2.0 + 1.0;
+        vec4 s1 = floor(b1)*2.0 + 1.0;
+        vec4 sh = -step(h, vec4(0.0));
+        vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+        vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+        vec3 p0 = vec3(a0.xy, h.x);
+        vec3 p1 = vec3(a0.zw, h.y);
+        vec3 p2 = vec3(a1.xy, h.z);
+        vec3 p3 = vec3(a1.zw, h.w);
+        vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+        p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+        vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+        m = m*m;
+        return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+      }
+      vec3 snoiseVec3(vec3 x){
+        return vec3(
+          snoise(x),
+          snoise(vec3(x.y - 19.1, x.z + 33.4, x.x + 47.2)),
+          snoise(vec3(x.z + 74.2, x.x - 124.5, x.y + 99.4))
+        );
+      }
+      vec3 curlNoise(vec3 p){
+        const float e = 0.1;
+        vec3 dx = vec3(e, 0.0, 0.0);
+        vec3 dy = vec3(0.0, e, 0.0);
+        vec3 dz = vec3(0.0, 0.0, e);
+        vec3 px0 = snoiseVec3(p - dx); vec3 px1 = snoiseVec3(p + dx);
+        vec3 py0 = snoiseVec3(p - dy); vec3 py1 = snoiseVec3(p + dy);
+        vec3 pz0 = snoiseVec3(p - dz); vec3 pz1 = snoiseVec3(p + dz);
+        float xg = py1.z - py0.z - pz1.y + pz0.y;
+        float yg = pz1.x - pz0.x - px1.z + px0.z;
+        float zg = px1.y - px0.y - py1.x + py0.x;
+        return normalize(vec3(xg, yg, zg));
+      }
+
+      void main(){
+        vec3 pos = position;
+
+        vec3 flow  = curlNoise(pos * 0.5 + vec3(uFlowTime*0.35, uFlowTime*0.27, uFlowTime*0.31) + vec3(uPhase*0.4));
+        vec3 flow2 = curlNoise(pos * 1.15 + vec3(uFlowTime*0.55 + 5.0, uFlowTime*0.42, uFlowTime*0.60));
+
+        float orderedAmp = 0.22 + uMid * 0.55 + uLow * 0.35 + uHigh * 0.15;
+        vec3 ordered = flow * orderedAmp + flow2 * (orderedAmp * 0.35);
+
+        vec3 shimmer = vec3(
+          snoise(vec3(pos.x*1.6, pos.y*1.6, uFlowTime*1.4)),
+          snoise(vec3(pos.y*1.6, pos.z*1.6, uFlowTime*1.7 + 3.0)),
+          snoise(vec3(pos.z*1.6, pos.x*1.6, uFlowTime*1.3 + 7.0))
+        ) * uHigh * 0.22;
+
+        vec3 rnd = vec3(
+          snoise(vec3(pos.x*0.5, pos.y*0.5, uTime*1.2)),
+          snoise(vec3(pos.y*0.5, pos.z*0.5, uTime*1.5 + 3.0)),
+          snoise(vec3(pos.z*0.5, pos.x*0.5, uTime*1.1 + 7.0))
+        );
+        vec3 chaos = rnd * (uPulse * 1.20);
+
+        float expansion = 1.0 + uLow * 0.25 + uPulse * 0.30;
+        vec3 basePos = pos * expansion;
+
+        vec3 free = basePos + ordered + shimmer + chaos;
+        /* en los beats más intensos uAssemble sube hacia 1 y el polvo
+           libre cede el paso a su punto asignado dentro del "30" — se
+           deja un resto de shimmer para que el número siga respirando
+           en vez de quedar clavado y muerto. */
+        pos = mix(free, aTarget + shimmer * 0.05, uAssemble);
+
+        vec4 mv = modelViewMatrix * vec4(pos, 1.0);
+        gl_Position = projectionMatrix * mv;
+
+        float size = 1.0 + uLow * 0.7 + uPulse * 2.4 + aSeed * 0.7;
+        gl_PointSize = size * (16.0 / -mv.z);
+
+        float glow = 0.35 + aSeed * 0.35;
+        glow += uPulse * (0.4 + 0.6 * aSeed);
+        glow += uMid * 0.20 * aSeed;
+        vBright = glow;
+        vDepth  = -mv.z;
+        vTone   = aTone;
+      }
+      `;
+
+      /* tinta oscura semitransparente sobre blanco: blending NORMAL (no
+         aditivo). vBright/uPulse mueven la OPACIDAD, no el tono hacia
+         blanco (que sería invisible aquí) — más brillo/pulso = trazo más
+         presente, no más claro. */
+      const FRAG = `
+      precision highp float;
+      uniform vec3 uBlack;
+      uniform vec3 uRed;
+      uniform float uPulse;
+      varying float vBright;
+      varying float vDepth;
+      varying float vTone;
+
+      void main(){
+        vec2 c = gl_PointCoord - 0.5;
+        float d = length(c);
+        if (d > 0.5) discard;
+        float shape = smoothstep(0.50, 0.05, d);
+        float depthFade = clamp(1.0 - (vDepth - 5.0) / 15.0, 0.15, 1.0);
+        float b = min(1.0, vBright);
+        float alpha = shape * (0.10 + b * 0.30) * depthFade;
+        /* los beats intensos empujan la mezcla hacia rojo — el número
+           "arma" en negro y se enciende en rojo justo con el golpe. */
+        float tone = clamp(vTone + uPulse * 0.6, 0.0, 1.0);
+        vec3 col = mix(uBlack, uRed, tone);
+        gl_FragColor = vec4(col, alpha);
+      }
+      `;
+
+      const css = getComputedStyle(document.documentElement);
+      const blackHex = css.getPropertyValue('--bg').trim() || '#0E0E12';
+      const redHex = css.getPropertyValue('--color-error').trim() || '#FF5A5A';
+      const uniforms = {
+        uTime: { value: 0 },
+        uFlowTime: { value: 0 },
+        uLow: { value: 0 },
+        uMid: { value: 0 },
+        uHigh: { value: 0 },
+        uPulse: { value: 0 },
+        uPhase: { value: 0 },
+        uAssemble: { value: 0 },
+        uBlack: { value: new THREE.Color(blackHex) },
+        uRed: { value: new THREE.Color(redHex) },
+      };
+
+      const mat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: VERT,
+        fragmentShader: FRAG,
+        transparent: true,
+        depthWrite: false,
+        blending: THREE.NormalBlending,
+      });
+      const points = new THREE.Points(geo, mat);
+      scene.add(points);
+
+      // -------- Audio (una sola pista, controles nativos Play/Pause/Stop) --------
+      const audio = new Audio('/assets/audio/yo-fui-hoy-soy.mp3');
+      audio.preload = 'auto';
+      audio.loop = false;
+
+      let actx = null, analyser = null, freq = null, srcNode = null;
+      const ensureGraph = () => {
+        if (actx) return;
+        actx = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = actx.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.5;
+        freq = new Uint8Array(analyser.frequencyBinCount);
+        srcNode = actx.createMediaElementSource(audio);
+        srcNode.connect(analyser);
+        analyser.connect(actx.destination);
+      };
+
+      const stateEl = document.querySelector('[data-state]');
+      const btnPlay = document.querySelector('[data-play]');
+      const btnPause = document.querySelector('[data-pause]');
+      const btnStop = document.querySelector('[data-stop]');
+      const setActive = (btn) => {
+        [btnPlay, btnPause, btnStop].forEach((b) => b.classList.toggle('is-active', b === btn));
+      };
+
+      btnPlay.addEventListener('click', async () => {
+        ensureGraph();
+        if (actx.state === 'suspended') await actx.resume();
+        try { await audio.play(); } catch (_) {}
+        setActive(btnPlay);
+        stateEl.textContent = '▸ en vivo';
+      });
+      btnPause.addEventListener('click', () => {
+        audio.pause();
+        setActive(btnPause);
+        stateEl.textContent = 'en pausa';
+      });
+      btnStop.addEventListener('click', () => {
+        audio.pause();
+        audio.currentTime = 0;
+        setActive(btnStop);
+        stateEl.textContent = 'detenida';
+      });
+      audio.addEventListener('ended', () => {
+        setActive(btnStop);
+        stateEl.textContent = 'terminó';
+      });
+
+      // -------- Render loop --------
+      const t0 = performance.now();
+      let camAngle = 0;
+      let lastFrameMs = t0;
+      let flowTime = 0;
+      const prevSpec = new Float32Array(80);
+      let fluxAvg = 0;
+      let beatPulse = 0;
+      let beatPhase = 0;
+      let lastBeatTime = 0;
+      let formAmount = 0; // 0 = polvo suelto, 1 = "30" armado del todo
+
+      function tick() {
+        requestAnimationFrame(tick);
+        const now = performance.now();
+        const tSec = (now - t0) / 1000;
+        const dt = Math.min(0.05, Math.max(0, (now - lastFrameMs) / 1000));
+        lastFrameMs = now;
+
+        let lo = 0, mi = 0, hi = 0;
+        if (analyser && freq && !audio.paused) {
+          analyser.getByteFrequencyData(freq);
+          const avg = (s, e) => {
+            let sum = 0;
+            const n = Math.min(e, freq.length);
+            for (let j = s; j < n; j++) sum += freq[j];
+            return (sum / Math.max(1, n - s)) / 255;
+          };
+          lo = Math.min(1.5, avg(0, 80) * 0.7);
+          mi = Math.min(1.5, avg(80, 200) * 0.7);
+          hi = Math.min(1.5, avg(200, 400) * 0.7);
+
+          let fluxSum = 0;
+          const BANDS = Math.min(80, freq.length);
+          for (let i = 2; i < BANDS; i++) {
+            const cur = freq[i] / 255;
+            const d = cur - prevSpec[i];
+            if (d > 0) fluxSum += d;
+            prevSpec[i] = cur;
+          }
+          const flux = fluxSum / BANDS;
+          fluxAvg = fluxAvg * 0.95 + flux * 0.05;
+
+          const sinceBeat = now - lastBeatTime;
+          if (sinceBeat > 120 && flux > fluxAvg * 1.5 + 0.003) {
+            const strength = Math.min(1.0, (flux - fluxAvg) * 22.0);
+            if (strength > 0.20) {
+              beatPulse = Math.max(beatPulse, strength);
+              beatPhase += 0.8 + Math.random() * 2.4;
+              lastBeatTime = now;
+              /* solo los golpes REALMENTE fuertes arman el número — un
+                 beat cualquiera no alcanza, tiene que ser de los picos
+                 más intensos de la canción (pedido 2026-08-12). */
+              if (strength > 0.55) formAmount = Math.min(1, formAmount + strength * 0.9);
+            }
+          }
+          beatPulse *= 0.88;
+          if (beatPulse < 0.001) beatPulse = 0;
+        } else {
+          beatPulse *= 0.92;
+        }
+        /* el "30" se sostiene un instante y se disuelve solo — no se
+           queda clavado en pantalla. */
+        formAmount *= 0.975;
+        if (formAmount < 0.001) formAmount = 0;
+
+        const envelope = lo * 0.5 + mi * 0.35 + hi * 0.15;
+        flowTime += dt * (0.6 + envelope * 2.6);
+
+        camAngle += 0.0025 + beatPulse * 0.008;
+        camera.position.x = Math.sin(camAngle) * 8.5;
+        camera.position.z = Math.cos(camAngle) * 8.5;
+        camera.position.y = Math.sin(camAngle * 0.4) * 0.8;
+        camera.lookAt(0, 0, 0);
+
+        uniforms.uTime.value = tSec;
+        uniforms.uFlowTime.value = flowTime;
+        uniforms.uLow.value = lo;
+        uniforms.uMid.value = mi;
+        uniforms.uHigh.value = hi;
+        uniforms.uPulse.value = beatPulse;
+        uniforms.uPhase.value = beatPhase;
+        uniforms.uAssemble.value = formAmount;
+
+        renderer.render(scene, camera);
+      }
+      tick();
+    </script>
+
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        background: #fff;
+        height: 100%;
+        overflow: hidden;
+        -webkit-tap-highlight-color: transparent;
+      }
+      body {
+        font-family: var(--font-ui);
+      }
+      #dust {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      .stage {
+        position: relative;
+        z-index: 1;
+        height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 40px;
+        text-align: center;
+        padding: 24px;
+        pointer-events: none;
+      }
+      .title {
+        font-family: var(--font-read);
+        font-weight: 500;
+        font-size: clamp(32px, 6vw, 72px);
+        letter-spacing: -0.03em;
+        line-height: 1.05;
+        color: var(--bg);
+      }
+      .title span { color: var(--fg-muted); }
+      .transport {
+        display: flex;
+        gap: 12px;
+        pointer-events: auto;
+      }
+      .tbtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: transparent;
+        border: 1px solid var(--bg);
+        color: var(--bg);
+        font-family: var(--font-ui);
+        font-size: var(--text-label);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 12px 20px;
+        cursor: pointer;
+        transition: background var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+      }
+      .tbtn svg { width: 16px; height: 16px; }
+      .tbtn:hover { background: var(--bg); color: #fff; }
+      .tbtn.is-active { background: var(--accent); border-color: var(--accent); color: #fff; }
+      .state {
+        position: absolute;
+        bottom: 28px;
+        left: 0;
+        right: 0;
+        font-family: var(--font-ui);
+        font-size: var(--text-label);
+        letter-spacing: 0.08em;
+        color: var(--fg-muted);
+      }
+    </style>
+  </body>
+</html>
