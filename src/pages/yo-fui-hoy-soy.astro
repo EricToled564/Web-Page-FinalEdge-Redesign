@@ -287,7 +287,6 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       precision highp float;
       uniform vec3 uBlack;
       uniform vec3 uRed;
-      uniform float uPulse;
       varying float vBright;
       varying float vDepth;
       varying float vTone;
@@ -299,11 +298,21 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         float shape = smoothstep(0.50, 0.05, d);
         float depthFade = clamp(1.0 - (vDepth - 5.0) / 15.0, 0.15, 1.0);
         float b = min(1.0, vBright);
-        float alpha = shape * (0.10 + b * 0.30) * depthFade;
-        /* los beats intensos empujan la mezcla hacia rojo — el número
-           "arma" en negro y se enciende en rojo justo con el golpe. */
-        float tone = clamp(vTone + uPulse * 0.6, 0.0, 1.0);
-        vec3 col = mix(uBlack, uRed, tone);
+        /* reporte 2026-08-12 "el color es solo rojo": dos causas.
+           1) uPulse empujaba el tono de CADA partícula hacia rojo en
+              cada golpe — con una canción con ritmo casi continuo eso
+              mantenía casi toda la nube roja casi todo el tiempo. El
+              tono base ahora es puramente el de cada partícula
+              (vTone), fijo, sin que el audio lo mueva — 50/50 real.
+           2) tinta negra semitransparente sobre blanco casi no se ve
+              (negro claro * alpha bajo ≈ gris apenas perceptible),
+              mientras que la MISMA alpha en rojo sí se lee con fuerza
+              — así que aunque la mezcla fuera 50/50 en cantidad de
+              partículas, visualmente parecía "solo rojo". Se le da al
+              negro más opacidad para que pese lo mismo que el rojo. */
+        float toneAlphaBoost = mix(1.9, 1.0, vTone);
+        float alpha = shape * (0.10 + b * 0.30) * depthFade * toneAlphaBoost;
+        vec3 col = mix(uBlack, uRed, vTone);
         gl_FragColor = vec4(col, alpha);
       }
       `;
@@ -454,16 +463,16 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         flowTime += dt * (0.6 + envelope * 2.6);
 
         camAngle += 0.0025 + beatPulse * 0.008;
-        /* reporte 2026-08-12 "la mitad de las veces sale como 03": el
-           ángulo crecía sin límite y la cámara daba la vuelta completa
-           a la nube — al pasar al lado de atrás del "30" (un plano
-           casi plano en Z) el número se ve en espejo, y como el 0 es
-           simétrico solo se nota el orden invertido: "03". Se acota el
-           balanceo a ±26° (cos siempre positivo) para que la cámara
-           JAMÁS cruce al reverso del glifo. */
-        const swing = Math.sin(camAngle * 0.15) * 0.45;
-        camera.position.x = Math.sin(swing) * 8.5;
-        camera.position.z = Math.cos(swing) * 8.5;
+        /* reporte 2026-08-12 "el 30 se sigue invirtiendo" (persistió
+           incluso acotando el balanceo a ±26°): la única forma de que
+           un plano se vea en espejo es que la cámara cruce a su
+           reverso, así que en vez de seguir acotando el ángulo se
+           elimina el movimiento horizontal por completo — la cámara
+           queda FIJA en X/Z (nunca puede cruzar al reverso porque
+           nunca se mueve en ese eje), y solo conserva un balanceo
+           vertical sutil para que la escena no se sienta muerta. */
+        camera.position.x = 0;
+        camera.position.z = 8.5;
         camera.position.y = Math.sin(camAngle * 0.4) * 0.8;
         camera.lookAt(0, 0, 0);
 
