@@ -384,33 +384,33 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          real de la canción no tiene (bridge → "Treinta años..." directo).
          Se quita ese bloque repetido — el resto de bloques (verso, pre-
          coro, coro, post-coro x2, puente, cierre) queda igual. */
-      /* REHECHO 2026-08-12 tras varios intentos fallidos con marcas de
-         tiempo duplicadas + un corrimiento aritmético (-1): la
-         combinación de ambos trucos hacía que cada repetición del
-         estribillo desplazara el conteo una posición MÁS, arruinando
-         todo lo que viniera después. Diseño nuevo, sin trucos:
-         - LYRIC_TIMES[0] es un marcador real y separado que NUNCA se
-           usa para texto (así el primer hueco de la canción queda
-           vacío) — el resto de las marcas se empareja 1 a 1, sin
-           corrimientos, con cada línea subida, en el mismo orden.
-         - "Sin pausa" entre líneas NO se logra duplicando marcas de
-           tiempo — eso rompe el conteo. Se logra en updateCaptions():
-           si la siguiente marca está muy cerca de la actual, se
-           muestran juntas. Cambiar SOLO los números de abajo para
-           ajustar qué tan "junto" se ve algo — nunca duplicar marcas. */
+      /* REHECHO 2026-08-12 con detección real por audio: se transcribió
+         el audio (Whisper, local) para obtener el tiempo de inicio de
+         cada palabra cantada, y esos tiempos se alinearon contra el
+         conteo de palabras por línea del archivo de letra final del
+         cliente (alineación forzada, técnica estándar) — así cada
+         marca de tiempo abajo es el inicio REAL detectado de esa línea
+         en el audio, no una estimación estructural a mano. 66 líneas
+         en total, mapeadas 1 a 1, en orden, sin ningún marcador
+         "silencioso" adicional ni corrimiento de índice.
+         "Sin pausa" entre líneas cercanas se sigue logrando en
+         updateCaptions() por cercanía de tiempo (MERGE_GAP), no
+         duplicando marcas. */
       const LYRIC_TIMES = [
-        12, 15.5, 19, 22.5, 26, 29.5, 33, 36.5, 40, 44, 48, 52, 56, 60, 64, 68,
-        72, 76, 80, 84, 88, 89, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
-        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 173,
-        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 237,
+        22.1, 31.6, 32.7, 35.6, 39.9, 43.0, 45.8, 50.7, 54.5, 58.7, 62.8, 66.3,
+        70.0, 74.0, 77.3, 80.1, 85.3, 88.7, 90.9, 93.6, 99.7, 101.1, 105.5,
+        106.6, 109.3, 113.8, 116.0, 120.0, 121.4, 124.8, 128.6, 131.9, 136.0,
+        139.4, 142.9, 146.8, 150.8, 153.3, 158.1, 164.0, 166.1, 169.0, 172.0,
+        175.5, 180.0, 181.2, 185.8, 195.6, 198.4, 207.0, 207.9, 211.2, 211.7,
+        215.3, 219.8, 223.5, 226.8, 230.2, 234.5, 243.5, 246.2, 247.9, 251.5,
+        255.8, 259.4, 263.1,
       ];
       const LYRICS_KEY = 'yfhs-lyrics-v1';
-      /* mapeo simple y sin corrimientos: se descarta LYRIC_TIMES[0] (el
-         hueco inicial silencioso) y el resto se empareja 1 a 1, en
-         orden, con las líneas subidas — sin aritmética de índices que
-         pueda desincronizarse. */
+      /* mapeo directo 1 a 1, en orden, con las líneas subidas — el
+         archivo de letra del cliente y este arreglo de tiempos tienen
+         la MISMA cantidad de líneas (66), verificado antes de subir. */
       const buildLyrics = (lines) =>
-        LYRIC_TIMES.slice(1).map((t, i) => [t, (lines && lines[i]) || '']).filter((row) => row[1]);
+        LYRIC_TIMES.map((t, i) => [t, (lines && lines[i]) || '']).filter((row) => row[1]);
       let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
 
       const fileInput = document.querySelector('[data-lyrics-file]');
