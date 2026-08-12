@@ -384,11 +384,15 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          real de la canción no tiene (bridge → "Treinta años..." directo).
          Se quita ese bloque repetido — el resto de bloques (verso, pre-
          coro, coro, post-coro x2, puente, cierre) queda igual. */
+      /* pedido 2026-08-12: dentro de cada una de las 3 repeticiones del
+         estribillo, "Yo fui, Hoy soy" va junto sin pausa y "Sports
+         World" entra tras una pausa CORTA — se acorta el hueco entre
+         esas dos marcas (antes 4s, ahora 2s) en las 3 apariciones. */
       const LYRIC_TIMES = [
         12, 15.5, 19, 22.5, 26, 29.5, 33, 36.5, 40, 44, 48, 52, 56, 60, 64, 68,
-        72, 76, 80, 84, 88, 92, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
-        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 176,
-        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 240,
+        72, 76, 80, 84, 88, 90, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
+        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 174,
+        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 238,
       ];
       const LYRICS_KEY = 'yfhs-lyrics-v1';
       /* reporte 2026-08-12 "está desincronizado una línea": el primer
