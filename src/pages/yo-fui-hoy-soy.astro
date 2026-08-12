@@ -454,8 +454,16 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         flowTime += dt * (0.6 + envelope * 2.6);
 
         camAngle += 0.0025 + beatPulse * 0.008;
-        camera.position.x = Math.sin(camAngle) * 8.5;
-        camera.position.z = Math.cos(camAngle) * 8.5;
+        /* reporte 2026-08-12 "la mitad de las veces sale como 03": el
+           ángulo crecía sin límite y la cámara daba la vuelta completa
+           a la nube — al pasar al lado de atrás del "30" (un plano
+           casi plano en Z) el número se ve en espejo, y como el 0 es
+           simétrico solo se nota el orden invertido: "03". Se acota el
+           balanceo a ±26° (cos siempre positivo) para que la cámara
+           JAMÁS cruce al reverso del glifo. */
+        const swing = Math.sin(camAngle * 0.15) * 0.45;
+        camera.position.x = Math.sin(swing) * 8.5;
+        camera.position.z = Math.cos(swing) * 8.5;
         camera.position.y = Math.sin(camAngle * 0.4) * 0.8;
         camera.lookAt(0, 0, 0);
 
