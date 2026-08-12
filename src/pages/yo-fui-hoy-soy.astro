@@ -528,16 +528,22 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         letter-spacing: -0.03em;
         line-height: 1.05;
         color: var(--bg);
+        /* efecto 3D ligero pedido explícitamente 2026-08-12 (relieve/
+           extrusión con capas de color SÓLIDO, no un blur difuso — se
+           lee como letras con espesor, no como una sombra proyectada). */
+        text-shadow: 1.5px 1.5px 0 var(--fg-muted), 3px 3px 0 var(--hairline); /* brand-ok:R3.2 efecto 3D ligero pedido explícito del cliente 2026-08-12, página independiente no listada (yo-fui-hoy-soy) */
       }
       /* pedido 2026-08-12: "Hoy Soy" pierde legibilidad sobre la nube
-         de partículas — un parche blanco pegado al texto (sin padding
-         extra, mismo tamaño que la caja de línea del propio texto)
-         resuelve el contraste sin verse como un rectángulo ajeno. */
+         de partículas — un fondo rectangular ("recuadro") fue
+         explícitamente rechazado. El blanco tiene que seguir el
+         contorno de las letras, no su caja de línea: un stroke blanco
+         grueso pintado DETRÁS del relleno (paint-order) actúa como un
+         halo exactamente del tamaño del propio texto. */
       .title span {
         color: var(--fg-muted);
-        background: #fff;
-        box-decoration-break: clone;
-        -webkit-box-decoration-break: clone;
+        -webkit-text-stroke: 14px #fff;
+        paint-order: stroke fill;
+        text-shadow: 1.5px 1.5px 0 var(--placeholder), 3px 3px 0 var(--hairline); /* brand-ok:R3.2 efecto 3D ligero pedido explícito del cliente 2026-08-12, página independiente no listada (yo-fui-hoy-soy) */
       }
       .transport {
         display: flex;
