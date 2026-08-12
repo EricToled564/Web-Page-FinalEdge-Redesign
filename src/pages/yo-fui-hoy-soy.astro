@@ -671,6 +671,12 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         cursor: pointer;
         background: #fff;
         transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
+        /* bug real (reporte 2026-08-12 "el botón no sirve"): .stage
+           tiene pointer-events:none para dejar pasar los clicks hacia
+           el canvas de partículas — .lyrics-upload es hijo de .stage y
+           heredaba ese none, así que el click SIEMPRE le llegaba al
+           canvas de atrás en vez de al botón, aunque se viera encima. */
+        pointer-events: auto;
       }
       .lyrics-upload:hover { border-color: var(--bg); color: var(--bg); }
     </style>
