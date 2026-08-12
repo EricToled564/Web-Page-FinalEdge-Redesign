@@ -384,15 +384,17 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          real de la canción no tiene (bridge → "Treinta años..." directo).
          Se quita ese bloque repetido — el resto de bloques (verso, pre-
          coro, coro, post-coro x2, puente, cierre) queda igual. */
-      /* pedido 2026-08-12: dentro de cada una de las 3 repeticiones del
-         estribillo, "Yo fui, Hoy soy" va junto sin pausa y "Sports
-         World" entra tras una pausa CORTA — se acorta el hueco entre
-         esas dos marcas (antes 4s, ahora 2s) en las 3 apariciones. */
+      /* pedido 2026-08-12 (corregido dos veces): dentro de cada una de
+         las 3 repeticiones del estribillo, "Yo fui, Hoy soy" y "Sports
+         World" van TODAS juntas, sin ninguna pausa entre ellas — ambas
+         marcas comparten el mismo tiempo (88/88, 172/172, 236/236); la
+         fusión de las dos líneas en un solo texto ocurre más abajo en
+         buildLyrics(), agrupando por marca de tiempo repetida. */
       const LYRIC_TIMES = [
         12, 15.5, 19, 22.5, 26, 29.5, 33, 36.5, 40, 44, 48, 52, 56, 60, 64, 68,
-        72, 76, 80, 84, 88, 90, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
-        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 174,
-        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 238,
+        72, 76, 80, 84, 88, 88, 96, 99.5, 103, 106.5, 110, 113.5, 117, 120.5,
+        124, 128, 132, 136, 140, 144, 148, 152, 156, 160, 164, 168, 172, 172,
+        188, 192, 196, 200, 204, 208, 212, 216, 220, 224, 228, 232, 236, 236,
       ];
       const LYRICS_KEY = 'yfhs-lyrics-v1';
       /* reporte 2026-08-12 "está desincronizado una línea": el primer
@@ -400,9 +402,19 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
          primera línea subida, pero debe quedar vacío — el archivo
          subido empieza a sonar en el SEGUNDO marcador (15.5s). Se
          recorre el emparejamiento una posición (lines[i-1] en vez de
-         lines[i]), así el índice 0 siempre queda vacío. */
-      const buildLyrics = (lines) =>
-        LYRIC_TIMES.map((t, i) => [t, (i > 0 && lines && lines[i - 1]) || '']).filter((row) => row[1]);
+         lines[i]), así el índice 0 siempre queda vacío. Después se
+         fusionan las marcas de tiempo repetidas (ver arriba) en una
+         sola entrada con ambas líneas juntas, sin pausa entre ellas. */
+      const buildLyrics = (lines) => {
+        const raw = LYRIC_TIMES.map((t, i) => [t, (i > 0 && lines && lines[i - 1]) || '']);
+        const merged = [];
+        for (const [t, text] of raw) {
+          const last = merged[merged.length - 1];
+          if (last && last[0] === t) last[1] = [last[1], text].filter(Boolean).join(' ');
+          else merged.push([t, text]);
+        }
+        return merged.filter((row) => row[1]);
+      };
       let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
 
       const fileInput = document.querySelector('[data-lyrics-file]');
