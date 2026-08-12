@@ -423,7 +423,7 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 
       const fileInput = document.querySelector('[data-lyrics-file]');
       const lyricsLabel = document.querySelector('[data-lyrics-label]');
-      const setLyricsLabel = () => {
+      const setLyricsLabel = (source) => {
         if (!lyricsLabel) return;
         if (!LYRICS.length) { lyricsLabel.textContent = 'Subir letra (.txt)'; return; }
         /* vista previa de la primera línea en el propio botón (pedido
@@ -431,9 +431,32 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
            ciegas): así se ve en el momento si el texto quedó bien
            decodificado, sin abrir herramientas de desarrollador. */
         const preview = LYRICS[0][1].slice(0, 24);
-        lyricsLabel.textContent = `Letra cargada (${LYRICS.length}): "${preview}${LYRICS[0][1].length > 24 ? '…' : ''}" — cambiar`;
+        const tag = source === 'site' ? '' : ' (solo este navegador)';
+        lyricsLabel.textContent = `Letra cargada (${LYRICS.length})${tag}: "${preview}${LYRICS[0][1].length > 24 ? '…' : ''}" — cambiar`;
       };
-      setLyricsLabel();
+      setLyricsLabel('local');
+      /* pedido 2026-08-12 "por qué la tengo que subir en el celular":
+         localStorage es por navegador/dispositivo, no se comparte. Se
+         intenta primero un archivo alojado en el propio sitio
+         (/assets/lyrics/yo-fui-hoy-soy.txt) — funciona igual en
+         cualquier dispositivo sin volver a subir nada, porque lo sirve
+         el sitio, no el navegador de quien lo ve. Si ese archivo no
+         existe todavía (nadie lo ha subido al repo), se usa lo que
+         haya en localStorage como respaldo. */
+      (async () => {
+        try {
+          const res = await fetch('/assets/lyrics/yo-fui-hoy-soy.txt', { cache: 'no-store' });
+          if (!res.ok) return;
+          const buf = await res.arrayBuffer();
+          let text;
+          try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+          catch (_) { text = new TextDecoder('windows-1252').decode(buf); }
+          const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+          if (!lines.length) return;
+          LYRICS = buildLyrics(lines);
+          setLyricsLabel('site');
+        } catch (_) { /* sin archivo en el sitio todavía — se queda con localStorage */ }
+      })();
       /* reporte 2026-08-12 "los acentos salen como signo de
          interrogación": file.text() da por hecho que el .txt está en
          UTF-8. Notepad y varios editores de Windows guardan por
@@ -459,7 +482,7 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
         localStorage.setItem(LYRICS_KEY, JSON.stringify(lines));
         LYRICS = buildLyrics(lines);
-        setLyricsLabel();
+        setLyricsLabel('local');
         fileInput.value = '';
       });
 
