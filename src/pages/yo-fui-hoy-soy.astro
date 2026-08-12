@@ -38,11 +38,6 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       </div>
       <p class="state" data-state>Lista para reproducir</p>
       <p class="captions" data-captions aria-live="polite"></p>
-
-      <label class="lyrics-upload">
-        <input type="file" accept=".txt" data-lyrics-file hidden />
-        <span data-lyrics-label>Subir letra (.txt)</span>
-      </label>
     </main>
 
     <script type="importmap">
@@ -369,15 +364,9 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
       };
 
       /* Letra en pantalla (pedido 2026-08-12), abajo del todo donde la
-         nube de polvo casi no llega. Tiempos estimados proporcionalmente
-         a la estructura de la canción (intro/verso/coro/puente/outro)
-         sobre sus 274s de duración — no hay forma de detectar el
-         arranque exacto de cada línea sin escuchar el audio, así que
-         puede necesitar ajuste fino una vez probado en vivo.
-         El TEXTO de cada línea NO vive en este archivo: se sube con el
-         botón "Subir letra" (.txt, una línea por renglón, en orden) y
-         se guarda en localStorage de este navegador — el arreglo de
-         abajo solo trae los tiempos.
+         nube de polvo casi no llega. El TEXTO de cada línea NO vive en
+         este archivo: se lee de /assets/lyrics/yo-fui-hoy-soy.txt (subido
+         una sola vez al repo) — el arreglo de abajo solo trae los tiempos.
          Corregido 2026-08-12: la primera versión del mapa de tiempos
          asumía una repetición extra del coro final antes del cierre
          (bridge → coro repetido → "Treinta años...") que la estructura
@@ -416,75 +405,35 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         [230.1,58],[233.9,59],[239.6,60],[241.4,61],[245.6,62],[250.8,63],
         [254.8,64],[256.6,65],[258.3,64],[260.4,65],[262.1,64],[264.2,65],
       ];
-      const LYRICS_KEY = 'yfhs-lyrics-v1';
       const buildLyrics = (lines) =>
         TIME_LINE_PAIRS.map(([t, lineIdx]) => [t, (lines && lines[lineIdx]) || '']).filter((row) => row[1]);
-      let LYRICS = buildLyrics(JSON.parse(localStorage.getItem(LYRICS_KEY) || 'null'));
-
-      const fileInput = document.querySelector('[data-lyrics-file]');
-      const lyricsLabel = document.querySelector('[data-lyrics-label]');
-      const setLyricsLabel = (source) => {
-        if (!lyricsLabel) return;
-        if (!LYRICS.length) { lyricsLabel.textContent = 'Subir letra (.txt)'; return; }
-        /* vista previa de la primera línea en el propio botón (pedido
-           2026-08-12, tras dos intentos fallidos de arreglar acentos a
-           ciegas): así se ve en el momento si el texto quedó bien
-           decodificado, sin abrir herramientas de desarrollador. */
-        const preview = LYRICS[0][1].slice(0, 24);
-        const tag = source === 'site' ? '' : ' (solo este navegador)';
-        lyricsLabel.textContent = `Letra cargada (${LYRICS.length})${tag}: "${preview}${LYRICS[0][1].length > 24 ? '…' : ''}" — cambiar`;
-      };
-      setLyricsLabel('local');
-      /* pedido 2026-08-12 "por qué la tengo que subir en el celular":
-         localStorage es por navegador/dispositivo, no se comparte. Se
-         intenta primero un archivo alojado en el propio sitio
-         (/assets/lyrics/yo-fui-hoy-soy.txt) — funciona igual en
-         cualquier dispositivo sin volver a subir nada, porque lo sirve
-         el sitio, no el navegador de quien lo ve. Si ese archivo no
-         existe todavía (nadie lo ha subido al repo), se usa lo que
-         haya en localStorage como respaldo. */
+      let LYRICS = [];
+      /* pedido 2026-08-12 "por qué la tengo que subir en el celular" /
+         "no le voy a estar pidiendo a las personas que suban la letra":
+         nada de botón ni UI visible para quien visita la página — la
+         letra se lee directo de un archivo alojado en el propio sitio
+         (/assets/lyrics/yo-fui-hoy-soy.txt, subido UNA sola vez al repo).
+         Si ese archivo no existe todavía, sencillamente no se muestran
+         captions — nunca se le pide nada al visitante. */
       (async () => {
         try {
           const res = await fetch('/assets/lyrics/yo-fui-hoy-soy.txt', { cache: 'no-store' });
           if (!res.ok) return;
           const buf = await res.arrayBuffer();
           let text;
+          /* reporte 2026-08-12 "los acentos salen como signo de
+             interrogación": el .txt no siempre es UTF-8 (Notepad y
+             varios editores de Windows guardan en Windows-1252por
+             defecto). fatal:true hace que el decoder de UTF-8 arroje un
+             error real ante cualquier byte inválido, señal segura de
+             que hay que releer como Windows-1252. */
           try { text = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
           catch (_) { text = new TextDecoder('windows-1252').decode(buf); }
           const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
           if (!lines.length) return;
           LYRICS = buildLyrics(lines);
-          setLyricsLabel('site');
-        } catch (_) { /* sin archivo en el sitio todavía — se queda con localStorage */ }
+        } catch (_) { /* sin archivo en el sitio todavía */ }
       })();
-      /* reporte 2026-08-12 "los acentos salen como signo de
-         interrogación": file.text() da por hecho que el .txt está en
-         UTF-8. Notepad y varios editores de Windows guardan por
-         defecto en "ANSI" (Windows-1252), que codifica letras
-         acentuadas y puntuación invertida con bytes distintos.
-         PRIMER intento (fatal:false + buscar el carácter de reemplazo)
-         no fue confiable — se cambia a fatal:true: así el decoder
-         de UTF-8 arroja un error real ante CUALQUIER byte inválido en
-         vez de solo sustituirlo, señal mucho más segura de que el
-         archivo no es UTF-8 y hay que releerlo como Windows-1252. */
-      const readTextSmart = async (file) => {
-        const buf = await file.arrayBuffer();
-        try {
-          return new TextDecoder('utf-8', { fatal: true }).decode(buf);
-        } catch (_) {
-          return new TextDecoder('windows-1252').decode(buf);
-        }
-      };
-      fileInput?.addEventListener('change', async () => {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) return;
-        const text = await readTextSmart(file);
-        const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-        localStorage.setItem(LYRICS_KEY, JSON.stringify(lines));
-        LYRICS = buildLyrics(lines);
-        setLyricsLabel('local');
-        fileInput.value = '';
-      });
 
       const captionsEl = document.querySelector('[data-captions]');
       let lastCaptionIdx = -2;
@@ -741,33 +690,6 @@ const BUILD = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
         min-height: 1.4em;
         pointer-events: none;
       }
-      /* botón discreto para subir el .txt de la letra (pedido
-         2026-08-12) — guarda en localStorage de este navegador, sin
-         backend ni GitHub de por medio. */
-      .lyrics-upload {
-        position: fixed;
-        top: 16px;
-        right: 16px;
-        z-index: 2;
-        display: inline-flex;
-        align-items: center;
-        border: 1px solid var(--hairline);
-        color: var(--fg-muted);
-        font-family: var(--font-ui);
-        font-size: var(--text-label);
-        letter-spacing: 0.06em;
-        padding: 8px 14px;
-        cursor: pointer;
-        background: #fff;
-        transition: border-color var(--t-hover) var(--ease), color var(--t-hover) var(--ease);
-        /* bug real (reporte 2026-08-12 "el botón no sirve"): .stage
-           tiene pointer-events:none para dejar pasar los clicks hacia
-           el canvas de partículas — .lyrics-upload es hijo de .stage y
-           heredaba ese none, así que el click SIEMPRE le llegaba al
-           canvas de atrás en vez de al botón, aunque se viera encima. */
-        pointer-events: auto;
-      }
-      .lyrics-upload:hover { border-color: var(--bg); color: var(--bg); }
     </style>
   </body>
 </html>
